@@ -21,6 +21,10 @@ VALTECH_LIGHT_GREY = "#F3F3F3"
 BLACK = "#000000"
 WHITE = "#FFFFFF"
 GREEN_HEADER = "#A6FF4D"
+OPPORTUNITY = "#12C76B"
+RISK = "#FFB000"
+INTELLIGENCE = "#2563EB"
+PINK = "#FF5C8A"
 
 
 TOYOTA_SET = [
@@ -30,7 +34,7 @@ TOYOTA_SET = [
 
 LEXUS_SET = [
     "Lexus", "BMW", "Mercedes-Benz", "Audi",
-    "Volvo", "Tesla", "Jaguar", "Land Rover", "Porsche", "Polestar", "Jaguar"
+    "Volvo", "Tesla", "Jaguar", "Land Rover", "Porsche", "Polestar"
 ]
 
 CHINESE_SET = [
@@ -205,38 +209,120 @@ st.markdown(
         font-size: 16px;
     }}
 
-    .summary-card {{
+    .section-kicker {{
+        color: #8D96A0;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: .32em;
+        text-transform: uppercase;
+        margin: 22px 0 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }}
+
+    .section-kicker::after {{
+        content: "";
+        height: 1px;
+        background: #E2E6EA;
+        flex: 1;
+    }}
+
+    .insight-card {{
         background: #ffffff;
-        border: 1px solid #e2e2e2;
-        border-radius: 18px;
-        padding: 20px;
-        box-shadow: 0 2px 12px rgba(0,0,0,.04);
-        min-height: 170px;
+        border: 1px solid #e6e9ed;
+        border-radius: 14px;
+        padding: 20px 22px;
+        min-height: 235px;
+        box-shadow: 0 1px 8px rgba(0,0,0,.035);
+        position: relative;
+        overflow: hidden;
     }}
 
-    .summary-card h3 {{
-        margin-top: 0;
-        color: #000000;
-        font-size: 20px;
+    .insight-card.opportunity {{
+        border-left: 5px solid {OPPORTUNITY};
     }}
 
-    .summary-card p, .summary-card li {{
-        color: #222222;
-        font-size: 15px;
+    .insight-card.risk {{
+        border-left: 5px solid {RISK};
     }}
 
-    .ai-box {{
-        background: #000000;
-        color: #ffffff;
-        border-left: 8px solid {VALTECH_BLUE};
-        padding: 20px;
-        border-radius: 18px;
-        margin: 18px 0;
+    .insight-card.intelligence {{
+        border-left: 5px solid {INTELLIGENCE};
     }}
 
-    .ai-box h3 {{
-        color: #ffffff;
-        margin-top: 0;
+    .insight-label {{
+        font-size: 12px;
+        letter-spacing: .22em;
+        text-transform: uppercase;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }}
+
+    .insight-label.opportunity {{
+        color: {OPPORTUNITY};
+    }}
+
+    .insight-label.risk {{
+        color: {RISK};
+    }}
+
+    .insight-label.intelligence {{
+        color: {INTELLIGENCE};
+    }}
+
+    .insight-dot {{
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: -1px;
+        box-shadow: inset 0 0 3px rgba(0,0,0,.25);
+    }}
+
+    .dot-opportunity {{
+        background: linear-gradient(180deg, #4ce36d, #00a32a);
+    }}
+
+    .dot-risk {{
+        background: linear-gradient(180deg, #ffe45c, #ffb000);
+    }}
+
+    .dot-intelligence {{
+        background: linear-gradient(180deg, #3aa0ff, #005bd3);
+    }}
+
+    .insight-title {{
+        font-size: 18px;
+        line-height: 1.25;
+        font-weight: 800;
+        color: #0A2342;
+        margin-bottom: 10px;
+    }}
+
+    .insight-copy {{
+        color: #8B95A1;
+        font-size: 14px;
+        line-height: 1.55;
+        min-height: 78px;
+    }}
+
+    .insight-metric {{
+        color: #0A2342;
+        font-size: 27px;
+        margin-top: 16px;
+        font-weight: 500;
+    }}
+
+    .tag {{
+        display: inline-block;
+        background: #EEF3FF;
+        color: #2563EB;
+        border-radius: 5px;
+        padding: 4px 10px;
+        font-size: 12px;
+        margin-top: 10px;
     }}
 
     .scorecard-title {{
@@ -277,10 +363,6 @@ st.markdown(
 
     div[data-testid="stMetricValue"] {{
         color: #000000;
-    }}
-
-    .dataframe tbody tr th {{
-        display: none;
     }}
     </style>
     """,
@@ -361,6 +443,277 @@ def preset_selection(preset_name, available_oems):
     else:
         preset = available_oems
     return [oem for oem in preset if oem in available_oems]
+
+
+def get_market_data(data, market, year, selected_oems=None):
+    df = data[(data["Market"] == market) & (data["Year"] == year)].copy()
+    if selected_oems:
+        df = df[df["OEM"].isin(selected_oems)]
+    return df
+
+
+def get_yoy_table(data, market, selected_oems=None):
+    d24 = get_market_data(data, market, 2024, selected_oems)
+    d25 = get_market_data(data, market, 2025, selected_oems)
+
+    merged = d25.merge(d24, on=["OEM", "Market"], suffixes=("_2025", "_2024"))
+
+    if merged.empty:
+        return merged
+
+    merged["Sales YoY %"] = (merged["Sales_2025"] / merged["Sales_2024"] - 1) * 100
+    merged["Visitors YoY %"] = (merged["UniqueVisitors_2025"] / merged["UniqueVisitors_2024"] - 1) * 100
+    merged["Conv Var pp"] = merged["ConversionPct_2025"] - merged["ConversionPct_2024"]
+    merged["Visits to Sale 2024"] = merged["UniqueVisitors_2024"] / merged["Sales_2024"]
+    merged["Visits to Sale 2025"] = merged["UniqueVisitors_2025"] / merged["Sales_2025"]
+    merged["Visits to Sale Var"] = merged["Visits to Sale 2025"] - merged["Visits to Sale 2024"]
+
+    return merged
+
+
+def calculate_scorecard(data, market, selected_oems=None):
+    merged = get_yoy_table(data, market, selected_oems)
+
+    if merged.empty:
+        return merged
+
+    score = merged.copy()
+    score["Conv Ranking"] = score["ConversionPct_2025"].rank(method="first", ascending=False).astype(int)
+    score = score.sort_values("Conv Ranking")
+
+    score = score.rename(
+        columns={
+            "OEM": "Brand",
+            "UniqueVisitors_2024": "Website Visitors 2024",
+            "UniqueVisitors_2025": "Website Visitors 2025",
+            "Sales_2024": "Passenger Sales 2024",
+            "Sales_2025": "Passenger Sales 2025",
+            "ConversionPct_2024": "Conv Rate 2024",
+            "ConversionPct_2025": "Conv Rate 2025",
+        }
+    )
+
+    return score[
+        [
+            "Brand",
+            "Website Visitors 2024",
+            "Website Visitors 2025",
+            "Visitors YoY %",
+            "Passenger Sales 2024",
+            "Passenger Sales 2025",
+            "Sales YoY %",
+            "Conv Rate 2024",
+            "Conv Rate 2025",
+            "Conv Var pp",
+            "Visits to Sale 2024",
+            "Visits to Sale 2025",
+            "Visits to Sale Var",
+            "Conv Ranking",
+        ]
+    ]
+
+
+def rank_badge(rank):
+    if rank == 1:
+        return "🥇"
+    if rank == 2:
+        return "🥈"
+    if rank == 3:
+        return "🥉"
+    return str(rank)
+
+
+def fmt_pct_delta(v):
+    if pd.isna(v):
+        return "n/a"
+    return f"{v:+.1f}%"
+
+
+def fmt_pp(v):
+    if pd.isna(v):
+        return "n/a"
+    return f"{v:+.2f}pp"
+
+
+def style_scorecard(scorecard):
+    display = scorecard.copy()
+    for col in ["Website Visitors 2024", "Website Visitors 2025", "Passenger Sales 2024", "Passenger Sales 2025"]:
+        display[col] = display[col].map(lambda x: f"{x:,.0f}")
+
+    for col in ["Visitors YoY %", "Sales YoY %"]:
+        display[col] = display[col].map(fmt_pct_delta)
+
+    for col in ["Conv Rate 2024", "Conv Rate 2025"]:
+        display[col] = display[col].map(lambda x: f"{x:.2f}%")
+
+    display["Conv Var pp"] = display["Conv Var pp"].map(fmt_pp)
+
+    for col in ["Visits to Sale 2024", "Visits to Sale 2025", "Visits to Sale Var"]:
+        display[col] = display[col].map(lambda x: f"{x:,.0f}")
+
+    display["Conv Ranking"] = display["Conv Ranking"].map(rank_badge)
+
+    return (
+        display.style
+        .set_table_styles([
+            {
+                "selector": "thead th",
+                "props": [
+                    ("background-color", GREEN_HEADER),
+                    ("color", "black"),
+                    ("font-weight", "800"),
+                    ("font-size", "14px"),
+                    ("text-align", "center"),
+                    ("border", "1px solid black"),
+                    ("white-space", "normal"),
+                ],
+            },
+            {
+                "selector": "tbody td",
+                "props": [
+                    ("font-size", "13px"),
+                    ("text-align", "center"),
+                    ("border", "1px solid #333333"),
+                ],
+            },
+            {
+                "selector": "tbody tr",
+                "props": [
+                    ("height", "42px"),
+                ],
+            },
+        ])
+    )
+
+
+def get_row(yoy, brand):
+    row = yoy[yoy["OEM"].str.lower() == brand.lower()]
+    if row.empty:
+        return None
+    return row.iloc[0]
+
+
+def pick_brand(yoy, candidates):
+    for brand in candidates:
+        row = get_row(yoy, brand)
+        if row is not None:
+            return row
+    return None
+
+
+def make_insight(kind, title, copy, metric, tag):
+    dot_class = {
+        "opportunity": "dot-opportunity",
+        "risk": "dot-risk",
+        "intelligence": "dot-intelligence",
+    }[kind]
+    label = {
+        "opportunity": "Opportunity",
+        "risk": "Risk Alert",
+        "intelligence": "Intelligence",
+    }[kind]
+
+    return f"""
+    <div class="insight-card {kind}">
+        <div class="insight-label {kind}"><span class="insight-dot {dot_class}"></span>{label}</div>
+        <div class="insight-title">{title}</div>
+        <div class="insight-copy">{copy}</div>
+        <div class="insight-metric">{metric}</div>
+        <div class="tag">{tag}</div>
+    </div>
+    """
+
+
+def generate_insight_cards(data, market, selected_oems):
+    yoy = get_yoy_table(data, market, selected_oems)
+
+    if yoy.empty:
+        return []
+
+    cards = []
+
+    yoy["Sales YoY % safe"] = yoy["Sales YoY %"].replace([float("inf"), float("-inf")], pd.NA)
+    yoy["Visitors YoY % safe"] = yoy["Visitors YoY %"].replace([float("inf"), float("-inf")], pd.NA)
+    yoy["Sales Efficiency Gap"] = yoy["Sales YoY % safe"] - yoy["Visitors YoY % safe"]
+
+    top_conv = yoy.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+    top_sales_growth = yoy.sort_values("Sales YoY % safe", ascending=False).iloc[0]
+    top_traffic_growth = yoy.sort_values("Visitors YoY % safe", ascending=False).iloc[0]
+    worst_conv_decline = yoy.sort_values("Conv Var pp", ascending=True).iloc[0]
+    weakest_conv = yoy.sort_values("ConversionPct_2025", ascending=True).iloc[0]
+
+    toyota = pick_brand(yoy, ["Toyota"])
+    lexus = pick_brand(yoy, ["Lexus"])
+
+    if toyota is not None:
+        cards.append(make_insight(
+            "opportunity" if toyota["Conv Var pp"] >= 0 else "risk",
+            "Toyota: conversion is the priority lever",
+            f"Toyota delivered {toyota['Sales_2025']:,.0f} passenger sales in 2025 with {toyota['UniqueVisitors_2025']:,.0f} unique visitors. Conversion moved {toyota['Conv Var pp']:+.2f}pp YoY, while visitor growth was {toyota['Visitors YoY %']:+.1f}%. The recommendation is to focus on journey quality and model-level intent capture, not simply more traffic.",
+            f"{toyota['ConversionPct_2025']:.2f}% conv",
+            "Toyota recommendation"
+        ))
+
+    if lexus is not None:
+        cards.append(make_insight(
+            "risk" if lexus["ConversionPct_2025"] < yoy["ConversionPct_2025"].median() else "opportunity",
+            "Lexus: premium consideration is not converting hard enough",
+            f"Lexus generated {lexus['UniqueVisitors_2025']:,.0f} visitors and {lexus['Sales_2025']:,.0f} sales in 2025. Conversion is {lexus['ConversionPct_2025']:.2f}%, with a YoY movement of {lexus['Conv Var pp']:+.2f}pp. The recommendation is sharper premium lead handling, finance/stock visibility and stronger lower-funnel retail prompts.",
+            f"{lexus['Sales YoY %']:+.1f}% sales YoY",
+            "Lexus recommendation"
+        ))
+
+    cards.append(make_insight(
+        "opportunity",
+        f"{top_conv['OEM']}: strongest conversion performer",
+        f"{top_conv['OEM']} leads the selected cohort on 2025 conversion. Its visits-to-sale ratio is {top_conv['Visits to Sale 2025']:.0f}, meaning it needs fewer visitors per passenger sale than competitors. Use this as the benchmark for digital retail efficiency.",
+        f"{top_conv['ConversionPct_2025']:.2f}% conv",
+        top_conv["OEM"]
+    ))
+
+    cards.append(make_insight(
+        "intelligence",
+        f"{top_traffic_growth['OEM']}: fastest visitor growth",
+        f"{top_traffic_growth['OEM']} had the strongest visitor growth in the selected cohort. Visitor growth was {top_traffic_growth['Visitors YoY %']:+.1f}% YoY, while sales growth was {top_traffic_growth['Sales YoY %']:+.1f}%. This shows whether awareness is converting into actual demand.",
+        f"{top_traffic_growth['Visitors YoY %']:+.1f}% visits YoY",
+        top_traffic_growth["OEM"]
+    ))
+
+    cards.append(make_insight(
+        "opportunity",
+        f"{top_sales_growth['OEM']}: strongest sales growth",
+        f"{top_sales_growth['OEM']} posted the strongest passenger sales growth in the selected cohort. Sales increased {top_sales_growth['Sales YoY %']:+.1f}% YoY against visitor growth of {top_sales_growth['Visitors YoY %']:+.1f}%. This is the clearest signal of demand momentum.",
+        f"{top_sales_growth['Sales YoY %']:+.1f}% sales YoY",
+        top_sales_growth["OEM"]
+    ))
+
+    cards.append(make_insight(
+        "risk",
+        f"{worst_conv_decline['OEM']}: conversion quality deteriorating",
+        f"{worst_conv_decline['OEM']} saw the weakest conversion movement in the selected cohort. Conversion moved {worst_conv_decline['Conv Var pp']:+.2f}pp YoY. If visitor growth is positive but conversion falls, the brand is likely attracting lower-quality traffic or losing users deeper in the funnel.",
+        f"{worst_conv_decline['Conv Var pp']:+.2f}pp conv",
+        worst_conv_decline["OEM"]
+    ))
+
+    cards.append(make_insight(
+        "risk",
+        f"{weakest_conv['OEM']}: weakest 2025 conversion",
+        f"{weakest_conv['OEM']} has the lowest 2025 conversion rate in the selected cohort. Visits-to-sale is {weakest_conv['Visits to Sale 2025']:.0f}, creating a clear efficiency gap versus the cohort leader.",
+        f"{weakest_conv['ConversionPct_2025']:.2f}% conv",
+        weakest_conv["OEM"]
+    ))
+
+    # Deduplicate by title and cap at 9 cards
+    seen = set()
+    unique_cards = []
+    for card in cards:
+        title_marker_start = card.find('<div class="insight-title">')
+        title_marker_end = card.find("</div>", title_marker_start)
+        title = card[title_marker_start:title_marker_end]
+        if title not in seen:
+            unique_cards.append(card)
+            seen.add(title)
+    return unique_cards[:9]
 
 
 def add_logo_images(fig, chart_df, x_max, y_max):
@@ -489,140 +842,6 @@ def build_chart(chart_df, selected_oems, market, year_view, show_logos):
     return fig
 
 
-def get_market_data(data, market, year, selected_oems=None):
-    df = data[(data["Market"] == market) & (data["Year"] == year)].copy()
-    if selected_oems:
-        df = df[df["OEM"].isin(selected_oems)]
-    return df
-
-
-def calculate_scorecard(data, market, year, selected_oems=None):
-    df = get_market_data(data, market, year, selected_oems)
-    if df.empty:
-        return df
-
-    score = df.copy()
-    score["Visits to Sale"] = score["UniqueVisitors"] / score["Sales"]
-    score["Conv Ranking"] = score["ConversionPct"].rank(method="first", ascending=False).astype(int)
-    score = score.sort_values("Conv Ranking")
-
-    score = score.rename(
-        columns={
-            "OEM": "Brand",
-            "UniqueVisitors": "Website Visitors",
-            "Sales": "Passenger Sales",
-            "ConversionPct": "Conv Rate",
-        }
-    )
-
-    return score[["Brand", "Website Visitors", "Passenger Sales", "Conv Rate", "Visits to Sale", "Conv Ranking"]]
-
-
-def rank_badge(rank):
-    if rank == 1:
-        return "🥇"
-    if rank == 2:
-        return "🥈"
-    if rank == 3:
-        return "🥉"
-    return str(rank)
-
-
-def style_scorecard(scorecard):
-    display = scorecard.copy()
-    display["Website Visitors"] = display["Website Visitors"].map(lambda x: f"{x:,.0f}")
-    display["Passenger Sales"] = display["Passenger Sales"].map(lambda x: f"{x:,.0f}")
-    display["Conv Rate"] = display["Conv Rate"].map(lambda x: f"{x:.2f}%")
-    display["Visits to Sale"] = display["Visits to Sale"].map(lambda x: f"{x:,.0f}")
-    display["Conv Ranking"] = display["Conv Ranking"].map(rank_badge)
-
-    return (
-        display.style
-        .set_table_styles([
-            {
-                "selector": "thead th",
-                "props": [
-                    ("background-color", GREEN_HEADER),
-                    ("color", "black"),
-                    ("font-weight", "800"),
-                    ("font-size", "18px"),
-                    ("text-align", "center"),
-                    ("border", "1px solid black"),
-                ],
-            },
-            {
-                "selector": "tbody td",
-                "props": [
-                    ("font-size", "16px"),
-                    ("text-align", "center"),
-                    ("border", "1px solid #333333"),
-                ],
-            },
-            {
-                "selector": "tbody tr",
-                "props": [
-                    ("height", "46px"),
-                ],
-            },
-        ])
-    )
-
-
-def generate_ai_commentary(data, market, selected_oems):
-    latest = get_market_data(data, market, 2025, selected_oems)
-    previous = get_market_data(data, market, 2024, selected_oems)
-
-    if latest.empty:
-        return ["No data is available for the selected view."]
-
-    total_sales = latest["Sales"].sum()
-    total_uv = latest["UniqueVisitors"].sum()
-    conv_2025 = total_sales / total_uv * 100 if total_uv else 0
-
-    prev_sales = previous["Sales"].sum() if not previous.empty else 0
-    prev_uv = previous["UniqueVisitors"].sum() if not previous.empty else 0
-    conv_2024 = prev_sales / prev_uv * 100 if prev_uv else 0
-
-    latest_sorted = latest.sort_values("ConversionPct", ascending=False)
-    top = latest_sorted.iloc[0]
-    low = latest_sorted.iloc[-1]
-    biggest_sales = latest.sort_values("Sales", ascending=False).iloc[0]
-    biggest_traffic = latest.sort_values("UniqueVisitors", ascending=False).iloc[0]
-
-    common = latest.merge(previous, on=["OEM", "Market"], suffixes=("_2025", "_2024"))
-    if not common.empty:
-        common["ConvChange"] = common["ConversionPct_2025"] - common["ConversionPct_2024"]
-        common["SalesChangePct"] = (common["Sales_2025"] / common["Sales_2024"] - 1) * 100
-        common["TrafficChangePct"] = (common["UniqueVisitors_2025"] / common["UniqueVisitors_2024"] - 1) * 100
-        biggest_improver = common.sort_values("ConvChange", ascending=False).iloc[0]
-        biggest_decliner = common.sort_values("ConvChange", ascending=True).iloc[0]
-    else:
-        biggest_improver = None
-        biggest_decliner = None
-
-    direction = "improved" if conv_2025 > conv_2024 else "weakened"
-    delta = conv_2025 - conv_2024
-
-    bullets = [
-        f"In {market}, selected OEM conversion {direction} from {conv_2024:.2f}% in 2024 to {conv_2025:.2f}% in 2025 ({delta:+.2f}pp).",
-        f"{top['OEM']} leads the selected set on conversion at {top['ConversionPct']:.2f}%, while {low['OEM']} is lowest at {low['ConversionPct']:.2f}%.",
-        f"{biggest_sales['OEM']} delivers the largest passenger sales volume in the selected set ({biggest_sales['Sales']:,.0f}), while {biggest_traffic['OEM']} has the highest website visitor scale ({biggest_traffic['UniqueVisitors']:,.0f}).",
-    ]
-
-    if biggest_improver is not None:
-        bullets.append(
-            f"The sharpest conversion improvement is {biggest_improver['OEM']} ({biggest_improver['ConvChange']:+.2f}pp), while the biggest decline is {biggest_decliner['OEM']} ({biggest_decliner['ConvChange']:+.2f}pp)."
-        )
-
-    # Hard-nosed guidance
-    if delta < 0:
-        bullets.append("The uncomfortable read: traffic is not automatically translating into sales. Optimisation should focus on conversion quality, not just visitor growth.")
-    else:
-        bullets.append("The positive read: conversion is moving in the right direction, but the spread between best and worst performers shows there is still material headroom.")
-
-    return bullets
-
-
 def render_hero():
     st.markdown(
         """
@@ -663,7 +882,7 @@ def render_data_definitions():
 
 
 def render_exec_summary(data, market, selected_oems):
-    st.subheader("Exec summary")
+    st.markdown(f'<div class="section-kicker">Executive insights — data-driven narratives from the {market} OEM cohort</div>', unsafe_allow_html=True)
 
     latest = get_market_data(data, market, 2025, selected_oems)
     previous = get_market_data(data, market, 2024, selected_oems)
@@ -680,48 +899,22 @@ def render_exec_summary(data, market, selected_oems):
     prev_uv = previous["UniqueVisitors"].sum() if not previous.empty else 0
     conv_2024 = prev_sales / prev_uv * 100 if prev_uv else 0
 
+    sales_yoy = (total_sales / prev_sales - 1) * 100 if prev_sales else 0
+    uv_yoy = (total_uv / prev_uv - 1) * 100 if prev_uv else 0
+
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("2025 passenger sales", f"{total_sales:,.0f}")
-    c2.metric("2025 unique visitors", f"{total_uv:,.0f}")
-    c3.metric("2025 conversion", f"{conv_2025:.2f}%")
-    c4.metric("Conversion change", f"{conv_2025 - conv_2024:+.2f}pp")
+    c1.metric("2025 passenger sales", f"{total_sales:,.0f}", f"{sales_yoy:+.1f}% YoY")
+    c2.metric("2025 unique visitors", f"{total_uv:,.0f}", f"{uv_yoy:+.1f}% YoY")
+    c3.metric("2025 conversion", f"{conv_2025:.2f}%", f"{conv_2025 - conv_2024:+.2f}pp")
+    c4.metric("Visits to sale", f"{(total_uv / total_sales):,.0f}" if total_sales else "n/a")
 
-    commentary = generate_ai_commentary(data, market, selected_oems)
+    cards = generate_insight_cards(data, market, selected_oems)
 
-    st.markdown(
-        """
-        <div class="ai-box">
-            <h3>AI commentary</h3>
-        """,
-        unsafe_allow_html=True,
-    )
-    for item in commentary:
-        st.markdown(f"- {item}")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        score = calculate_scorecard(data, market, 2025, selected_oems)
-        if not score.empty:
-            st.markdown("### 2025 conversion leaders")
-            st.dataframe(
-                score.head(5)[["Brand", "Conv Rate", "Visits to Sale", "Conv Ranking"]]
-                .assign(**{"Conv Rate": lambda x: x["Conv Rate"].map(lambda v: f"{v:.2f}%")}),
-                use_container_width=True,
-                hide_index=True,
-            )
-
-    with col2:
-        if not previous.empty:
-            trend = latest.merge(previous, on=["OEM", "Market"], suffixes=("_2025", "_2024"))
-            if not trend.empty:
-                trend["Conversion change"] = trend["ConversionPct_2025"] - trend["ConversionPct_2024"]
-                trend = trend.sort_values("Conversion change", ascending=False)
-                st.markdown("### Biggest conversion movers")
-                mover_display = trend[["OEM", "Conversion change"]].head(5).copy()
-                mover_display["Conversion change"] = mover_display["Conversion change"].map(lambda v: f"{v:+.2f}pp")
-                st.dataframe(mover_display, use_container_width=True, hide_index=True)
+    for i in range(0, len(cards), 3):
+        cols = st.columns(3)
+        for col, card in zip(cols, cards[i:i + 3]):
+            with col:
+                st.markdown(card, unsafe_allow_html=True)
 
 
 def render_bubble_page(data, selected_oems, year_view, show_logos):
@@ -779,22 +972,18 @@ def render_bubble_page(data, selected_oems, year_view, show_logos):
 
 
 def render_scorecard_page(data, selected_oems):
-    st.subheader("Scorecard")
+    st.subheader("Leadership scorecard")
 
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        market = st.selectbox("Scorecard market", ["MM5", "UK", "France", "Germany", "Italy", "Spain"], index=0)
-    with col2:
-        year = st.selectbox("Scorecard year", [2025, 2024], index=0)
+    market = st.selectbox("Scorecard market", ["MM5", "UK", "France", "Germany", "Italy", "Spain"], index=0)
 
-    scorecard = calculate_scorecard(data, market, year, selected_oems)
+    scorecard = calculate_scorecard(data, market, selected_oems)
 
     if scorecard.empty:
         st.warning("No scorecard data available for this selection.")
         return
 
-    st.markdown(f'<div class="scorecard-title">{market} {year} conversion scorecard</div>', unsafe_allow_html=True)
-    st.caption("Ranking is based on conversion rate. Visits to sale = unique visitors divided by passenger sales.")
+    st.markdown(f'<div class="scorecard-title">{market} 2024–2025 conversion scorecard</div>', unsafe_allow_html=True)
+    st.caption("Ranking is based on 2025 conversion rate. Variance shows 2025 versus 2024.")
 
     st.dataframe(style_scorecard(scorecard), use_container_width=True, hide_index=True)
 
@@ -802,7 +991,7 @@ def render_scorecard_page(data, selected_oems):
     st.download_button(
         "Download scorecard as CSV",
         data=csv,
-        file_name=f"{market.lower()}_{year}_conversion_scorecard.csv",
+        file_name=f"{market.lower()}_2024_2025_conversion_scorecard.csv",
         mime="text/csv",
     )
 
