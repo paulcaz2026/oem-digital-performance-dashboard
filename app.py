@@ -1404,6 +1404,84 @@ def render_toyota_lexus_benchmarks(data, market):
 
 
 
+
+def render_market_weakness_summary(data):
+    st.markdown('<div class="section-kicker">Market weakness summary — Toyota & Lexus</div>', unsafe_allow_html=True)
+
+    rows = []
+    for market in ["UK", "France", "Germany", "Italy", "Spain"]:
+        yoy = get_yoy_table(data, market, None)
+        if yoy.empty:
+            continue
+
+        for brand, cohort in [("Toyota", TOYOTA_SET), ("Lexus", LEXUS_SET)]:
+            row = get_row(yoy, brand)
+            cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
+
+            if row is None or cohort_df.empty:
+                continue
+
+            leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+            rows.append({
+                "Brand": brand,
+                "Market": market,
+                "2025 conversion": row["ConversionPct_2025"],
+                "Benchmark leader": leader["OEM"],
+                "Leader conversion": leader["ConversionPct_2025"],
+                "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
+                "Sales YoY": row["Sales YoY %"],
+                "Visitor YoY": row["Visitors YoY %"],
+            })
+
+    if not rows:
+        st.info("No Toyota/Lexus market weakness data available.")
+        return
+
+    summary = pd.DataFrame(rows).sort_values("Gap to leader")
+
+    row_html = ""
+    for _, r in summary.iterrows():
+        gap_badge = badge_html(r["Gap to leader"], suffix="pp")
+        sales_badge = badge_html(r["Sales YoY"], suffix="%")
+        visitor_badge = badge_html(r["Visitor YoY"], suffix="%")
+
+        row_html += (
+            "<tr>"
+            f"<td><b>{r['Brand']}</b></td>"
+            f"<td>{r['Market']}</td>"
+            f"<td>{r['2025 conversion']:.2f}%</td>"
+            f"<td>{r['Benchmark leader']}</td>"
+            f"<td>{r['Leader conversion']:.2f}%</td>"
+            f"<td>{gap_badge}</td>"
+            f"<td>{sales_badge}</td>"
+            f"<td>{visitor_badge}</td>"
+            "</tr>"
+        )
+
+    table_html = (
+        "<div class='weakness-table-wrap'>"
+        "<table class='weakness-table'>"
+        "<thead>"
+        "<tr>"
+        "<th>Brand</th>"
+        "<th>Market</th>"
+        "<th>2025 conversion</th>"
+        "<th>Benchmark leader</th>"
+        "<th>Leader conversion</th>"
+        "<th>Gap to leader</th>"
+        "<th>Sales YoY</th>"
+        "<th>Visitor YoY</th>"
+        "</tr>"
+        "</thead>"
+        f"<tbody>{row_html}</tbody>"
+        "</table>"
+        "</div>"
+    )
+
+    st.markdown(table_html, unsafe_allow_html=True)
+
+
+
 def render_gap_analysis_page(data, market, selected_oems):
     st.markdown(f'<div class="section-kicker">Toyota & Lexus gap analysis — {market}</div>', unsafe_allow_html=True)
 
