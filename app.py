@@ -475,6 +475,33 @@ div[data-testid="stPlotlyChart"] {
     font-weight:700;
 }
 
+
+.start-factors-grid {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:16px;
+    margin-bottom:20px;
+}
+.start-factor-card {
+    background:#F5F6F7;
+    border-left:8px solid #B8EC63;
+    border-radius:8px;
+    min-height:110px;
+    padding:24px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:#111827;
+    font-size:18px;
+    line-height:1.3;
+    font-weight:600;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+@media (max-width: 900px) {
+    .start-factors-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1143,41 +1170,31 @@ def render_start_here_page(data):
 
     intro_html = (
         "<div class='start-intro'>"
-        "<b>This is not simply a dashboard that is looking at whose website is better or worse.</b><br>"
-        "This report looks much bigger picture at the overall conversion efficiency from digital to customer buying the car. "
-        "Website usability and digital experience are important, but they are only one part of a much broader omnichannel funnel. "
-        "The conversion rate shown here reflects how upper-funnel website demand is translated into passenger new car customer contracts "
-        "through lead handling, retailer experience, pricing, product availability and other commercial factors."
+        "<b>This is not a dashboard that seeks to isolate which OEM has the best or worst website.</b><br><br>"
+        "This dashboard looks to provoke bigger picture questions. It seeks to examine overall conversion efficiency from website visit to a customer buying the car. "
+        "It is clear that the experience of the website including usability is a factor but this is only one part of a much broader set of factors.<br><br>"
+        "Detailed below are all of the factors."
         "</div>"
     )
     st.markdown(intro_html, unsafe_allow_html=True)
 
-    funnel_html = (
-        "<div class='start-shell'>"
-        "<div class='factor-box' style='left:26px; top:28px;'>Brand strategy</div>"
-        "<div class='factor-box' style='left:26px; top:172px;'>Marketing strategy<br>(offline / online)</div>"
-        "<div class='factor-box' style='left:26px; top:316px;'>Customer strategy<br>(digital experience, existing vs conquest strategy)</div>"
-        "<div class='factor-box' style='left:26px; top:460px;'>New car sales mix<br>(private / fleet)</div>"
-        "<div class='factor-box' style='right:26px; top:28px;'>New vs Used<br>sales mix</div>"
-        "<div class='factor-box' style='right:26px; top:172px;'>What sales comprises<br>– lease vs purchase</div>"
-        "<div class='factor-box' style='right:26px; top:316px;'>Premium vs Mass market<br>(price point)</div>"
-        "<div class='factor-box' style='right:26px; top:460px;'>Product strategy &amp;<br>availability</div>"
-        "<div class='factor-box' style='right:26px; top:604px;'>Distribution &amp; Dealership<br>network</div>"
-        "<div class='funnel-wrap'>"
-        "<div class='funnel-label-top'>Website visitors</div>"
-        "<div class='funnel-seg funnel-top'>Upper-funnel digital demand</div>"
-        "<div class='funnel-seg funnel-mid1'>Lead management</div>"
-        "<div class='funnel-seg funnel-mid2'>Retailer experience</div>"
-        "<div class='funnel-seg funnel-mid3'>Offer / finance / stock progression</div>"
-        "<div class='funnel-seg funnel-bottom'>Customer contract</div>"
-        "<div class='funnel-note'>"
-        "The dashboard focuses on how demand enters at the website and exits as customer contracts.<br>"
-        "Only the top and bottom of the funnel are directly measured here; the middle stages are influenced by multiple commercial and operational factors."
-        "</div>"
-        "</div>"
-        "</div>"
-    )
-    st.markdown(funnel_html, unsafe_allow_html=True)
+    section("Factors that can influence conversion efficiency")
+    factors = [
+        "Brand Strategy",
+        "Marketing Strategy",
+        "Ecommerce Strategy",
+        "Website Usability",
+        "Website Experience",
+        "Pricing & Promotions Strategy",
+        "Ownership Options",
+        "Product Strategy",
+        "Stock Availability",
+        "Network Strategy",
+        "Powertrain Strategy",
+        "Macro Economic factors",
+    ]
+    cards_html = "".join([f"<div class='start-factor-card'>{factor}</div>" for factor in factors])
+    st.markdown(f"<div class='start-factors-grid'>{cards_html}</div>", unsafe_allow_html=True)
 
     section("How to interpret Similarweb unique visitors")
     c1, c2 = st.columns(2)
@@ -1215,7 +1232,6 @@ def render_start_here_page(data):
     st.markdown(f"<div class='oem-pill-wrap'>{pills}</div>", unsafe_allow_html=True)
 
     render_footer()
-
 
 # =========================
 # Pages
