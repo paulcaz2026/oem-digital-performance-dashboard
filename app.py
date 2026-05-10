@@ -1374,7 +1374,73 @@ def render_exec_summary(data, market, selected_oems):
     st.markdown('<div class="section-kicker">Performance visuals — YoY growth and visitor scale</div>', unsafe_allow_html=True)
     render_exec_visuals(data, market, selected_oems)
 
-    render_toyota_lexus_benchmarks(data, market)
+
+
+    # Individual Toyota & Lexus figures
+    yoy_all = get_yoy_table(data, market, None)
+
+    toyota_row = get_row(yoy_all, "Toyota")
+    lexus_row = get_row(yoy_all, "Lexus")
+
+    if toyota_row is not None or lexus_row is not None:
+        st.markdown('<div class="section-kicker">Toyota & Lexus brand detail</div>', unsafe_allow_html=True)
+
+        cols = st.columns(2)
+
+        if toyota_row is not None:
+            with cols[0]:
+                st.markdown(
+                    """
+                    <div style="background:#ffffff; border:1px solid #E6EAF0; border-radius:18px; padding:22px;">
+                    <img src="https://brand.toyota.com/content/dam/brandhub/guidelines/logo/four-column/BHUB_Logo_LogoFamily_01.svg" style="height:34px; margin-bottom:16px;">
+                    """,
+                    unsafe_allow_html=True,
+                )
+                st.metric(
+                    "2025 conversion",
+                    f"{toyota_row['ConversionPct_2025']:.2f}%",
+                    f"{toyota_row['Conv Var pp']:+.2f}pp",
+                )
+                st.metric(
+                    "Passenger sales",
+                    f"{toyota_row['Sales_2025']:,.0f}",
+                    f"{toyota_row['Sales YoY %']:+.1f}% YoY",
+                )
+                st.metric(
+                    "Unique visitors",
+                    f"{toyota_row['UniqueVisitors_2025']:,.0f}",
+                    f"{toyota_row['Visitors YoY %']:+.1f}% YoY",
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        if lexus_row is not None:
+            with cols[1]:
+                st.markdown(
+                    """
+                    <div style="background:#ffffff; border:1px solid #E6EAF0; border-radius:18px; padding:22px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/Lexus.svg" style="height:24px; margin-bottom:20px;">
+                    """,
+                    unsafe_allow_html=True,
+                )
+                st.metric(
+                    "2025 conversion",
+                    f"{lexus_row['ConversionPct_2025']:.2f}%",
+                    f"{lexus_row['Conv Var pp']:+.2f}pp",
+                )
+                st.metric(
+                    "Passenger sales",
+                    f"{lexus_row['Sales_2025']:,.0f}",
+                    f"{lexus_row['Sales YoY %']:+.1f}% YoY",
+                )
+                st.metric(
+                    "Unique visitors",
+                    f"{lexus_row['UniqueVisitors_2025']:,.0f}",
+                    f"{lexus_row['Visitors YoY %']:+.1f}% YoY",
+                )
+                st.markdown("</div>", unsafe_allow_html=True)
+
+
+        render_toyota_lexus_benchmarks(data, market)
 
     cards = generate_insight_cards(data, market, selected_oems)
 
