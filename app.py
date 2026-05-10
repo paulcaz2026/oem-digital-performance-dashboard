@@ -1405,6 +1405,24 @@ def render_toyota_lexus_benchmarks(data, market):
 
 
 
+
+def badge_html(value, suffix="%"):
+    try:
+        v = float(value)
+    except Exception:
+        return '<span class="badge-neutral">n/a</span>'
+
+    cls = "badge-pos" if v > 0 else "badge-neg" if v < 0 else "badge-neutral"
+    sign = "+" if v > 0 else ""
+
+    if suffix == "pp":
+        text = f"{sign}{v:.2f}pp"
+    else:
+        text = f"{sign}{v:.1f}%"
+
+    return f'<span class="{cls}">{text}</span>'
+
+
 def render_market_weakness_summary(data):
     st.markdown('<div class="section-kicker">Market weakness summary — Toyota & Lexus</div>', unsafe_allow_html=True)
 
