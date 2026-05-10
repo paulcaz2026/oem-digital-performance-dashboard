@@ -1180,7 +1180,7 @@ def render_hero():
             </div>
             <div class="hero-title">OEM Omnichannel Conversion Funnel</div>
             <div class="hero-subtitle">
-                Website to customer contract conversion across MM5. Explores how unique visitors demand converts into passenger new car customer contracts, and where Toyota/Lexus under- or over-perform by market.
+                Website to customer contract conversion across MM5. Explores how unique visitors demand converts into passenger new car customer contracts, and where Toyota/Lexus under- or over-perform by market.<br><br><span style='font-size:16px; opacity:0.9;'><b>Coverage:</b> 2024 &amp; 2025 &nbsp;&nbsp;|&nbsp;&nbsp; <b>Sales data:</b> www.marklines.com &nbsp;&nbsp;|&nbsp;&nbsp; <b>Unique visitors:</b> www.similarweb.com</span>
             </div>
         </div>
         """,
