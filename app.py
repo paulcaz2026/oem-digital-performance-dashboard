@@ -1220,51 +1220,45 @@ def render_top10_glance(data, market, selected_oems):
     top = yoy.sort_values("UniqueVisitors_2025", ascending=False).head(10).copy()
     top["Rank"] = range(1, len(top) + 1)
 
-    rows = []
     colors = ["#2563EB", "#B544F4", "#FFB000", "#FF3B77", "#FF7A1A", "#27C59A", "#27C59A", "#4C78FF", "#B544F4", "#22B8CF"]
 
+    row_html = ""
     for idx, (_, r) in enumerate(top.iterrows()):
-        pages_placeholder = "—"
-        duration_placeholder = "—"
-        bounce_placeholder = "—"
-        rows.append(
-            f"""
-            <tr>
-                <td class="rank-cell">{int(r['Rank'])}</td>
-                <td><span class="brand-dot" style="background:{colors[idx % len(colors)]};"></span><b>{r['OEM']}</b></td>
-                <td>{fmt_short_num(r['UniqueVisitors_2025'])}</td>
-                <td>{fmt_short_num(r['UniqueVisitors_2024'])}</td>
-                <td>{badge_html(r['Visitors YoY %'])}</td>
-                <td>{r['Sales_2025']:,.0f}</td>
-                <td>{r['ConversionPct_2025']:.2f}%</td>
-                <td>{r['Conv Var pp']:+.2f}pp</td>
-            </tr>
-            """
+        row_html += (
+            "<tr>"
+            f"<td class='rank-cell'>{int(r['Rank'])}</td>"
+            f"<td><span class='brand-dot' style='background:{colors[idx % len(colors)]};'></span><b>{r['OEM']}</b></td>"
+            f"<td>{fmt_short_num(r['UniqueVisitors_2025'])}</td>"
+            f"<td>{fmt_short_num(r['UniqueVisitors_2024'])}</td>"
+            f"<td>{badge_html(r['Visitors YoY %'])}</td>"
+            f"<td>{r['Sales_2025']:,.0f}</td>"
+            f"<td>{r['ConversionPct_2025']:.2f}%</td>"
+            f"<td>{r['Conv Var pp']:+.2f}pp</td>"
+            "</tr>"
         )
 
-    table = f"""
-    <div class="section-kicker">Top 10 brands at a glance</div>
-    <div class="top-table-wrap">
-        <table class="top-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Brand</th>
-                    <th>Visits 2025</th>
-                    <th>Visits 2024</th>
-                    <th>YoY</th>
-                    <th>Passenger sales</th>
-                    <th>Conv rate</th>
-                    <th>Conv var</th>
-                </tr>
-            </thead>
-            <tbody>
-                {''.join(rows)}
-            </tbody>
-        </table>
-    </div>
-    """
-    st.markdown(table, unsafe_allow_html=True)
+    table_html = (
+        "<div class='section-kicker'>Top 10 brands at a glance</div>"
+        "<div class='top-table-wrap'>"
+        "<table class='top-table'>"
+        "<thead>"
+        "<tr>"
+        "<th>#</th>"
+        "<th>Brand</th>"
+        "<th>Visits 2025</th>"
+        "<th>Visits 2024</th>"
+        "<th>YoY</th>"
+        "<th>Passenger sales</th>"
+        "<th>Conv rate</th>"
+        "<th>Conv var</th>"
+        "</tr>"
+        "</thead>"
+        f"<tbody>{row_html}</tbody>"
+        "</table>"
+        "</div>"
+    )
+
+    st.markdown(table_html, unsafe_allow_html=True)
 
 
 def benchmark_card_html(title, copy, metric):
