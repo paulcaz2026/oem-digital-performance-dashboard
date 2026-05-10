@@ -7,7 +7,7 @@ import streamlit as st
 
 
 st.set_page_config(
-    page_title="OEM Digital Performance Dashboard",
+    page_title="OEM Omnichannel Conversion Funnel",
     page_icon="🚗",
     layout="wide",
 )
@@ -522,6 +522,29 @@ st.markdown(
         margin-bottom: 18px;
     }}
 
+
+    .market-flag {
+        display: inline-block;
+        background: #F3F7FF;
+        color: #005F9E;
+        border: 1px solid #CFE8FF;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .footer-note {
+        margin-top: 36px;
+        padding: 18px 20px;
+        background: #F3F3F3;
+        border-left: 6px solid #009FE3;
+        border-radius: 12px;
+        font-size: 13px;
+        color: #0A2342;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -793,6 +816,64 @@ def pick_brand(yoy, candidates):
     return None
 
 
+
+def make_market_insight(kind, market, title, copy, metric, tag):
+    dot_class = {
+        "opportunity": "dot-opportunity",
+        "risk": "dot-risk",
+        "intelligence": "dot-intelligence",
+    }[kind]
+    label = {
+        "opportunity": "Opportunity",
+        "risk": "Risk Alert",
+        "intelligence": "Intelligence",
+    }[kind]
+
+    return f"""
+    <div class="insight-card {kind}">
+        <div class="market-flag">{market}</div>
+        <div class="insight-label {kind}"><span class="insight-dot {dot_class}"></span>{label}</div>
+        <div class="insight-title">{title}</div>
+        <div class="insight-copy">{copy}</div>
+        <div class="insight-metric">{metric}</div>
+        <div class="tag">{tag}</div>
+    </div>
+    """
+
+
+def generate_toyota_lexus_market_cards(data):
+    cards = []
+    for market in ["UK", "France", "Germany", "Italy", "Spain"]:
+        yoy = get_yoy_table(data, market, None)
+        if yoy.empty:
+            continue
+
+        for brand, cohort in [("Toyota", TOYOTA_SET), ("Lexus", LEXUS_SET)]:
+            row = get_row(yoy, brand)
+            cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
+            if row is None or cohort_df.empty:
+                continue
+
+            leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+            gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
+
+            # prioritise biggest gaps and negative sales/traffic mismatches
+            severity = abs(gap) + (0.5 if row["Sales YoY %"] < 0 else 0) + (0.25 if row["Visitors YoY %"] > row["Sales YoY %"] else 0)
+            kind = "risk" if gap < -0.75 or row["Sales YoY %"] < 0 else "opportunity"
+
+            title = f"{brand}: close the gap to {leader['OEM']}"
+            copy = (
+                f"{brand} converts at {row['ConversionPct_2025']:.2f}% versus {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%, "
+                f"a {gap:+.2f}pp gap. Sales YoY is {row['Sales YoY %']:+.1f}% and visitor YoY is {row['Visitors YoY %']:+.1f}%. "
+                "The action is to improve website-to-contract progression: stock visibility, offer clarity, finance UX and lead response quality."
+            )
+            metric = f"{gap:+.2f}pp gap"
+            cards.append((severity, make_market_insight(kind, market, title, copy, metric, f"{brand} recommendation")))
+
+    cards = sorted(cards, key=lambda x: x[0], reverse=True)
+    return [card for _, card in cards[:8]]
+
+
 def make_insight(kind, title, copy, metric, tag):
     dot_class = {
         "opportunity": "dot-opportunity",
@@ -1034,6 +1115,18 @@ def build_chart(chart_df, selected_oems, market, year_view, show_logos):
     return fig
 
 
+
+def render_footer_notes():
+    st.markdown(
+        """
+        <div class="footer-note">
+            <b>Definitions and caveats:</b> This is not a total market-share dashboard. It uses passenger car sales from Marklines and unique visitor website data from Similarweb. It does not include fleet, LCV or tactical registrations. Conversion rate = passenger car sales divided by unique visitors. Data period: 2024–2025.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_hero():
     st.markdown(
         """
@@ -1041,19 +1134,10 @@ def render_hero():
             <div class="hero-logo">
                 <img src="https://mma.prnewswire.com/media/2728124/Valtech_Logo.jpg" alt="Valtech logo">
             </div>
-            <div class="hero-title">OEM Digital Performance Dashboard</div>
+            <div class="hero-title">OEM Omnichannel Conversion Funnel</div>
             <div class="hero-subtitle">
-                Passenger car digital sales view across MM5. Explore how OEM traffic scale, conversion efficiency and 2024–2025 movement differ by market.
+                Website-to-contract conversion view across MM5. Explore how unique visitor demand converts into passenger car customer contracts, and where Toyota/Lexus under- or over-perform by market.
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        """
-        <div class="caveat-box">
-            This is not a total market-share dashboard. It uses passenger car sales and unique visitor website data; it does not include fleet, LCV or tactical registrations.
         </div>
         """,
         unsafe_allow_html=True,
@@ -1114,8 +1198,8 @@ def build_yoy_growth_chart(data, market, selected_oems, metric="Visitors YoY %",
             x=0.02,
             font=dict(size=15, color="#8D96A0"),
         ),
-        height=420,
-        margin=dict(l=95, r=50, t=70, b=45),
+        height=560,
+        margin=dict(l=120, r=70, t=70, b=45),
         plot_bgcolor=WHITE,
         paper_bgcolor=WHITE,
         font=dict(family="Helvetica Neue, Arial, sans-serif", color="#0A2342"),
@@ -1207,216 +1291,14 @@ def build_visit_volume_chart(data, market, selected_oems, top_n=12):
 
 
 def render_exec_visuals(data, market, selected_oems):
-    col1, col2 = st.columns(2)
-    with col1:
-        st.plotly_chart(
-            build_yoy_growth_chart(data, market, selected_oems, "Visitors YoY %", top_n=6),
-            use_container_width=True,
-        )
-    with col2:
-        st.plotly_chart(
-            build_visit_volume_chart(data, market, selected_oems, top_n=12),
-            use_container_width=True,
-        )
-
-
-
-
-def badge_html(value, suffix="%"):
-    try:
-        v = float(value)
-    except Exception:
-        return '<span class="badge-neutral">n/a</span>'
-    cls = "badge-pos" if v > 0 else "badge-neg" if v < 0 else "badge-neutral"
-    sign = "+" if v > 0 else ""
-    return f'<span class="{cls}">{sign}{v:.1f}{suffix}</span>'
-
-
-def fmt_short_num(value):
-    try:
-        v = float(value)
-    except Exception:
-        return "n/a"
-    if abs(v) >= 1_000_000:
-        return f"{v/1_000_000:.2f}M"
-    if abs(v) >= 1_000:
-        return f"{v/1_000:.1f}K"
-    return f"{v:,.0f}"
-
-
-def render_top10_glance(data, market, selected_oems):
-    yoy = get_yoy_table(data, market, selected_oems)
-    if yoy.empty:
-        return
-
-    top = yoy.sort_values("UniqueVisitors_2025", ascending=False).head(10).copy()
-    top["Rank"] = range(1, len(top) + 1)
-
-    colors = ["#2563EB", "#B544F4", "#FFB000", "#FF3B77", "#FF7A1A", "#27C59A", "#27C59A", "#4C78FF", "#B544F4", "#22B8CF"]
-
-    row_html = ""
-    for idx, (_, r) in enumerate(top.iterrows()):
-        row_html += (
-            "<tr>"
-            f"<td class='rank-cell'>{int(r['Rank'])}</td>"
-            f"<td><span class='brand-dot' style='background:{colors[idx % len(colors)]};'></span><b>{r['OEM']}</b></td>"
-            f"<td>{fmt_short_num(r['UniqueVisitors_2025'])}</td>"
-            f"<td>{fmt_short_num(r['UniqueVisitors_2024'])}</td>"
-            f"<td>{badge_html(r['Visitors YoY %'])}</td>"
-            f"<td>{r['Sales_2025']:,.0f}</td>"
-            f"<td>{r['ConversionPct_2025']:.2f}%</td>"
-            f"<td>{r['Conv Var pp']:+.2f}pp</td>"
-            "</tr>"
-        )
-
-    table_html = (
-        "<div class='section-kicker'>Top 10 brands at a glance</div>"
-        "<div class='top-table-wrap'>"
-        "<table class='top-table'>"
-        "<thead>"
-        "<tr>"
-        "<th>#</th>"
-        "<th>Brand</th>"
-        "<th>Visits 2025</th>"
-        "<th>Visits 2024</th>"
-        "<th>YoY</th>"
-        "<th>Passenger sales</th>"
-        "<th>Conv rate</th>"
-        "<th>Conv var</th>"
-        "</tr>"
-        "</thead>"
-        f"<tbody>{row_html}</tbody>"
-        "</table>"
-        "</div>"
+    st.plotly_chart(
+        build_yoy_growth_chart(data, market, selected_oems, "Visitors YoY %", top_n=10),
+        use_container_width=True,
     )
 
-    st.markdown(table_html, unsafe_allow_html=True)
-
-
-def benchmark_card_html(title, copy, metric):
-    return f"""
-    <div class="benchmark-card">
-        <div class="benchmark-title">{title}</div>
-        <div class="benchmark-copy">{copy}</div>
-        <div class="benchmark-metric">{metric}</div>
-    </div>
-    """
-
-
-def render_toyota_lexus_benchmarks(data, market):
-    yoy_all = get_yoy_table(data, market, None)
-    if yoy_all.empty:
-        return
-
-    st.markdown('<div class="section-kicker">Toyota / Lexus benchmark callouts</div>', unsafe_allow_html=True)
-
-    cards = []
-
-    for brand, cohort in [
-        ("Toyota", TOYOTA_SET),
-        ("Lexus", LEXUS_SET),
-    ]:
-        row = get_row(yoy_all, brand)
-        cohort_df = yoy_all[yoy_all["OEM"].isin(cohort)].copy()
-
-        if row is None or cohort_df.empty:
-            continue
-
-        cohort_df["Conv Rank"] = cohort_df["ConversionPct_2025"].rank(method="min", ascending=False)
-        brand_rank = int(cohort_df.loc[cohort_df["OEM"].str.lower() == brand.lower(), "Conv Rank"].iloc[0])
-        leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
-        gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
-        visits_to_sale_gap = row["Visits to Sale 2025"] - leader["Visits to Sale 2025"]
-
-        copy = (
-            f"{brand} ranks #{brand_rank} of {len(cohort_df)} in its benchmark set. "
-            f"The conversion gap to {leader['OEM']} is {gap:+.2f}pp. "
-            f"Visits-to-sale gap is {visits_to_sale_gap:+.0f}."
-        )
-
-        metric = f"{row['ConversionPct_2025']:.2f}% conv"
-        cards.append(benchmark_card_html(f"{brand} benchmark", copy, metric))
-
-    if cards:
-        cols = st.columns(len(cards))
-        for col, card in zip(cols, cards):
-            with col:
-                st.markdown(card, unsafe_allow_html=True)
-
-
-def render_market_weakness_summary(data):
-    st.markdown('<div class="section-kicker">Market weakness summary — Toyota & Lexus</div>', unsafe_allow_html=True)
-
-    rows = []
-    for market in ["UK", "France", "Germany", "Italy", "Spain"]:
-        yoy = get_yoy_table(data, market, None)
-        if yoy.empty:
-            continue
-
-        for brand, cohort in [("Toyota", TOYOTA_SET), ("Lexus", LEXUS_SET)]:
-            row = get_row(yoy, brand)
-            cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
-            if row is None or cohort_df.empty:
-                continue
-            leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
-            rows.append({
-                "Brand": brand,
-                "Market": market,
-                "2025 conversion": row["ConversionPct_2025"],
-                "Benchmark leader": leader["OEM"],
-                "Leader conversion": leader["ConversionPct_2025"],
-                "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
-                "Sales YoY": row["Sales YoY %"],
-                "Visitor YoY": row["Visitors YoY %"],
-            })
-
-    if not rows:
-        return
-
-    summary = pd.DataFrame(rows).sort_values("Gap to leader")
-
-    row_html = ""
-    for _, r in summary.iterrows():
-        gap_badge = badge_html(r["Gap to leader"], suffix="pp")
-        sales_badge = badge_html(r["Sales YoY"], suffix="%")
-        visitor_badge = badge_html(r["Visitor YoY"], suffix="%")
-        row_html += (
-            "<tr>"
-            f"<td><b>{r['Brand']}</b></td>"
-            f"<td>{r['Market']}</td>"
-            f"<td>{r['2025 conversion']:.2f}%</td>"
-            f"<td>{r['Benchmark leader']}</td>"
-            f"<td>{r['Leader conversion']:.2f}%</td>"
-            f"<td>{gap_badge}</td>"
-            f"<td>{sales_badge}</td>"
-            f"<td>{visitor_badge}</td>"
-            "</tr>"
-        )
-
-    html = (
-        "<div class='weakness-table-wrap'>"
-        "<table class='weakness-table'>"
-        "<thead><tr>"
-        "<th>Brand</th><th>Market</th><th>2025 conversion</th><th>Benchmark leader</th>"
-        "<th>Leader conversion</th><th>Gap to leader</th><th>Sales YoY</th><th>Visitor YoY</th>"
-        "</tr></thead>"
-        f"<tbody>{row_html}</tbody>"
-        "</table></div>"
-    )
-    st.markdown(html, unsafe_allow_html=True)
-
-
-def render_definitions_tooltips():
-    st.markdown('<div class="section-kicker">Metric definitions</div>', unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns(4)
-    c1.info("**Unique visitors**: Similarweb website audience measure.")
-    c2.info("**Passenger sales**: Marklines passenger car sales.")
-    c3.info("**Conversion rate**: passenger sales divided by unique visitors.")
-    c4.info("**Visits to sale**: unique visitors required for one passenger sale. Lower is better.")
 
 
 def render_exec_summary(data, market, selected_oems):
-    st.markdown('<div class="freshness">Data period: 2024–2025 | Sources: Marklines passenger car sales + Similarweb unique visitors</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="section-kicker">Executive insights — data-driven narratives from the {market} OEM cohort</div>', unsafe_allow_html=True)
 
     latest = get_market_data(data, market, 2025, selected_oems)
@@ -1465,7 +1347,6 @@ def render_exec_summary(data, market, selected_oems):
 
 
 def render_gap_analysis_page(data, market, selected_oems):
-    st.markdown('<div class="freshness">Data period: 2024–2025 | Sources: Marklines passenger car sales + Similarweb unique visitors</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="section-kicker">Toyota & Lexus gap analysis — {market}</div>', unsafe_allow_html=True)
 
     focus_oems = [o for o in selected_oems if o in ["Toyota", "Lexus"]]
@@ -1497,34 +1378,18 @@ def render_gap_analysis_page(data, market, selected_oems):
     render_toyota_lexus_benchmarks(data, market)
     render_market_weakness_summary(data)
 
-    st.markdown(f'<div class="section-kicker">AI insights — Toyota & Lexus recommendations</div>', unsafe_allow_html=True)
-    cards = []
-    yoy = get_yoy_table(data, market, None)
-    for brand in ["Toyota", "Lexus"]:
-        row = get_row(yoy, brand)
-        if row is None:
-            continue
+    st.markdown(f'<div class="section-kicker">AI insights — Toyota & Lexus market recommendations</div>', unsafe_allow_html=True)
+    cards = generate_toyota_lexus_market_cards(data)
+    for i in range(0, len(cards), 3):
+        cols = st.columns(3)
+        for col, card in zip(cols, cards[i:i + 3]):
+            with col:
+                st.markdown(card, unsafe_allow_html=True)
 
-        kind = "risk" if row["Conv Var pp"] < 0 or row["Sales YoY %"] < 0 else "opportunity"
-        title = f"{brand}: close the conversion gap before buying more traffic"
-        copy = (
-            f"{brand} conversion is {row['ConversionPct_2025']:.2f}% in 2025, moving {row['Conv Var pp']:+.2f}pp YoY. "
-            f"Sales growth is {row['Sales YoY %']:+.1f}% while visitor growth is {row['Visitors YoY %']:+.1f}%. "
-            "The practical recommendation is to prioritise lower-funnel experience, stock visibility, finance clarity and lead handling before scaling paid traffic."
-        )
-        metric = f"{row['ConversionPct_2025']:.2f}% conv"
-        cards.append(make_insight(kind, title, copy, metric, f"{brand} recommendation"))
-
-    cols = st.columns(2)
-    for col, card in zip(cols, cards):
-        with col:
-            st.markdown(card, unsafe_allow_html=True)
-
-    render_definitions_tooltips()
+    render_footer_notes()
 
 
 def render_market_performance_page(data, market, selected_oems):
-    st.markdown('<div class="freshness">Data period: 2024–2025 | Sources: Marklines passenger car sales + Similarweb unique visitors</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="section-kicker">Market performance — {market} OEM cohort</div>', unsafe_allow_html=True)
 
     latest = get_market_data(data, market, 2025, selected_oems)
@@ -1650,7 +1515,6 @@ def render_scorecard_page(data, selected_oems):
 
 
 render_hero()
-render_data_definitions()
 
 data = load_data()
 available_oems = sorted(data["OEM"].unique())
