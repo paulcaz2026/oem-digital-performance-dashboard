@@ -331,6 +331,14 @@ st.markdown(
         margin-bottom: 8px;
     }}
 
+    div[data-testid="stPlotlyChart"] {{
+        background: #ffffff;
+        border: 1px solid #e6e9ed;
+        border-radius: 14px;
+        padding: 10px;
+        box-shadow: 0 1px 8px rgba(0,0,0,.035);
+    }}
+
     .stTabs [data-baseweb="tab-list"] {{
         gap: 8px;
     }}
@@ -536,7 +544,9 @@ def fmt_pp(v):
 
 
 def style_scorecard(scorecard):
+    raw = scorecard.copy()
     display = scorecard.copy()
+
     for col in ["Website Visitors 2024", "Website Visitors 2025", "Passenger Sales 2024", "Passenger Sales 2025"]:
         display[col] = display[col].map(lambda x: f"{x:,.0f}")
 
@@ -553,7 +563,35 @@ def style_scorecard(scorecard):
 
     display["Conv Ranking"] = display["Conv Ranking"].map(rank_badge)
 
-    return (
+    yoy_cols = ["Visitors YoY %", "Sales YoY %", "Conv Var pp"]
+
+    def yoy_badge_style(value):
+        text = str(value)
+        if text.startswith("+"):
+            return (
+                "background-color: #DDF8EC; "
+                "color: #12C76B; "
+                "font-weight: 700; "
+                "border-radius: 7px; "
+                "text-align: center;"
+            )
+        if text.startswith("-"):
+            return (
+                "background-color: #FFE5EF; "
+                "color: #FF2F6D; "
+                "font-weight: 700; "
+                "border-radius: 7px; "
+                "text-align: center;"
+            )
+        return (
+            "background-color: #EEF2F6; "
+            "color: #6F6F6F; "
+            "font-weight: 700; "
+            "border-radius: 7px; "
+            "text-align: center;"
+        )
+
+    styler = (
         display.style
         .set_table_styles([
             {
@@ -574,6 +612,7 @@ def style_scorecard(scorecard):
                     ("font-size", "13px"),
                     ("text-align", "center"),
                     ("border", "1px solid #333333"),
+                    ("vertical-align", "middle"),
                 ],
             },
             {
@@ -583,7 +622,10 @@ def style_scorecard(scorecard):
                 ],
             },
         ])
+        .applymap(yoy_badge_style, subset=yoy_cols)
     )
+
+    return styler
 
 
 def get_row(yoy, brand):
@@ -881,6 +923,153 @@ def render_data_definitions():
         )
 
 
+
+def build_yoy_growth_chart(data, market, selected_oems, metric="Visitors YoY %", top_n=6):
+    yoy = get_yoy_table(data, market, selected_oems)
+    fig = go.Figure()
+
+    if yoy.empty or metric not in yoy.columns:
+        return fig
+
+    yoy = yoy.replace([float("inf"), float("-inf")], pd.NA).dropna(subset=[metric])
+
+    if yoy.empty:
+        return fig
+
+    top = yoy.sort_values(metric, ascending=False).head(top_n)
+    bottom = yoy.sort_values(metric, ascending=True).head(top_n)
+    chart_df = pd.concat([top, bottom]).drop_duplicates(subset=["OEM"])
+    chart_df = chart_df.sort_values(metric, ascending=True)
+
+    colors = chart_df[metric].apply(lambda v: "#5ED6AC" if v >= 0 else "#FF5C8A")
+
+    fig.add_trace(
+        go.Bar(
+            x=chart_df[metric],
+            y=chart_df["OEM"],
+            orientation="h",
+            marker=dict(
+                color=colors,
+                line=dict(color=colors, width=1.4),
+            ),
+            text=chart_df[metric].map(lambda v: f"{v:+.1f}%"),
+            textposition="outside",
+            hovertemplate="<b>%{y}</b><br>YoY growth: %{x:+.1f}%<extra></extra>",
+        )
+    )
+
+    fig.update_layout(
+        title=dict(
+            text=f"YoY visit growth — 2025 vs 2024 (top & bottom {top_n})",
+            x=0.02,
+            font=dict(size=15, color="#8D96A0"),
+        ),
+        height=420,
+        margin=dict(l=95, r=50, t=70, b=45),
+        plot_bgcolor=WHITE,
+        paper_bgcolor=WHITE,
+        font=dict(family="Helvetica Neue, Arial, sans-serif", color="#0A2342"),
+        showlegend=False,
+    )
+
+    min_x = min(chart_df[metric].min() * 1.25, -5)
+    max_x = max(chart_df[metric].max() * 1.20, 5)
+
+    fig.update_xaxes(
+        range=[min_x, max_x],
+        ticksuffix="%",
+        gridcolor="#E2E6EA",
+        zeroline=True,
+        zerolinecolor="#B8C0C8",
+        linecolor="#E2E6EA",
+    )
+    fig.update_yaxes(
+        gridcolor="#FFFFFF",
+        linecolor="#E2E6EA",
+    )
+
+    return fig
+
+
+def build_visit_volume_chart(data, market, selected_oems, top_n=12):
+    yoy = get_yoy_table(data, market, selected_oems)
+    fig = go.Figure()
+
+    if yoy.empty:
+        return fig
+
+    chart_df = yoy.sort_values("UniqueVisitors_2025", ascending=False).head(top_n)
+    chart_df = chart_df.sort_values("UniqueVisitors_2025", ascending=True)
+
+    fig.add_trace(
+        go.Bar(
+            x=chart_df["UniqueVisitors_2024"],
+            y=chart_df["OEM"],
+            orientation="h",
+            name="2024",
+            marker=dict(color="#DDE3EA", line=dict(color="#9AA5B1", width=1.2)),
+            hovertemplate="<b>%{y}</b><br>2024 visits: %{x:,.0f}<extra></extra>",
+        )
+    )
+
+    fig.add_trace(
+        go.Bar(
+            x=chart_df["UniqueVisitors_2025"],
+            y=chart_df["OEM"],
+            orientation="h",
+            name="2025",
+            marker=dict(color=VALTECH_BLUE, line=dict(color="#2563EB", width=1.2)),
+            hovertemplate="<b>%{y}</b><br>2025 visits: %{x:,.0f}<extra></extra>",
+        )
+    )
+
+    fig.update_layout(
+        title=dict(
+            text=f"Visit volume — 2025 vs 2024 (top {top_n})",
+            x=0.02,
+            font=dict(size=15, color="#8D96A0"),
+        ),
+        height=420,
+        margin=dict(l=95, r=40, t=70, b=45),
+        barmode="overlay",
+        bargap=0.38,
+        plot_bgcolor=WHITE,
+        paper_bgcolor=WHITE,
+        font=dict(family="Helvetica Neue, Arial, sans-serif", color="#0A2342"),
+        legend=dict(orientation="h", y=1.08, x=0.70),
+    )
+
+    max_x = max(chart_df["UniqueVisitors_2025"].max(), chart_df["UniqueVisitors_2024"].max()) * 1.12
+
+    fig.update_xaxes(
+        range=[0, max_x],
+        tickformat=",.2s",
+        gridcolor="#E2E6EA",
+        zeroline=False,
+        linecolor="#E2E6EA",
+    )
+    fig.update_yaxes(
+        gridcolor="#FFFFFF",
+        linecolor="#E2E6EA",
+    )
+
+    return fig
+
+
+def render_exec_visuals(data, market, selected_oems):
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(
+            build_yoy_growth_chart(data, market, selected_oems, "Visitors YoY %", top_n=6),
+            use_container_width=True,
+        )
+    with col2:
+        st.plotly_chart(
+            build_visit_volume_chart(data, market, selected_oems, top_n=12),
+            use_container_width=True,
+        )
+
+
 def render_exec_summary(data, market, selected_oems):
     st.markdown(f'<div class="section-kicker">Executive insights — data-driven narratives from the {market} OEM cohort</div>', unsafe_allow_html=True)
 
@@ -915,6 +1104,9 @@ def render_exec_summary(data, market, selected_oems):
         for col, card in zip(cols, cards[i:i + 3]):
             with col:
                 st.markdown(card, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-kicker">Performance visuals — YoY growth and visitor scale</div>', unsafe_allow_html=True)
+    render_exec_visuals(data, market, selected_oems)
 
 
 def render_bubble_page(data, selected_oems, year_view, show_logos):
