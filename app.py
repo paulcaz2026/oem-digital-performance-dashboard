@@ -523,7 +523,7 @@ st.markdown(
     }}
 
 
-    .market-flag {
+    .market-flag {{
         display: inline-block;
         background: #F3F7FF;
         color: #005F9E;
@@ -533,9 +533,9 @@ st.markdown(
         font-size: 12px;
         font-weight: 800;
         margin-bottom: 10px;
-    }
+    }}
 
-    .footer-note {
+    .footer-note {{
         margin-top: 36px;
         padding: 18px 20px;
         background: #F3F3F3;
@@ -543,7 +543,7 @@ st.markdown(
         border-radius: 12px;
         font-size: 13px;
         color: #0A2342;
-    }
+    }}
 
     </style>
     """,
