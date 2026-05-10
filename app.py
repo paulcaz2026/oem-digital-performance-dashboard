@@ -42,34 +42,86 @@ CHINESE_SET = [
 ]
 
 
-LOGO_MAP = {
-    "Toyota": "https://logo.clearbit.com/toyota.com",
-    "Lexus": "https://logo.clearbit.com/lexus.com",
-    "VW": "https://logo.clearbit.com/volkswagen.com",
-    "BMW": "https://logo.clearbit.com/bmw.com",
-    "Mercedes-Benz": "https://logo.clearbit.com/mercedes-benz.com",
-    "Audi": "https://logo.clearbit.com/audi.com",
-    "Volvo": "https://logo.clearbit.com/volvocars.com",
-    "Tesla": "https://logo.clearbit.com/tesla.com",
-    "Ford": "https://logo.clearbit.com/ford.com",
-    "Peugeot": "https://logo.clearbit.com/peugeot.com",
-    "Renault": "https://logo.clearbit.com/renault.com",
-    "Hyundai": "https://logo.clearbit.com/hyundai.com",
-    "Kia": "https://logo.clearbit.com/kia.com",
-    "Nissan": "https://logo.clearbit.com/nissan-global.com",
-    "Skoda": "https://logo.clearbit.com/skoda-auto.com",
-    "Seat": "https://logo.clearbit.com/seat.com",
-    "Dacia": "https://logo.clearbit.com/dacia.com",
-    "Jaguar": "https://logo.clearbit.com/jaguar.com",
-    "Land Rover": "https://logo.clearbit.com/landrover.com",
-    "BYD": "https://logo.clearbit.com/byd.com",
-    "MG": "https://logo.clearbit.com/mgmotor.com",
-    "XPENG": "https://logo.clearbit.com/xpeng.com",
-    "NIO": "https://logo.clearbit.com/nio.com",
-    "Geely": "https://logo.clearbit.com/geely.com",
-    "Omoda": "https://logo.clearbit.com/omodaauto.com",
-    "Jaecoo": "https://logo.clearbit.com/jaecoo.com",
+LOGO_DOMAIN_MAP = {
+    "Toyota": "toyota.com",
+    "Lexus": "lexus.com",
+    "VW": "volkswagen.com",
+    "Volkswagen": "volkswagen.com",
+    "BMW": "bmw.com",
+    "Mercedes-Benz": "mercedes-benz.com",
+    "Mercedes": "mercedes-benz.com",
+    "Audi": "audi.com",
+    "Volvo": "volvocars.com",
+    "Tesla": "tesla.com",
+    "Ford": "ford.com",
+    "Peugeot": "peugeot.com",
+    "Renault": "renault.com",
+    "Hyundai": "hyundai.com",
+    "Kia": "kia.com",
+    "Nissan": "nissan-global.com",
+    "Skoda": "skoda-auto.com",
+    "Škoda": "skoda-auto.com",
+    "Seat": "seat.com",
+    "Dacia": "dacia.com",
+    "Jaguar": "jaguar.com",
+    "Land Rover": "landrover.com",
+    "BYD": "byd.com",
+    "MG": "mg.co.uk",
+    "XPENG": "xpeng.com",
+    "Xpeng": "xpeng.com",
+    "NIO": "nio.com",
+    "Geely": "geely.com",
+    "Omoda": "omodaauto.com",
+    "Jaecoo": "jaecoo.com",
+    "Leapmotor": "leapmotor.com",
+    "Ora": "gwm-global.com",
+    "GWM Ora": "gwm-global.com",
+    "Aiways": "ai-ways.eu",
+    "Citroen": "citroen.com",
+    "Citroën": "citroen.com",
+    "Fiat": "fiat.com",
+    "Mini": "mini.com",
+    "MINI": "mini.com",
+    "Mazda": "mazda.com",
+    "Honda": "honda.com",
+    "Suzuki": "suzuki.com",
+    "Opel": "opel.com",
+    "Vauxhall": "vauxhall.co.uk",
+    "Porsche": "porsche.com",
+    "Alfa Romeo": "alfaromeo.com",
+    "Cupra": "cupraofficial.com",
+    "DS": "dsautomobiles.com",
+    "DS Automobiles": "dsautomobiles.com",
+    "Jeep": "jeep.com",
+    "Mitsubishi": "mitsubishi-motors.com",
+    "Smart": "smart.com",
+    "Polestar": "polestar.com",
+    "Subaru": "subaru.com",
+    "Maserati": "maserati.com",
 }
+
+
+def get_brandfetch_client_id():
+    """Read Brandfetch Client ID from Streamlit Secrets.
+
+    In Streamlit Cloud, add this under Manage app > Settings > Secrets:
+    BRANDFETCH_CLIENT_ID = "your_client_id_here"
+    """
+    try:
+        return st.secrets.get("BRANDFETCH_CLIENT_ID", "")
+    except Exception:
+        return ""
+
+
+def get_logo_url(oem):
+    """Build a Brandfetch Logo API URL for an OEM."""
+    client_id = get_brandfetch_client_id()
+    domain = LOGO_DOMAIN_MAP.get(oem)
+
+    if not client_id or not domain:
+        return None
+
+    return f"https://cdn.brandfetch.io/{domain}?c={client_id}"
 
 
 st.markdown(
@@ -312,7 +364,7 @@ def preset_selection(preset_name, available_oems):
 
 def add_logo_images(fig, chart_df, x_max, y_max):
     for _, row in chart_df.iterrows():
-        logo = LOGO_MAP.get(row["OEM"])
+        logo = get_logo_url(row["OEM"])
         if not logo:
             continue
 
@@ -557,8 +609,13 @@ selected_oems = st.sidebar.multiselect(
 show_logos = st.sidebar.toggle(
     "Show OEM logos",
     value=True,
-    help="Logos require internet access. Turn off if any logos fail to load."
+    help="Logos require internet access and a Brandfetch Client ID in Streamlit Secrets."
 )
+
+if show_logos and not get_brandfetch_client_id():
+    st.sidebar.warning(
+        "Brandfetch Client ID not found. Add BRANDFETCH_CLIENT_ID in Streamlit Secrets or turn logos off."
+    )
 
 if not selected_oems:
     st.warning("Select at least one OEM in the sidebar.")
