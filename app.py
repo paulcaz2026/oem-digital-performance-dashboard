@@ -15,16 +15,13 @@ st.set_page_config(
 
 DATA_FILE = Path(__file__).parent / "OEM Sales Data 2024-2025.xlsx"
 
-VALTECH_BLUE = "#00bdfa"
-VALTECH_CYAN = "#00fffa"
-VALTECH_ROSE = "#ff1b78"
-VALTECH_TURQUOISE = "#0dfdb4"
-VALTECH_YELLOW = "#fff011"
+# Valtech-inspired palette requested: grey + blue
+VALTECH_BLUE = "#009FE3"
+VALTECH_GREY = "#6F6F6F"
+VALTECH_LIGHT_GREY = "#F3F3F3"
 BLACK = "#000000"
-WHITE = "#ffffff"
-DARK = "#101010"
-MID_GREY = "#343434"
-LIGHT_GREY = "#f4f4f4"
+WHITE = "#FFFFFF"
+
 
 TOYOTA_SET = [
     "Toyota", "VW", "Ford", "Peugeot", "Renault",
@@ -102,11 +99,6 @@ LOGO_DOMAIN_MAP = {
 
 
 def get_brandfetch_client_id():
-    """Read Brandfetch Client ID from Streamlit Secrets.
-
-    In Streamlit Cloud, add this under Manage app > Settings > Secrets:
-    BRANDFETCH_CLIENT_ID = "your_client_id_here"
-    """
     try:
         return st.secrets.get("BRANDFETCH_CLIENT_ID", "")
     except Exception:
@@ -114,13 +106,10 @@ def get_brandfetch_client_id():
 
 
 def get_logo_url(oem):
-    """Build a Brandfetch Logo API URL for an OEM."""
     client_id = get_brandfetch_client_id()
     domain = LOGO_DOMAIN_MAP.get(oem)
-
     if not client_id or not domain:
         return None
-
     return f"https://cdn.brandfetch.io/{domain}?c={client_id}"
 
 
@@ -132,7 +121,7 @@ st.markdown(
     }}
 
     .stApp {{
-        background: linear-gradient(180deg, #ffffff 0%, #f7f7f7 100%);
+        background: #ffffff;
     }}
 
     section[data-testid="stSidebar"] {{
@@ -149,88 +138,70 @@ st.markdown(
         color: black !important;
     }}
 
-    .valtech-header {{
+    .hero {{
         background: #000000;
-        color: white;
+        color: #ffffff;
         padding: 28px 32px;
         border-radius: 22px;
-        margin-bottom: 20px;
+        margin-bottom: 22px;
         position: relative;
         overflow: hidden;
+        border-bottom: 8px solid {VALTECH_BLUE};
     }}
 
-    .valtech-header:after {{
+    .hero::after {{
         content: "";
         position: absolute;
-        width: 420px;
-        height: 420px;
+        width: 430px;
+        height: 430px;
         border-radius: 50%;
-        background: linear-gradient(135deg, {VALTECH_BLUE}, {VALTECH_TURQUOISE});
+        background: linear-gradient(135deg, {VALTECH_BLUE}, {VALTECH_GREY});
         right: -180px;
         top: -230px;
-        opacity: .9;
+        opacity: 0.55;
     }}
 
-    .valtech-logo {{
-        font-size: 30px;
-        font-weight: 800;
-        letter-spacing: -1px;
-        margin-bottom: 18px;
+    .hero-logo {{
         position: relative;
         z-index: 2;
+        margin-bottom: 20px;
     }}
 
-    .valtech-logo span {{
-        color: {VALTECH_BLUE};
+    .hero-logo img {{
+        height: 42px;
+        width: auto;
+        background: #ffffff;
+        padding: 8px 12px;
+        border-radius: 8px;
     }}
 
-    .valtech-title {{
+    .hero-title {{
+        position: relative;
+        z-index: 2;
         font-size: 42px;
         line-height: 1.05;
         font-weight: 800;
-        max-width: 900px;
-        position: relative;
-        z-index: 2;
+        letter-spacing: -0.04em;
+        max-width: 920px;
     }}
 
-    .valtech-subtitle {{
-        color: #dcdcdc;
-        font-size: 17px;
+    .hero-subtitle {{
+        position: relative;
+        z-index: 2;
         margin-top: 12px;
-        max-width: 1000px;
-        position: relative;
-        z-index: 2;
+        color: #e6e6e6;
+        font-size: 17px;
+        max-width: 980px;
     }}
 
-    .metric-card {{
-        background: #ffffff;
-        border: 1px solid #e5e5e5;
-        border-radius: 18px;
-        padding: 18px;
-        box-shadow: 0 2px 12px rgba(0,0,0,.04);
-    }}
-
-    .metric-label {{
-        color: #555;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        margin-bottom: 8px;
-    }}
-
-    .metric-value {{
-        font-size: 28px;
-        font-weight: 800;
-        color: #000;
-    }}
-
-    .insight-box {{
-        background: #000;
-        color: #fff;
-        padding: 18px 20px;
+    .caveat-box {{
+        background: {VALTECH_LIGHT_GREY};
         border-left: 8px solid {VALTECH_BLUE};
+        color: #000000;
+        padding: 18px 20px;
         border-radius: 14px;
         margin-bottom: 18px;
+        font-size: 16px;
     }}
 
     .stTabs [data-baseweb="tab-list"] {{
@@ -240,7 +211,7 @@ st.markdown(
     .stTabs [data-baseweb="tab"] {{
         background: #ffffff;
         border-radius: 999px;
-        border: 1px solid #dddddd;
+        border: 1px solid #d8d8d8;
         padding: 8px 18px;
     }}
 
@@ -248,10 +219,6 @@ st.markdown(
         background: #000000 !important;
         color: #ffffff !important;
         border-color: #000000 !important;
-    }}
-
-    div[data-testid="stMetricValue"] {{
-        color: #000000;
     }}
 
     .stButton button, .stDownloadButton button {{
@@ -267,10 +234,8 @@ st.markdown(
         border-color: {VALTECH_BLUE};
     }}
 
-    hr {{
-        border: none;
-        border-top: 1px solid #e5e5e5;
-        margin: 24px 0;
+    div[data-testid="stMetricValue"] {{
+        color: #000000;
     }}
     </style>
     """,
@@ -288,12 +253,8 @@ def find_column(columns, candidates):
 
 
 @st.cache_data
-def load_data(uploaded_file=None):
-    if uploaded_file is not None:
-        raw = pd.read_excel(uploaded_file)
-    else:
-        raw = pd.read_excel(DATA_FILE)
-
+def load_data():
+    raw = pd.read_excel(DATA_FILE)
     raw.columns = [str(c).strip() for c in raw.columns]
 
     brand_col = find_column(raw.columns, ["brand", "oem"])
@@ -309,7 +270,7 @@ def load_data(uploaded_file=None):
             market_col: "Market",
             year_col: "Year",
             sales_col: "Sales",
-            uv_col: "UniqueVisits",
+            uv_col: "UniqueVisitors",
         }
     )
 
@@ -317,36 +278,32 @@ def load_data(uploaded_file=None):
     df["Market"] = df["Market"].astype(str).str.strip()
     df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
     df["Sales"] = pd.to_numeric(df["Sales"], errors="coerce")
-    df["UniqueVisits"] = pd.to_numeric(df["UniqueVisits"], errors="coerce")
+    df["UniqueVisitors"] = pd.to_numeric(df["UniqueVisitors"], errors="coerce")
 
-    df = df.dropna(subset=["OEM", "Market", "Year", "Sales", "UniqueVisits"])
-    df = df[(df["UniqueVisits"] > 0) & (df["Sales"] >= 0)]
+    df = df.dropna(subset=["OEM", "Market", "Year", "Sales", "UniqueVisitors"])
+    df = df[(df["UniqueVisitors"] > 0) & (df["Sales"] >= 0)]
     df["Year"] = df["Year"].astype(int)
 
     market_data = (
         df.groupby(["OEM", "Market", "Year"], as_index=False)
-        .agg({"Sales": "sum", "UniqueVisits": "sum"})
+        .agg({"Sales": "sum", "UniqueVisitors": "sum"})
     )
-    market_data["ConversionRate"] = market_data["Sales"] / market_data["UniqueVisits"]
-    market_data["ConversionPct"] = market_data["ConversionRate"] * 100
+    market_data["ConversionPct"] = market_data["Sales"] / market_data["UniqueVisitors"] * 100
 
     all_mm5 = (
         df.groupby(["OEM", "Year"], as_index=False)
-        .agg({"Sales": "sum", "UniqueVisits": "sum"})
+        .agg({"Sales": "sum", "UniqueVisitors": "sum"})
     )
     all_mm5["Market"] = "MM5"
-    all_mm5["ConversionRate"] = all_mm5["Sales"] / all_mm5["UniqueVisits"]
-    all_mm5["ConversionPct"] = all_mm5["ConversionRate"] * 100
+    all_mm5["ConversionPct"] = all_mm5["Sales"] / all_mm5["UniqueVisitors"] * 100
 
-    combined = pd.concat(
+    return pd.concat(
         [
-            all_mm5[["OEM", "Market", "Year", "Sales", "UniqueVisits", "ConversionPct"]],
-            market_data[["OEM", "Market", "Year", "Sales", "UniqueVisits", "ConversionPct"]],
+            all_mm5[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct"]],
+            market_data[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct"]],
         ],
         ignore_index=True,
     )
-
-    return combined
 
 
 def preset_selection(preset_name, available_oems):
@@ -358,7 +315,6 @@ def preset_selection(preset_name, available_oems):
         preset = CHINESE_SET
     else:
         preset = available_oems
-
     return [oem for oem in preset if oem in available_oems]
 
 
@@ -367,19 +323,15 @@ def add_logo_images(fig, chart_df, x_max, y_max):
         logo = get_logo_url(row["OEM"])
         if not logo:
             continue
-
-        size_x = x_max * 0.035
-        size_y = y_max * 0.055
-
         fig.add_layout_image(
             dict(
                 source=logo,
                 xref="x",
                 yref="y",
-                x=row["UniqueVisits"],
+                x=row["UniqueVisitors"],
                 y=row["ConversionPct"],
-                sizex=size_x,
-                sizey=size_y,
+                sizex=x_max * 0.035,
+                sizey=y_max * 0.055,
                 xanchor="center",
                 yanchor="middle",
                 sizing="contain",
@@ -396,7 +348,7 @@ def build_chart(chart_df, selected_oems, market, year_view, show_logos):
         return fig
 
     max_sales = max(chart_df["Sales"].max(), 1)
-    max_x = max(chart_df["UniqueVisits"].max() * 1.15, 1)
+    max_x = max(chart_df["UniqueVisitors"].max() * 1.15, 1)
     max_y = max(chart_df["ConversionPct"].max() * 1.20, 0.1)
 
     if year_view == "2024 and 2025 + shift":
@@ -408,21 +360,17 @@ def build_chart(chart_df, selected_oems, market, year_view, show_logos):
                 r25 = d25.iloc[0]
                 fig.add_trace(
                     go.Scatter(
-                        x=[r24["UniqueVisits"], r25["UniqueVisits"]],
+                        x=[r24["UniqueVisitors"], r25["UniqueVisitors"]],
                         y=[r24["ConversionPct"], r25["ConversionPct"]],
                         mode="lines",
-                        line=dict(width=2, dash="dot", color="rgba(0,0,0,0.38)"),
+                        line=dict(width=2, dash="dot", color="rgba(111,111,111,0.6)"),
                         hoverinfo="skip",
                         showlegend=False,
                     )
                 )
 
     years = [2024, 2025] if year_view == "2024 and 2025 + shift" else [int(year_view)]
-
-    colors = {
-        2024: VALTECH_BLUE,
-        2025: VALTECH_ROSE,
-    }
+    colors = {2024: VALTECH_BLUE, 2025: VALTECH_GREY}
 
     for year in years:
         year_df = chart_df[chart_df["Year"] == year].copy()
@@ -433,7 +381,7 @@ def build_chart(chart_df, selected_oems, market, year_view, show_logos):
 
         fig.add_trace(
             go.Scatter(
-                x=year_df["UniqueVisits"],
+                x=year_df["UniqueVisitors"],
                 y=year_df["ConversionPct"],
                 mode="markers+text" if not show_logos else "markers",
                 text=year_df["OEM"] if not show_logos else None,
@@ -445,13 +393,13 @@ def build_chart(chart_df, selected_oems, market, year_view, show_logos):
                     opacity=0.68,
                     line=dict(width=1.3, color="rgba(0,0,0,0.95)"),
                 ),
-                customdata=year_df[["OEM", "Market", "Year", "Sales", "UniqueVisits", "ConversionPct"]],
+                customdata=year_df[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct"]],
                 hovertemplate=(
                     "<b>%{customdata[0]}</b><br>"
                     "Market: %{customdata[1]}<br>"
                     "Year: %{customdata[2]}<br>"
                     "Sales: %{customdata[3]:,.0f}<br>"
-                    "Unique visits: %{customdata[4]:,.0f}<br>"
+                    "Unique visitors: %{customdata[4]:,.0f}<br>"
                     "Conversion rate: %{customdata[5]:.2f}%"
                     "<extra></extra>"
                 ),
@@ -463,11 +411,11 @@ def build_chart(chart_df, selected_oems, market, year_view, show_logos):
 
     fig.update_layout(
         title=dict(
-            text=f"{market} | Unique visits vs conversion rate",
+            text=f"{market} | Unique visitors vs conversion rate",
             x=0.02,
             font=dict(size=24, color=BLACK),
         ),
-        xaxis_title="Unique visits",
+        xaxis_title="Unique visitors",
         yaxis_title="Conversion rate (%)",
         height=720,
         hovermode="closest",
@@ -506,14 +454,15 @@ def render_market_tab(data, market, selected_oems, year_view, show_logos):
         st.warning(f"No data available for {market} with the current OEM/year selection.")
         return
 
-    latest = chart_data[chart_data["Year"] == chart_data["Year"].max()]
+    latest_year = chart_data["Year"].max()
+    latest = chart_data[chart_data["Year"] == latest_year]
     total_sales = latest["Sales"].sum()
-    total_uv = latest["UniqueVisits"].sum()
+    total_uv = latest["UniqueVisitors"].sum()
     weighted_conv = (total_sales / total_uv * 100) if total_uv else 0
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Selected sales", f"{total_sales:,.0f}")
-    c2.metric("Selected unique visits", f"{total_uv:,.0f}")
+    c2.metric("Selected unique visitors", f"{total_uv:,.0f}")
     c3.metric("Weighted conversion", f"{weighted_conv:.2f}%")
 
     fig = build_chart(chart_data, selected_oems, market, year_view, show_logos)
@@ -527,7 +476,7 @@ def render_market_tab(data, market, selected_oems, year_view, show_logos):
             display_data.rename(
                 columns={
                     "ConversionPct": "Conversion rate (%)",
-                    "UniqueVisits": "Unique visits",
+                    "UniqueVisitors": "Unique visitors",
                 }
             ),
             use_container_width=True,
@@ -546,10 +495,12 @@ def render_market_tab(data, market, selected_oems, year_view, show_logos):
 
 st.markdown(
     """
-    <div class="valtech-header">
-        <div class="valtech-logo">valtech<span>_</span></div>
-        <div class="valtech-title">OEM Digital Performance Dashboard</div>
-        <div class="valtech-subtitle">
+    <div class="hero">
+        <div class="hero-logo">
+            <img src="https://mma.prnewswire.com/media/2728124/Valtech_Logo.jpg" alt="Valtech logo">
+        </div>
+        <div class="hero-title">OEM Digital Performance Dashboard</div>
+        <div class="hero-subtitle">
             Passenger car digital sales view across MM5. Explore how OEM traffic scale, conversion efficiency and 2024–2025 movement differ by market.
         </div>
     </div>
@@ -559,9 +510,8 @@ st.markdown(
 
 st.markdown(
     """
-    <div class="insight-box">
-        <b>Read this correctly:</b> this is a digital performance dashboard, not a total market-share dashboard.
-        It uses passenger car sales and unique visits; it should not be used as proof of total brand share where fleet, LCV or tactical registrations are out of scope.
+    <div class="caveat-box">
+        This is not a total market-share dashboard. It uses passenger car sales and unique visitor website data; it does not include fleet, LCV or tactical registrations.
     </div>
     """,
     unsafe_allow_html=True,
@@ -572,19 +522,16 @@ with st.expander("Data definition and caveats", expanded=False):
         """
         - **Markets:** UK, France, Italy, Spain and Germany.
         - **MM5:** aggregated view across those five markets.
-        - **Sales:** passenger car sales from the uploaded workbook.
-        - **Unique visits:** Similarweb traffic metric from the uploaded workbook.
-        - **Conversion rate:** sales divided by unique visits.
-        - **Exclusions:** do not position this as full market share unless fleet, LCV and tactical registrations are confirmed to be included.
-        - **Toyota and Lexus:** treated as separate brands.
+        - **Sales:** passenger car sales - Marklines.
+        - **Unique visitor:** Similarweb.
+        - **Conversion rate:** sales divided by unique visitors.
         """
     )
 
-data = load_data(None)
+data = load_data()
 available_oems = sorted(data["OEM"].unique())
 
 st.sidebar.header("Filters")
-st.sidebar.caption("Using the bundled Excel dataset from GitHub.")
 
 year_view = st.sidebar.selectbox(
     "Year view",
@@ -609,7 +556,7 @@ selected_oems = st.sidebar.multiselect(
 show_logos = st.sidebar.toggle(
     "Show OEM logos",
     value=True,
-    help="Logos require internet access and a Brandfetch Client ID in Streamlit Secrets."
+    help="Logos require internet access and a Brandfetch Client ID in Streamlit Secrets.",
 )
 
 if show_logos and not get_brandfetch_client_id():
@@ -638,5 +585,5 @@ for market, tab in tab_markets:
 
 st.markdown("---")
 st.caption(
-    "Valtech-styled dashboard. Recommended executive flow: start with MM5, then use the market tabs to identify where the conversion gap is most material."
+    "Recommended executive flow: start with MM5, then use the market tabs to identify where the conversion gap is most material."
 )
