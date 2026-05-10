@@ -364,6 +364,117 @@ div[data-testid="stPlotlyChart"] {
     font-weight: 800;
 }
 
+
+.start-intro {
+    background:#F7F9FC;
+    border-left:6px solid #009FE3;
+    border-radius:14px;
+    padding:20px 22px;
+    color:#0A2342;
+    font-size:16px;
+    line-height:1.6;
+    margin-bottom:18px;
+}
+.start-shell {
+    position: relative;
+    min-height: 980px;
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    box-shadow: 0 1px 8px rgba(0,0,0,.035);
+    overflow:hidden;
+    margin-bottom: 20px;
+}
+.factor-box {
+    position:absolute;
+    width:240px;
+    min-height:96px;
+    background:#F5F6F7;
+    border-left:8px solid #B8EC63;
+    padding:18px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:#111827;
+    font-size:15px;
+    line-height:1.3;
+    font-weight:600;
+    box-shadow:0 1px 4px rgba(0,0,0,.04);
+}
+.funnel-wrap {
+    position:absolute;
+    left:50%;
+    top:70px;
+    transform:translateX(-50%);
+    width:390px;
+    z-index:2;
+}
+.funnel-label-top, .funnel-label-bottom {
+    text-align:center;
+    font-weight:800;
+    color:#0A2342;
+    margin-bottom:10px;
+}
+.funnel-seg {
+    margin: 0 auto 10px auto;
+    color:#ffffff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-weight:700;
+    border-radius:12px;
+    padding:10px 14px;
+    background:linear-gradient(135deg, #009FE3, #005F9E);
+    box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.funnel-top { width: 360px; height: 62px; background:linear-gradient(135deg, #12C76B, #009FE3); }
+.funnel-mid1 { width: 300px; height: 58px; clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%); }
+.funnel-mid2 { width: 245px; height: 58px; clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%); background:linear-gradient(135deg, #007EB5, #0A2342); }
+.funnel-mid3 { width: 195px; height: 54px; clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%); background:linear-gradient(135deg, #0A2342, #005F9E); }
+.funnel-bottom { width: 138px; height: 62px; background:linear-gradient(135deg, #FFB000, #12C76B); }
+.funnel-note {
+    text-align:center;
+    color:#6F7782;
+    font-size:13px;
+    line-height:1.45;
+    margin-top:10px;
+}
+.method-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:14px;
+    padding:18px 20px;
+    box-shadow:0 1px 8px rgba(0,0,0,.035);
+    height:100%;
+}
+.method-title {
+    font-size:16px;
+    font-weight:800;
+    color:#0A2342;
+    margin-bottom:8px;
+}
+.method-copy {
+    color:#6F7782;
+    font-size:14px;
+    line-height:1.55;
+}
+.oem-pill-wrap {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+.oem-pill {
+    background:#EEF3F8;
+    color:#0A2342;
+    border:1px solid #D9E2EA;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1026,6 +1137,91 @@ def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
     return fig
 
 
+
+def render_start_here_page(data):
+    section("Start here — how to use this dashboard")
+    st.markdown(
+        """
+        <div class="start-intro">
+            <b>This dashboard is not simply a score of which OEM website is “better” or “worse”.</b><br>
+            It is designed to evaluate <b>website-to-customer-contract conversion efficiency</b>. Website usability and digital experience are important,
+            but they are only one part of a much broader omnichannel funnel. The conversion rate shown here reflects how upper-funnel website demand is
+            translated into passenger new car customer contracts through lead handling, retailer experience, pricing, product availability and other commercial factors.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="start-shell">
+            <div class="factor-box" style="left:26px; top:28px;">Brand strategy</div>
+            <div class="factor-box" style="left:26px; top:172px;">Marketing strategy<br>(offline / online)</div>
+            <div class="factor-box" style="left:26px; top:316px;">Customer strategy<br>(digital experience, existing vs conquest strategy)</div>
+            <div class="factor-box" style="left:26px; top:460px;">New car sales mix<br>(private / fleet)</div>
+
+            <div class="factor-box" style="right:26px; top:28px;">New vs Used<br>sales mix</div>
+            <div class="factor-box" style="right:26px; top:172px;">What sales comprises<br>– lease vs purchase</div>
+            <div class="factor-box" style="right:26px; top:316px;">Premium vs Mass market<br>(price point)</div>
+            <div class="factor-box" style="right:26px; top:460px;">Product strategy &amp;<br>availability</div>
+            <div class="factor-box" style="right:26px; top:604px;">Distribution &amp; Dealership<br>network</div>
+
+            <div class="funnel-wrap">
+                <div class="funnel-label-top">Website visitors</div>
+                <div class="funnel-seg funnel-top">Upper-funnel digital demand</div>
+                <div class="funnel-seg funnel-mid1">Lead management</div>
+                <div class="funnel-seg funnel-mid2">Retailer experience</div>
+                <div class="funnel-seg funnel-mid3">Offer / finance / stock progression</div>
+                <div class="funnel-seg funnel-bottom">Customer contract</div>
+                <div class="funnel-note">
+                    The dashboard focuses on how demand enters at the website and exits as customer contracts.<br>
+                    Only the top and bottom of the funnel are directly measured here; the middle stages are influenced by multiple commercial and operational factors.
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    section("How to interpret Similarweb unique visitors")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(
+            """
+            <div class="method-card">
+                <div class="method-title">Why Similarweb will not exactly match web analytics</div>
+                <div class="method-copy">
+                    Similarweb states that its traffic estimates are built from a blended methodology using <b>direct measurement</b>,
+                    a <b>contributory network</b>, <b>partnerships</b> and <b>public data extraction</b>, which are then processed and modelled through its
+                    machine-learning “Intelligence Engine”. Because this is an external estimation methodology, it should be treated as a
+                    <b>consistent market benchmark</b>, not as a direct replacement for Adobe or Google Analytics.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            """
+            <div class="method-card">
+                <div class="method-title">Why consent management affects these sources differently</div>
+                <div class="method-copy">
+                    Similarweb also states that it <b>does not use cookies to collect behavioural data</b>. That means the impact of consent management platforms
+                    is <b>not the same</b> as in first-party analytics implementations, where tagging and consent choices can materially affect reported sessions or users.
+                    In practice, Similarweb and site analytics may move in similar directions over time, but the absolute numbers will not reconcile one-to-one.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    section("OEMs included in this report")
+    oems = sorted(data['OEM'].dropna().astype(str).unique().tolist())
+    pills = ''.join([f"<span class='oem-pill'>{o}</span>" for o in oems])
+    st.markdown(f"<div class='oem-pill-wrap'>{pills}</div>", unsafe_allow_html=True)
+
+    render_footer()
+
 # =========================
 # Pages
 # =========================
@@ -1202,7 +1398,7 @@ st.sidebar.header("Filters")
 
 page = st.sidebar.radio(
     "Dashboard page",
-    ["Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
+    ["Start Here", "Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
     index=0,
 )
 
@@ -1239,7 +1435,9 @@ if show_logos and not get_brandfetch_client_id():
 
 selected_oems = selected_or_all(selected_oems, all_oems)
 
-if page == "Toyota & Lexus Gap Analysis":
+if page == "Start Here":
+    render_start_here_page(data)
+elif page == "Toyota & Lexus Gap Analysis":
     render_gap_analysis_page(data, summary_market)
 elif page == "Market Performance":
     render_market_performance_page(data, summary_market, selected_oems)
