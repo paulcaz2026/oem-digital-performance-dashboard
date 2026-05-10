@@ -1140,87 +1140,82 @@ def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
 
 def render_start_here_page(data):
     section("Start here — how to use this dashboard")
-    st.markdown(
-        """
-        <div class="start-intro">
-            <b>This dashboard is not simply a score of which OEM website is “better” or “worse”.</b><br>
-            It is designed to evaluate <b>website-to-customer-contract conversion efficiency</b>. Website usability and digital experience are important,
-            but they are only one part of a much broader omnichannel funnel. The conversion rate shown here reflects how upper-funnel website demand is
-            translated into passenger new car customer contracts through lead handling, retailer experience, pricing, product availability and other commercial factors.
-        </div>
-        """,
-        unsafe_allow_html=True,
+
+    intro_html = (
+        "<div class='start-intro'>"
+        "<b>This is not simply a dashboard that is looking at whose website is better or worse.</b><br>"
+        "This report looks much bigger picture at the overall conversion efficiency from digital to customer buying the car. "
+        "Website usability and digital experience are important, but they are only one part of a much broader omnichannel funnel. "
+        "The conversion rate shown here reflects how upper-funnel website demand is translated into passenger new car customer contracts "
+        "through lead handling, retailer experience, pricing, product availability and other commercial factors."
+        "</div>"
     )
+    st.markdown(intro_html, unsafe_allow_html=True)
 
-    st.markdown(
-        """
-        <div class="start-shell">
-            <div class="factor-box" style="left:26px; top:28px;">Brand strategy</div>
-            <div class="factor-box" style="left:26px; top:172px;">Marketing strategy<br>(offline / online)</div>
-            <div class="factor-box" style="left:26px; top:316px;">Customer strategy<br>(digital experience, existing vs conquest strategy)</div>
-            <div class="factor-box" style="left:26px; top:460px;">New car sales mix<br>(private / fleet)</div>
-
-            <div class="factor-box" style="right:26px; top:28px;">New vs Used<br>sales mix</div>
-            <div class="factor-box" style="right:26px; top:172px;">What sales comprises<br>– lease vs purchase</div>
-            <div class="factor-box" style="right:26px; top:316px;">Premium vs Mass market<br>(price point)</div>
-            <div class="factor-box" style="right:26px; top:460px;">Product strategy &amp;<br>availability</div>
-            <div class="factor-box" style="right:26px; top:604px;">Distribution &amp; Dealership<br>network</div>
-
-            <div class="funnel-wrap">
-                <div class="funnel-label-top">Website visitors</div>
-                <div class="funnel-seg funnel-top">Upper-funnel digital demand</div>
-                <div class="funnel-seg funnel-mid1">Lead management</div>
-                <div class="funnel-seg funnel-mid2">Retailer experience</div>
-                <div class="funnel-seg funnel-mid3">Offer / finance / stock progression</div>
-                <div class="funnel-seg funnel-bottom">Customer contract</div>
-                <div class="funnel-note">
-                    The dashboard focuses on how demand enters at the website and exits as customer contracts.<br>
-                    Only the top and bottom of the funnel are directly measured here; the middle stages are influenced by multiple commercial and operational factors.
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    funnel_html = (
+        "<div class='start-shell'>"
+        "<div class='factor-box' style='left:26px; top:28px;'>Brand strategy</div>"
+        "<div class='factor-box' style='left:26px; top:172px;'>Marketing strategy<br>(offline / online)</div>"
+        "<div class='factor-box' style='left:26px; top:316px;'>Customer strategy<br>(digital experience, existing vs conquest strategy)</div>"
+        "<div class='factor-box' style='left:26px; top:460px;'>New car sales mix<br>(private / fleet)</div>"
+        "<div class='factor-box' style='right:26px; top:28px;'>New vs Used<br>sales mix</div>"
+        "<div class='factor-box' style='right:26px; top:172px;'>What sales comprises<br>– lease vs purchase</div>"
+        "<div class='factor-box' style='right:26px; top:316px;'>Premium vs Mass market<br>(price point)</div>"
+        "<div class='factor-box' style='right:26px; top:460px;'>Product strategy &amp;<br>availability</div>"
+        "<div class='factor-box' style='right:26px; top:604px;'>Distribution &amp; Dealership<br>network</div>"
+        "<div class='funnel-wrap'>"
+        "<div class='funnel-label-top'>Website visitors</div>"
+        "<div class='funnel-seg funnel-top'>Upper-funnel digital demand</div>"
+        "<div class='funnel-seg funnel-mid1'>Lead management</div>"
+        "<div class='funnel-seg funnel-mid2'>Retailer experience</div>"
+        "<div class='funnel-seg funnel-mid3'>Offer / finance / stock progression</div>"
+        "<div class='funnel-seg funnel-bottom'>Customer contract</div>"
+        "<div class='funnel-note'>"
+        "The dashboard focuses on how demand enters at the website and exits as customer contracts.<br>"
+        "Only the top and bottom of the funnel are directly measured here; the middle stages are influenced by multiple commercial and operational factors."
+        "</div>"
+        "</div>"
+        "</div>"
     )
+    st.markdown(funnel_html, unsafe_allow_html=True)
 
     section("How to interpret Similarweb unique visitors")
     c1, c2 = st.columns(2)
+
     with c1:
-        st.markdown(
-            """
-            <div class="method-card">
-                <div class="method-title">Why Similarweb will not exactly match web analytics</div>
-                <div class="method-copy">
-                    Similarweb states that its traffic estimates are built from a blended methodology using <b>direct measurement</b>,
-                    a <b>contributory network</b>, <b>partnerships</b> and <b>public data extraction</b>, which are then processed and modelled through its
-                    machine-learning “Intelligence Engine”. Because this is an external estimation methodology, it should be treated as a
-                    <b>consistent market benchmark</b>, not as a direct replacement for Adobe or Google Analytics.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        method_html = (
+            "<div class='method-card'>"
+            "<div class='method-title'>Why Similarweb will not exactly match web analytics</div>"
+            "<div class='method-copy'>"
+            "Similarweb states that its traffic estimates are built from a blended methodology using <b>direct measurement</b>, "
+            "a <b>contributory network</b>, <b>partnerships</b> and <b>public data extraction</b>, which are then processed and modelled through its "
+            "machine-learning “Intelligence Engine”. Because this is an external estimation methodology, it should be treated as a "
+            "<b>consistent market benchmark</b>, not as a direct replacement for Adobe or Google Analytics."
+            "</div>"
+            "</div>"
         )
+        st.markdown(method_html, unsafe_allow_html=True)
+
     with c2:
-        st.markdown(
-            """
-            <div class="method-card">
-                <div class="method-title">Why consent management affects these sources differently</div>
-                <div class="method-copy">
-                    Similarweb also states that it <b>does not use cookies to collect behavioural data</b>. That means the impact of consent management platforms
-                    is <b>not the same</b> as in first-party analytics implementations, where tagging and consent choices can materially affect reported sessions or users.
-                    In practice, Similarweb and site analytics may move in similar directions over time, but the absolute numbers will not reconcile one-to-one.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        consent_html = (
+            "<div class='method-card'>"
+            "<div class='method-title'>Why consent management affects these sources differently</div>"
+            "<div class='method-copy'>"
+            "Similarweb also states that it <b>does not use cookies to collect behavioural data</b>. That means the impact of consent management platforms "
+            "is <b>not the same</b> as in first-party analytics implementations, where tagging and consent choices can materially affect reported sessions or users. "
+            "In practice, Similarweb and site analytics may move in similar directions over time, but the absolute numbers will not reconcile one-to-one."
+            "</div>"
+            "</div>"
         )
+        st.markdown(consent_html, unsafe_allow_html=True)
 
     section("OEMs included in this report")
-    oems = sorted(data['OEM'].dropna().astype(str).unique().tolist())
-    pills = ''.join([f"<span class='oem-pill'>{o}</span>" for o in oems])
+    oems = sorted(data["OEM"].dropna().astype(str).unique().tolist())
+    pills = "".join([f"<span class='oem-pill'>{o}</span>" for o in oems])
     st.markdown(f"<div class='oem-pill-wrap'>{pills}</div>", unsafe_allow_html=True)
 
     render_footer()
+
 
 # =========================
 # Pages
