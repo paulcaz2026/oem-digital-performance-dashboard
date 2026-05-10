@@ -1346,6 +1346,64 @@ def render_exec_summary(data, market, selected_oems):
 
 
 
+
+def benchmark_card_html(title, copy, metric):
+    return f"""
+    <div class="benchmark-card">
+        <div class="benchmark-title">{title}</div>
+        <div class="benchmark-copy">{copy}</div>
+        <div class="benchmark-metric">{metric}</div>
+    </div>
+    """
+
+
+def render_toyota_lexus_benchmarks(data, market):
+    yoy_all = get_yoy_table(data, market, None)
+    if yoy_all.empty:
+        return
+
+    st.markdown('<div class="section-kicker">Toyota / Lexus benchmark callouts</div>', unsafe_allow_html=True)
+
+    cards = []
+
+    for brand, cohort in [
+        ("Toyota", TOYOTA_SET),
+        ("Lexus", LEXUS_SET),
+    ]:
+        row = get_row(yoy_all, brand)
+        cohort_df = yoy_all[yoy_all["OEM"].isin(cohort)].copy()
+
+        if row is None or cohort_df.empty:
+            continue
+
+        cohort_df["Conv Rank"] = cohort_df["ConversionPct_2025"].rank(method="min", ascending=False)
+        rank_series = cohort_df.loc[cohort_df["OEM"].str.lower() == brand.lower(), "Conv Rank"]
+
+        if rank_series.empty:
+            continue
+
+        brand_rank = int(rank_series.iloc[0])
+        leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+        gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
+        visits_to_sale_gap = row["Visits to Sale 2025"] - leader["Visits to Sale 2025"]
+
+        copy = (
+            f"{brand} ranks #{brand_rank} of {len(cohort_df)} in its benchmark set. "
+            f"The conversion gap to {leader['OEM']} is {gap:+.2f}pp. "
+            f"Visits-to-sale gap is {visits_to_sale_gap:+.0f}."
+        )
+
+        metric = f"{row['ConversionPct_2025']:.2f}% conv"
+        cards.append(benchmark_card_html(f"{brand} benchmark", copy, metric))
+
+    if cards:
+        cols = st.columns(len(cards))
+        for col, card in zip(cols, cards):
+            with col:
+                st.markdown(card, unsafe_allow_html=True)
+
+
+
 def render_gap_analysis_page(data, market, selected_oems):
     st.markdown(f'<div class="section-kicker">Toyota & Lexus gap analysis — {market}</div>', unsafe_allow_html=True)
 
