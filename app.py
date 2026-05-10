@@ -547,14 +547,14 @@ st.markdown(
 
     
     /* OEM selector chips */
-    span[data-baseweb="tag"] {
+    span[data-baseweb="tag"] {{
         background-color: #D9DDE3 !important;
         color: #111827 !important;
         border-radius: 8px !important;
-    }
-    span[data-baseweb="tag"] svg {
+    }}
+    span[data-baseweb="tag"] svg {{
         color: #111827 !important;
-    }
+    }}
 
 </style>
     """,
