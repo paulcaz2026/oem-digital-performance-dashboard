@@ -373,22 +373,22 @@ st.markdown(
         color: #000000;
     }}
 
-    .top-table-wrap {
+    .top-table-wrap {{
         background: #ffffff;
         border: 1px solid #e6e9ed;
         border-radius: 14px;
         padding: 18px 22px;
         box-shadow: 0 1px 8px rgba(0,0,0,.035);
         margin: 16px 0 22px 0;
-    }
+    }}
 
-    .top-table {
+    .top-table {{
         width: 100%;
         border-collapse: collapse;
         font-size: 14px;
-    }
+    }}
 
-    .top-table thead th {
+    .top-table thead th {{
         background: #f5f6f8;
         color: #8D96A0;
         text-transform: uppercase;
@@ -397,89 +397,89 @@ st.markdown(
         padding: 13px 14px;
         text-align: left;
         border-bottom: 1px solid #e1e5ea;
-    }
+    }}
 
-    .top-table tbody td {
+    .top-table tbody td {{
         padding: 13px 14px;
         border-bottom: 1px solid #edf0f2;
         color: #0A2342;
-    }
+    }}
 
-    .top-table tbody tr:nth-child(1) {
+    .top-table tbody tr:nth-child(1) {{
         background: #f7f9fc;
         font-weight: 700;
-    }
+    }}
 
-    .rank-cell {
+    .rank-cell {{
         color: #8D96A0;
         width: 50px;
-    }
+    }}
 
-    .brand-dot {
+    .brand-dot {{
         display: inline-block;
         width: 9px;
         height: 9px;
         border-radius: 50%;
         margin-right: 8px;
         background: #2563EB;
-    }
+    }}
 
-    .badge-pos {
+    .badge-pos {{
         background: #DDF8EC;
         color: #12C76B;
         padding: 5px 9px;
         border-radius: 6px;
         font-weight: 700;
         display: inline-block;
-    }
+    }}
 
-    .badge-neg {
+    .badge-neg {{
         background: #FFE5EF;
         color: #FF2F6D;
         padding: 5px 9px;
         border-radius: 6px;
         font-weight: 700;
         display: inline-block;
-    }
+    }}
 
-    .badge-neutral {
+    .badge-neutral {{
         background: #EEF2F6;
         color: #6F6F6F;
         padding: 5px 9px;
         border-radius: 6px;
         font-weight: 700;
         display: inline-block;
-    }
+    }}
 
-    .benchmark-card {
+    .benchmark-card {{
         background: #ffffff;
         border: 1px solid #e6e9ed;
         border-radius: 14px;
         padding: 18px 20px;
         box-shadow: 0 1px 8px rgba(0,0,0,.035);
         min-height: 155px;
-    }
+    }}
 
-    .benchmark-title {
+    .benchmark-title {{
         font-size: 17px;
         font-weight: 800;
         color: #0A2342;
         margin-bottom: 8px;
-    }
+    }}
 
-    .benchmark-copy {
+    .benchmark-copy {{
         color: #6F7782;
         line-height: 1.45;
         font-size: 14px;
-    }
+    }}
 
-    .benchmark-metric {
+    .benchmark-metric {{
         font-size: 26px;
         color: #0A2342;
         margin-top: 10px;
-    }
+    }}
 
-    .freshness {
+    .freshness {{
         display: inline-block;
         background: #F3F3F3;
         border-left: 5px solid #009FE3;
@@ -488,7 +488,7 @@ st.markdown(
         font-size: 13px;
         color: #0A2342;
         margin-bottom: 18px;
-    }
+    }}
 
     </style>
     """,
