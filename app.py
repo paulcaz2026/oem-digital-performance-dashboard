@@ -622,7 +622,7 @@ def style_scorecard(scorecard):
                 ],
             },
         ])
-        .applymap(yoy_badge_style, subset=yoy_cols)
+        .map(yoy_badge_style, subset=yoy_cols)
     )
 
     return styler
