@@ -479,6 +479,38 @@ st.markdown(
         margin-top: 10px;
     }}
 
+    .weakness-table-wrap {{
+        background: #ffffff;
+        border: 1px solid #e6e9ed;
+        border-radius: 14px;
+        padding: 18px 22px;
+        box-shadow: 0 1px 8px rgba(0,0,0,.035);
+        margin: 16px 0 22px 0;
+    }}
+
+    .weakness-table {{
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }}
+
+    .weakness-table thead th {{
+        background: #f5f6f8;
+        color: #8D96A0;
+        text-transform: uppercase;
+        letter-spacing: .14em;
+        font-size: 11px;
+        padding: 13px 14px;
+        text-align: left;
+        border-bottom: 1px solid #e1e5ea;
+    }}
+
+    .weakness-table tbody td {{
+        padding: 13px 14px;
+        border-bottom: 1px solid #edf0f2;
+        color: #0A2342;
+    }}
+
     .freshness {{
         display: inline-block;
         background: #F3F3F3;
@@ -1343,14 +1375,35 @@ def render_market_weakness_summary(data):
 
     summary = pd.DataFrame(rows).sort_values("Gap to leader")
 
-    display = summary.copy()
-    display["2025 conversion"] = display["2025 conversion"].map(lambda v: f"{v:.2f}%")
-    display["Leader conversion"] = display["Leader conversion"].map(lambda v: f"{v:.2f}%")
-    display["Gap to leader"] = display["Gap to leader"].map(lambda v: f"{v:+.2f}pp")
-    display["Sales YoY"] = display["Sales YoY"].map(lambda v: f"{v:+.1f}%")
-    display["Visitor YoY"] = display["Visitor YoY"].map(lambda v: f"{v:+.1f}%")
+    row_html = ""
+    for _, r in summary.iterrows():
+        gap_badge = badge_html(r["Gap to leader"], suffix="pp")
+        sales_badge = badge_html(r["Sales YoY"], suffix="%")
+        visitor_badge = badge_html(r["Visitor YoY"], suffix="%")
+        row_html += (
+            "<tr>"
+            f"<td><b>{r['Brand']}</b></td>"
+            f"<td>{r['Market']}</td>"
+            f"<td>{r['2025 conversion']:.2f}%</td>"
+            f"<td>{r['Benchmark leader']}</td>"
+            f"<td>{r['Leader conversion']:.2f}%</td>"
+            f"<td>{gap_badge}</td>"
+            f"<td>{sales_badge}</td>"
+            f"<td>{visitor_badge}</td>"
+            "</tr>"
+        )
 
-    st.dataframe(display, use_container_width=True, hide_index=True)
+    html = (
+        "<div class='weakness-table-wrap'>"
+        "<table class='weakness-table'>"
+        "<thead><tr>"
+        "<th>Brand</th><th>Market</th><th>2025 conversion</th><th>Benchmark leader</th>"
+        "<th>Leader conversion</th><th>Gap to leader</th><th>Sales YoY</th><th>Visitor YoY</th>"
+        "</tr></thead>"
+        f"<tbody>{row_html}</tbody>"
+        "</table></div>"
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_definitions_tooltips():
@@ -1408,6 +1461,113 @@ def render_exec_summary(data, market, selected_oems):
     render_market_weakness_summary(data)
     render_definitions_tooltips()
 
+
+
+
+def render_gap_analysis_page(data, market, selected_oems):
+    st.markdown('<div class="freshness">Data period: 2024–2025 | Sources: Marklines passenger car sales + Similarweb unique visitors</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-kicker">Toyota & Lexus gap analysis — {market}</div>', unsafe_allow_html=True)
+
+    focus_oems = [o for o in selected_oems if o in ["Toyota", "Lexus"]]
+    if not focus_oems:
+        focus_oems = ["Toyota", "Lexus"]
+
+    latest = get_market_data(data, market, 2025, focus_oems)
+    previous = get_market_data(data, market, 2024, focus_oems)
+
+    if latest.empty:
+        st.warning("No Toyota/Lexus data available for this market.")
+        return
+
+    total_sales = latest["Sales"].sum()
+    total_uv = latest["UniqueVisitors"].sum()
+    conv_2025 = total_sales / total_uv * 100 if total_uv else 0
+    prev_sales = previous["Sales"].sum() if not previous.empty else 0
+    prev_uv = previous["UniqueVisitors"].sum() if not previous.empty else 0
+    conv_2024 = prev_sales / prev_uv * 100 if prev_uv else 0
+    sales_yoy = (total_sales / prev_sales - 1) * 100 if prev_sales else 0
+    uv_yoy = (total_uv / prev_uv - 1) * 100 if prev_uv else 0
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Toyota/Lexus sales", f"{total_sales:,.0f}", f"{sales_yoy:+.1f}% YoY")
+    c2.metric("Toyota/Lexus visitors", f"{total_uv:,.0f}", f"{uv_yoy:+.1f}% YoY")
+    c3.metric("Weighted conversion", f"{conv_2025:.2f}%", f"{conv_2025 - conv_2024:+.2f}pp")
+    c4.metric("Visits to sale", f"{(total_uv / total_sales):,.0f}" if total_sales else "n/a")
+
+    render_toyota_lexus_benchmarks(data, market)
+    render_market_weakness_summary(data)
+
+    st.markdown(f'<div class="section-kicker">AI insights — Toyota & Lexus recommendations</div>', unsafe_allow_html=True)
+    cards = []
+    yoy = get_yoy_table(data, market, None)
+    for brand in ["Toyota", "Lexus"]:
+        row = get_row(yoy, brand)
+        if row is None:
+            continue
+
+        kind = "risk" if row["Conv Var pp"] < 0 or row["Sales YoY %"] < 0 else "opportunity"
+        title = f"{brand}: close the conversion gap before buying more traffic"
+        copy = (
+            f"{brand} conversion is {row['ConversionPct_2025']:.2f}% in 2025, moving {row['Conv Var pp']:+.2f}pp YoY. "
+            f"Sales growth is {row['Sales YoY %']:+.1f}% while visitor growth is {row['Visitors YoY %']:+.1f}%. "
+            "The practical recommendation is to prioritise lower-funnel experience, stock visibility, finance clarity and lead handling before scaling paid traffic."
+        )
+        metric = f"{row['ConversionPct_2025']:.2f}% conv"
+        cards.append(make_insight(kind, title, copy, metric, f"{brand} recommendation"))
+
+    cols = st.columns(2)
+    for col, card in zip(cols, cards):
+        with col:
+            st.markdown(card, unsafe_allow_html=True)
+
+    render_definitions_tooltips()
+
+
+def render_market_performance_page(data, market, selected_oems):
+    st.markdown('<div class="freshness">Data period: 2024–2025 | Sources: Marklines passenger car sales + Similarweb unique visitors</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-kicker">Market performance — {market} OEM cohort</div>', unsafe_allow_html=True)
+
+    latest = get_market_data(data, market, 2025, selected_oems)
+    previous = get_market_data(data, market, 2024, selected_oems)
+
+    if latest.empty:
+        st.warning("No data available for this selection.")
+        return
+
+    total_sales = latest["Sales"].sum()
+    total_uv = latest["UniqueVisitors"].sum()
+    conv_2025 = total_sales / total_uv * 100 if total_uv else 0
+    prev_sales = previous["Sales"].sum() if not previous.empty else 0
+    prev_uv = previous["UniqueVisitors"].sum() if not previous.empty else 0
+    conv_2024 = prev_sales / prev_uv * 100 if prev_uv else 0
+    sales_yoy = (total_sales / prev_sales - 1) * 100 if prev_sales else 0
+    uv_yoy = (total_uv / prev_uv - 1) * 100 if prev_uv else 0
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("2025 passenger sales", f"{total_sales:,.0f}", f"{sales_yoy:+.1f}% YoY")
+    c2.metric("2025 unique visitors", f"{total_uv:,.0f}", f"{uv_yoy:+.1f}% YoY")
+    c3.metric("2025 conversion", f"{conv_2025:.2f}%", f"{conv_2025 - conv_2024:+.2f}pp")
+    c4.metric("Visits to sale", f"{(total_uv / total_sales):,.0f}" if total_sales else "n/a")
+
+    render_top10_glance(data, market, selected_oems)
+
+    st.markdown('<div class="section-kicker">Performance visuals — YoY growth and visitor scale</div>', unsafe_allow_html=True)
+    render_exec_visuals(data, market, selected_oems)
+
+    st.markdown(f'<div class="section-kicker">AI insights — market performance</div>', unsafe_allow_html=True)
+    cards = generate_insight_cards(data, market, selected_oems)
+    # Avoid duplicating Toyota/Lexus recommendation focus too heavily here; show broader market cards.
+    broader_cards = [c for c in cards if "Toyota:" not in c and "Lexus:" not in c][:6]
+    if not broader_cards:
+        broader_cards = cards[:6]
+
+    for i in range(0, len(broader_cards), 3):
+        cols = st.columns(3)
+        for col, card in zip(cols, broader_cards[i:i + 3]):
+            with col:
+                st.markdown(card, unsafe_allow_html=True)
+
+    render_definitions_tooltips()
 
 
 def render_bubble_page(data, selected_oems, year_view, show_logos):
@@ -1499,12 +1659,12 @@ st.sidebar.header("Filters")
 
 page = st.sidebar.radio(
     "Dashboard page",
-    ["Exec summary", "Bubble chart", "Scorecard"],
+    ["Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
     index=0,
 )
 
 summary_market = st.sidebar.selectbox(
-    "Exec summary market",
+    "Summary market",
     ["MM5", "UK", "France", "Germany", "Italy", "Spain"],
     index=0,
 )
@@ -1544,8 +1704,10 @@ if not selected_oems:
     st.warning("Select at least one OEM in the sidebar.")
     st.stop()
 
-if page == "Exec summary":
-    render_exec_summary(data, summary_market, selected_oems)
+if page == "Toyota & Lexus Gap Analysis":
+    render_gap_analysis_page(data, summary_market, selected_oems)
+elif page == "Market Performance":
+    render_market_performance_page(data, summary_market, selected_oems)
 elif page == "Bubble chart":
     render_bubble_page(data, selected_oems, year_view, show_logos)
 else:
