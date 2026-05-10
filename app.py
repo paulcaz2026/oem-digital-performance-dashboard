@@ -1369,7 +1369,7 @@ def render_exec_summary(data, market, selected_oems):
     c3.metric("2025 conversion", f"{conv_2025:.2f}%", f"{conv_2025 - conv_2024:+.2f}pp")
     c4.metric("Visits to sale", f"{(total_uv / total_sales):,.0f}" if total_sales else "n/a")
 
-    render_top10_glance(data, market, selected_oems)
+    render_market_top10_inline(data, market, selected_oems)
 
     st.markdown('<div class="section-kicker">Performance visuals — YoY growth and visitor scale</div>', unsafe_allow_html=True)
     render_exec_visuals(data, market, selected_oems)
@@ -1600,7 +1600,7 @@ def fmt_short_num(value):
     return f"{v:,.0f}"
 
 
-def render_top10_glance(data, market, selected_oems):
+def render_market_top10_inline(data, market, selected_oems):
     yoy = get_yoy_table(data, market, selected_oems)
     if yoy.empty:
         return
@@ -1650,6 +1650,56 @@ def render_top10_glance(data, market, selected_oems):
 
 
 
+
+def render_market_top10_inline(data, market, selected_oems):
+    yoy = get_yoy_table(data, market, selected_oems)
+    if yoy.empty:
+        st.info("No Top 10 data available for this selection.")
+        return
+
+    top = yoy.sort_values("UniqueVisitors_2025", ascending=False).head(10).copy()
+    top["Rank"] = range(1, len(top) + 1)
+
+    def short_num(value):
+        v = float(value)
+        if abs(v) >= 1_000_000:
+            return f"{v/1_000_000:.2f}M"
+        if abs(v) >= 1_000:
+            return f"{v/1_000:.1f}K"
+        return f"{v:,.0f}"
+
+    rows = []
+    for _, r in top.iterrows():
+        rows.append({
+            "#": int(r["Rank"]),
+            "Brand": r["OEM"],
+            "Visits 2025": short_num(r["UniqueVisitors_2025"]),
+            "Visits 2024": short_num(r["UniqueVisitors_2024"]),
+            "Visitor YoY": f"{r['Visitors YoY %']:+.1f}%",
+            "Passenger sales": f"{r['Sales_2025']:,.0f}",
+            "Conv rate": f"{r['ConversionPct_2025']:.2f}%",
+            "Conv var": f"{r['Conv Var pp']:+.2f}pp",
+        })
+
+    table = pd.DataFrame(rows)
+
+    def style_yoy(val):
+        text = str(val)
+        if text.startswith("+"):
+            return "background-color: #DDF8EC; color: #12C76B; font-weight: 700;"
+        if text.startswith("-"):
+            return "background-color: #FFE5EF; color: #FF2F6D; font-weight: 700;"
+        return "background-color: #EEF2F6; color: #6F6F6F; font-weight: 700;"
+
+    st.markdown('<div class="section-kicker">Top 10 brands at a glance</div>', unsafe_allow_html=True)
+    st.dataframe(
+        table.style.map(style_yoy, subset=["Visitor YoY", "Conv var"]),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
+
 def render_market_performance_page(data, market, selected_oems):
     st.markdown(f'<div class="section-kicker">Market performance — {market} OEM cohort</div>', unsafe_allow_html=True)
 
@@ -1675,7 +1725,7 @@ def render_market_performance_page(data, market, selected_oems):
     c3.metric("2025 conversion", f"{conv_2025:.2f}%", f"{conv_2025 - conv_2024:+.2f}pp")
     c4.metric("Visits to sale", f"{(total_uv / total_sales):,.0f}" if total_sales else "n/a")
 
-    render_top10_glance(data, market, selected_oems)
+    render_market_top10_inline(data, market, selected_oems)
 
     st.markdown('<div class="section-kicker">Performance visuals — YoY growth and visitor scale</div>', unsafe_allow_html=True)
     render_exec_visuals(data, market, selected_oems)
