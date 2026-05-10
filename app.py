@@ -644,19 +644,41 @@ def get_market_data(data, market, year, selected_oems=None):
     return df
 
 
+
 def get_yoy_table(data, market, selected_oems=None):
+    """Return a stable 2024-vs-2025 comparison table.
+
+    Internal column names are intentionally stable and must not be renamed for display copy.
+    """
     d24 = get_market_data(data, market, 2024, selected_oems)
     d25 = get_market_data(data, market, 2025, selected_oems)
 
     if d24.empty or d25.empty:
         return pd.DataFrame()
 
-    merged = d25.merge(d24, on=["OEM", "Market"], suffixes=("_2025", "_2024"))
+    merged = d25.merge(
+        d24,
+        on=["OEM", "Market"],
+        suffixes=("_2025", "_2024"),
+        how="inner",
+    )
 
     if merged.empty:
-        return merged
+        return pd.DataFrame()
 
-    # Stable internal calculation columns. Do not rename these for display purposes.
+    required = [
+        "Sales_2025",
+        "Sales_2024",
+        "UniqueVisitors_2025",
+        "UniqueVisitors_2024",
+        "ConversionPct_2025",
+        "ConversionPct_2024",
+    ]
+    missing = [c for c in required if c not in merged.columns]
+    if missing:
+        st.error(f"Missing required YoY columns: {missing}")
+        return pd.DataFrame()
+
     merged["Sales YoY %"] = (merged["Sales_2025"] / merged["Sales_2024"] - 1) * 100
     merged["Visitors YoY %"] = (merged["UniqueVisitors_2025"] / merged["UniqueVisitors_2024"] - 1) * 100
     merged["Conv Var pp"] = merged["ConversionPct_2025"] - merged["ConversionPct_2024"]
@@ -964,12 +986,12 @@ def generate_insight_cards(data, market, selected_oems):
 
     cards = []
 
-    yoy["Sales YoY vs 2024 % safe"] = yoy["Sales YoY %"].replace([float("inf"), float("-inf")], pd.NA)
+    yoy["Sales YoY % safe"] = yoy["Sales YoY %"].replace([float("inf"), float("-inf")], pd.NA)
     yoy["Visitors YoY % safe"] = yoy["Visitors YoY %"].replace([float("inf"), float("-inf")], pd.NA)
-    yoy["Sales Efficiency Gap"] = yoy["Sales YoY vs 2024 % safe"] - yoy["Visitors YoY % safe"]
+    yoy["Sales Efficiency Gap"] = yoy["Sales YoY % safe"] - yoy["Visitors YoY % safe"]
 
     top_conv = yoy.sort_values("ConversionPct_2025", ascending=False).iloc[0]
-    top_sales_growth = yoy.sort_values("Sales YoY vs 2024 % safe", ascending=False).iloc[0]
+    top_sales_growth = yoy.sort_values("Sales YoY % safe", ascending=False).iloc[0]
     top_traffic_growth = yoy.sort_values("Visitors YoY % safe", ascending=False).iloc[0]
     worst_conv_decline = yoy.sort_values("Conv Var pp", ascending=True).iloc[0]
     weakest_conv = yoy.sort_values("ConversionPct_2025", ascending=True).iloc[0]
@@ -1185,6 +1207,24 @@ def render_footer_notes():
         unsafe_allow_html=True,
     )
 
+
+
+
+def validate_dashboard_data(data):
+    """Lightweight validation used during startup to catch broken YoY logic."""
+    for market in ["MM5", "UK", "France", "Germany", "Italy", "Spain"]:
+        yoy = get_yoy_table(data, market, None)
+        if yoy.empty:
+            continue
+        required = [
+            "Sales_2025", "Sales_2024",
+            "UniqueVisitors_2025", "UniqueVisitors_2024",
+            "Sales YoY %", "Visitors YoY %", "Conv Var pp",
+        ]
+        missing = [c for c in required if c not in yoy.columns]
+        if missing:
+            raise ValueError(f"{market} YoY table missing columns: {missing}")
+    return True
 
 def render_hero():
     st.markdown(
@@ -1572,8 +1612,8 @@ def render_market_weakness_summary(data):
                 "Benchmark leader": leader["OEM"],
                 "Leader conversion": leader["ConversionPct_2025"],
                 "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
-                "Sales YoY vs 2024": row["Sales YoY %"],
-                "Visitor YoY vs 2024": row["Visitors YoY %"],
+                "Sales YoY %": row["Sales YoY %"],
+                "Visitors YoY %": row["Visitors YoY %"],
             })
 
     if not rows:
@@ -1585,7 +1625,7 @@ def render_market_weakness_summary(data):
     row_html = ""
     for _, r in summary.iterrows():
         gap_badge = badge_html(r["Gap to leader"], suffix="pp")
-        sales_badge = badge_html(r["Sales YoY vs 2024"], suffix="%")
+        sales_badge = badge_html(r["Sales YoY %"], suffix="%")
         visitor_badge = badge_html(r["Visitors YoY %"], suffix="%")
 
         row_html += (
@@ -1873,7 +1913,7 @@ def render_market_top10_inline(data, market, selected_oems):
 
     st.markdown('<div class="section-kicker">Top 10 brands at a glance</div>', unsafe_allow_html=True)
     st.dataframe(
-        table.style.map(style_yoy, subset=["Visitor YoY vs 2024", "Conv var vs 2024"]),
+        table.style.map(style_yoy, subset=["Visitors YoY %", "Conv var vs 2024"]),
         use_container_width=True,
         hide_index=True,
     )
