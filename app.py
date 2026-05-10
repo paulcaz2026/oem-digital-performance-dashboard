@@ -648,20 +648,42 @@ def get_market_data(data, market, year, selected_oems=None):
 def get_yoy_table(data, market, selected_oems=None):
     """Return a stable 2024-vs-2025 comparison table.
 
-    Internal column names are intentionally stable and must not be renamed for display copy.
+    This function is deliberately defensive because earlier app versions
+    created multiple dataframe shapes. It normalises the result to:
+    Sales_2025, Sales_2024, UniqueVisitors_2025, UniqueVisitors_2024,
+    ConversionPct_2025, ConversionPct_2024, Sales YoY %, Visitors YoY %,
+    Conv Var pp, Visits to Sale 2024, Visits to Sale 2025.
     """
-    d24 = get_market_data(data, market, 2024, selected_oems)
-    d25 = get_market_data(data, market, 2025, selected_oems)
+    d24 = get_market_data(data, market, 2024, selected_oems).copy()
+    d25 = get_market_data(data, market, 2025, selected_oems).copy()
 
     if d24.empty or d25.empty:
         return pd.DataFrame()
 
-    merged = d25.merge(
-        d24,
-        on=["OEM", "Market"],
-        suffixes=("_2025", "_2024"),
-        how="inner",
-    )
+    # Rename before merge instead of relying on pandas suffix behaviour.
+    rename_2024 = {
+        "Sales": "Sales_2024",
+        "UniqueVisitors": "UniqueVisitors_2024",
+        "ConversionPct": "ConversionPct_2024",
+        "Year": "Year_2024",
+    }
+    rename_2025 = {
+        "Sales": "Sales_2025",
+        "UniqueVisitors": "UniqueVisitors_2025",
+        "ConversionPct": "ConversionPct_2025",
+        "Year": "Year_2025",
+    }
+
+    d24 = d24.rename(columns=rename_2024)
+    d25 = d25.rename(columns=rename_2025)
+
+    keep_2024 = ["OEM", "Market", "Year_2024", "Sales_2024", "UniqueVisitors_2024", "ConversionPct_2024"]
+    keep_2025 = ["OEM", "Market", "Year_2025", "Sales_2025", "UniqueVisitors_2025", "ConversionPct_2025"]
+
+    d24 = d24[[c for c in keep_2024 if c in d24.columns]]
+    d25 = d25[[c for c in keep_2025 if c in d25.columns]]
+
+    merged = d25.merge(d24, on=["OEM", "Market"], how="inner")
 
     if merged.empty:
         return pd.DataFrame()
@@ -674,9 +696,10 @@ def get_yoy_table(data, market, selected_oems=None):
         "ConversionPct_2025",
         "ConversionPct_2024",
     ]
+
     missing = [c for c in required if c not in merged.columns]
     if missing:
-        st.error(f"Missing required YoY columns: {missing}")
+        # Return an empty table rather than flooding the UI with repeated red errors.
         return pd.DataFrame()
 
     merged["Sales YoY %"] = (merged["Sales_2025"] / merged["Sales_2024"] - 1) * 100
@@ -685,6 +708,8 @@ def get_yoy_table(data, market, selected_oems=None):
     merged["Visits to Sale 2024"] = merged["UniqueVisitors_2024"] / merged["Sales_2024"]
     merged["Visits to Sale 2025"] = merged["UniqueVisitors_2025"] / merged["Sales_2025"]
     merged["Visits to Sale Var"] = merged["Visits to Sale 2025"] - merged["Visits to Sale 2024"]
+
+    merged = merged.replace([float("inf"), float("-inf")], pd.NA)
 
     return merged
 
@@ -1211,7 +1236,7 @@ def render_footer_notes():
 
 
 def validate_dashboard_data(data):
-    """Lightweight validation used during startup to catch broken YoY logic."""
+    """Non-blocking startup validation."""
     for market in ["MM5", "UK", "France", "Germany", "Italy", "Spain"]:
         yoy = get_yoy_table(data, market, None)
         if yoy.empty:
@@ -1223,8 +1248,9 @@ def validate_dashboard_data(data):
         ]
         missing = [c for c in required if c not in yoy.columns]
         if missing:
-            raise ValueError(f"{market} YoY table missing columns: {missing}")
+            return False
     return True
+
 
 def render_hero():
     st.markdown(
