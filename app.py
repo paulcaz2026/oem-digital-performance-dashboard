@@ -528,16 +528,11 @@ with st.expander("Data definition and caveats", expanded=False):
         """
     )
 
-uploaded = st.sidebar.file_uploader(
-    "Optional: upload replacement Excel file",
-    type=["xlsx"],
-    help="Leave blank to use the bundled workbook."
-)
-
-data = load_data(uploaded)
+data = load_data(None)
 available_oems = sorted(data["OEM"].unique())
 
 st.sidebar.header("Filters")
+st.sidebar.caption("Using the bundled Excel dataset from GitHub.")
 
 year_view = st.sidebar.selectbox(
     "Year view",
