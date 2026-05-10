@@ -841,6 +841,53 @@ def make_market_insight(kind, market, title, copy, metric, tag):
     """
 
 
+def get_market_action_narrative(brand, market, row, leader, gap):
+    sales_yoy = row["Sales YoY %"]
+    visitor_yoy = row["Visitors YoY %"]
+    conv_var = row["Conv Var pp"]
+
+    if market == "Germany":
+        return (
+            f"Germany is the toughest conversion gap for {brand}. {leader['OEM']} sets the benchmark at {leader['ConversionPct_2025']:.2f}% versus {brand} at {row['ConversionPct_2025']:.2f}%. "
+            "Recommendation: prioritise retailer hand-off quality, availability messaging and high-intent model pages; Germany needs fewer generic visits and more purchase-ready journeys."
+        )
+
+    if market == "UK":
+        return (
+            f"In the UK, {brand} is losing efficiency against {leader['OEM']} with a {gap:+.2f}pp conversion gap. "
+            "Recommendation: tighten the lower funnel around enquiry forms, test-drive booking, used/new stock routing and finance CTAs; this is where visitor intent is most likely leaking."
+        )
+
+    if market == "France":
+        return (
+            f"France shows a conversion gap of {gap:+.2f}pp for {brand} versus {leader['OEM']}. "
+            "Recommendation: localise offer visibility and dealer follow-up prompts; the opportunity is to turn browsing into configured, dealer-ready demand."
+        )
+
+    if market == "Italy":
+        return (
+            f"In Italy, {brand} conversion is {row['ConversionPct_2025']:.2f}% with sales YoY at {sales_yoy:+.1f}% and visitor YoY at {visitor_yoy:+.1f}%. "
+            "Recommendation: focus on reducing friction between model discovery and contact request; Italy looks like a journey-efficiency problem rather than a pure awareness problem."
+        )
+
+    if market == "Spain":
+        return (
+            f"Spain is relatively more resilient, but {brand} still trails {leader['OEM']} by {gap:+.2f}pp. "
+            "Recommendation: protect momentum by scaling the highest-converting traffic sources and making offer, stock and lead response paths more prominent."
+        )
+
+    if visitor_yoy > sales_yoy and conv_var < 0:
+        return (
+            f"{brand} is attracting more traffic than sales growth justifies. Visitor YoY is {visitor_yoy:+.1f}% versus sales YoY of {sales_yoy:+.1f}%. "
+            "Recommendation: audit traffic quality and landing-page intent; growth is only useful if it moves customers closer to contract."
+        )
+
+    return (
+        f"{brand} has a {gap:+.2f}pp gap to {leader['OEM']} and conversion moved {conv_var:+.2f}pp YoY. "
+        "Recommendation: prioritise the highest-intent steps in the contract funnel and remove friction from enquiry, finance and stock discovery."
+    )
+
+
 def generate_toyota_lexus_market_cards(data):
     cards = []
     for market in ["UK", "France", "Germany", "Italy", "Spain"]:
@@ -857,21 +904,18 @@ def generate_toyota_lexus_market_cards(data):
             leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
             gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
 
-            # prioritise biggest gaps and negative sales/traffic mismatches
             severity = abs(gap) + (0.5 if row["Sales YoY %"] < 0 else 0) + (0.25 if row["Visitors YoY %"] > row["Sales YoY %"] else 0)
             kind = "risk" if gap < -0.75 or row["Sales YoY %"] < 0 else "opportunity"
 
-            title = f"{brand}: close the gap to {leader['OEM']}"
-            copy = (
-                f"{brand} converts at {row['ConversionPct_2025']:.2f}% versus {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%, "
-                f"a {gap:+.2f}pp gap. Sales YoY is {row['Sales YoY %']:+.1f}% and visitor YoY is {row['Visitors YoY %']:+.1f}%. "
-                "The action is to improve website-to-contract progression: stock visibility, offer clarity, finance UX and lead response quality."
-            )
+            title = f"{brand}: {market} conversion gap to {leader['OEM']}"
+            copy = get_market_action_narrative(brand, market, row, leader, gap)
             metric = f"{gap:+.2f}pp gap"
             cards.append((severity, make_market_insight(kind, market, title, copy, metric, f"{brand} recommendation")))
 
     cards = sorted(cards, key=lambda x: x[0], reverse=True)
     return [card for _, card in cards[:8]]
+
+
 
 
 def make_insight(kind, title, copy, metric, tag):
@@ -1136,7 +1180,7 @@ def render_hero():
             </div>
             <div class="hero-title">OEM Omnichannel Conversion Funnel</div>
             <div class="hero-subtitle">
-                Website-to-contract conversion view across MM5. Explore how unique visitor demand converts into passenger car customer contracts, and where Toyota/Lexus under- or over-perform by market.
+                Website to customer contract conversion across MM5. Explores how unique visitors demand converts into passenger new car customer contracts, and where Toyota/Lexus under- or over-perform by market.
             </div>
         </div>
         """,
@@ -1541,6 +1585,69 @@ def render_gap_analysis_page(data, market, selected_oems):
                 st.markdown(card, unsafe_allow_html=True)
 
     render_footer_notes()
+
+
+
+def fmt_short_num(value):
+    try:
+        v = float(value)
+    except Exception:
+        return "n/a"
+    if abs(v) >= 1_000_000:
+        return f"{v/1_000_000:.2f}M"
+    if abs(v) >= 1_000:
+        return f"{v/1_000:.1f}K"
+    return f"{v:,.0f}"
+
+
+def render_top10_glance(data, market, selected_oems):
+    yoy = get_yoy_table(data, market, selected_oems)
+    if yoy.empty:
+        return
+
+    top = yoy.sort_values("UniqueVisitors_2025", ascending=False).head(10).copy()
+    top["Rank"] = range(1, len(top) + 1)
+
+    colors = ["#2563EB", "#B544F4", "#FFB000", "#FF3B77", "#FF7A1A", "#27C59A", "#27C59A", "#4C78FF", "#B544F4", "#22B8CF"]
+
+    row_html = ""
+    for idx, (_, r) in enumerate(top.iterrows()):
+        row_html += (
+            "<tr>"
+            f"<td class='rank-cell'>{int(r['Rank'])}</td>"
+            f"<td><span class='brand-dot' style='background:{colors[idx % len(colors)]};'></span><b>{r['OEM']}</b></td>"
+            f"<td>{fmt_short_num(r['UniqueVisitors_2025'])}</td>"
+            f"<td>{fmt_short_num(r['UniqueVisitors_2024'])}</td>"
+            f"<td>{badge_html(r['Visitors YoY %'])}</td>"
+            f"<td>{r['Sales_2025']:,.0f}</td>"
+            f"<td>{r['ConversionPct_2025']:.2f}%</td>"
+            f"<td>{r['Conv Var pp']:+.2f}pp</td>"
+            "</tr>"
+        )
+
+    table_html = (
+        "<div class='section-kicker'>Top 10 brands at a glance</div>"
+        "<div class='top-table-wrap'>"
+        "<table class='top-table'>"
+        "<thead>"
+        "<tr>"
+        "<th>#</th>"
+        "<th>Brand</th>"
+        "<th>Visits 2025</th>"
+        "<th>Visits 2024</th>"
+        "<th>YoY</th>"
+        "<th>Passenger sales</th>"
+        "<th>Conv rate</th>"
+        "<th>Conv var</th>"
+        "</tr>"
+        "</thead>"
+        f"<tbody>{row_html}</tbody>"
+        "</table>"
+        "</div>"
+    )
+
+    st.markdown(table_html, unsafe_allow_html=True)
+
 
 
 def render_market_performance_page(data, market, selected_oems):
