@@ -1385,7 +1385,7 @@ def render_exec_summary(data, market, selected_oems):
                 st.markdown(card, unsafe_allow_html=True)
 
     render_market_weakness_summary(data)
-    render_definitions_tooltips()
+    render_footer_notes()
 
 
 
@@ -1743,7 +1743,7 @@ def render_market_performance_page(data, market, selected_oems):
             with col:
                 st.markdown(card, unsafe_allow_html=True)
 
-    render_definitions_tooltips()
+    render_footer_notes()
 
 
 def render_bubble_page(data, selected_oems, year_view, show_logos):
