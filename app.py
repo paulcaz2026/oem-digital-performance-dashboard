@@ -301,6 +301,69 @@ div[data-testid="stPlotlyChart"] {
     padding: 10px;
     box-shadow: 0 1px 8px rgba(0,0,0,.035);
 }
+
+.tl-detail-card {
+    background: #ffffff;
+    border: 1px solid #e6e9ed;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 1px 8px rgba(0,0,0,.035);
+    min-height: 260px;
+}
+.tl-detail-logo {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 18px;
+}
+.tl-detail-logo img {
+    max-height: 42px;
+    max-width: 230px;
+    object-fit: contain;
+}
+.tl-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+.tl-detail-metric {
+    background: #F7F9FC;
+    border-radius: 12px;
+    padding: 14px;
+    min-height: 120px;
+}
+.tl-detail-label {
+    color: #6F7782;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.tl-detail-value {
+    color: #000000;
+    font-size: 30px;
+    line-height: 1.1;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+.tl-detail-delta-pos {
+    display: inline-block;
+    background: #DDF8EC;
+    color: #128A3A;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+}
+.tl-detail-delta-neg {
+    display: inline-block;
+    background: #FFE5EF;
+    color: #D33F49;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -557,6 +620,50 @@ def render_brand_strip():
     )
 
 
+def delta_class_for_html(value):
+    try:
+        return "tl-detail-delta-pos" if float(value) >= 0 else "tl-detail-delta-neg"
+    except Exception:
+        return "tl-detail-delta-pos"
+
+
+def brand_detail_html(brand, row, logo, logo_height="38px"):
+    if row is None:
+        return (
+            "<div class='tl-detail-card'>"
+            f"<div class='tl-detail-logo'><img src='{logo}' style='height:{logo_height};'></div>"
+            f"<p>No {brand} data available for this market.</p>"
+            "</div>"
+        )
+
+    conv_delta_class = delta_class_for_html(row["Conv Var pp"])
+    sales_delta_class = delta_class_for_html(row["Sales YoY %"])
+    visitor_delta_class = delta_class_for_html(row["Visitors YoY %"])
+
+    return (
+        "<div class='tl-detail-card'>"
+        f"<div class='tl-detail-logo'><img src='{logo}' style='height:{logo_height};' alt='{brand} logo'></div>"
+        "<div class='tl-detail-grid'>"
+        "<div class='tl-detail-metric'>"
+        "<div class='tl-detail-label'>2025 conversion</div>"
+        f"<div class='tl-detail-value'>{row['ConversionPct_2025']:.2f}%</div>"
+        f"<div class='{conv_delta_class}'>{fmt_pp(row['Conv Var pp'])} vs 2024</div>"
+        "</div>"
+        "<div class='tl-detail-metric'>"
+        "<div class='tl-detail-label'>2025 passenger sales</div>"
+        f"<div class='tl-detail-value'>{fmt_int(row['Sales_2025'])}</div>"
+        f"<div class='{sales_delta_class}'>{fmt_pct(row['Sales YoY %'])} vs 2024</div>"
+        "</div>"
+        "<div class='tl-detail-metric'>"
+        "<div class='tl-detail-label'>2025 unique visitors</div>"
+        f"<div class='tl-detail-value'>{fmt_int(row['UniqueVisitors_2025'])}</div>"
+        f"<div class='{visitor_delta_class}'>{fmt_pct(row['Visitors YoY %'])} vs 2024</div>"
+        "</div>"
+        "</div>"
+        "</div>"
+    )
+
+
 def render_brand_detail(data, market):
     section("2025 Toyota & Lexus performance vs 2024")
     yoy = yoy_table(data, market, None)
@@ -564,40 +671,21 @@ def render_brand_detail(data, market):
     lexus = get_row(yoy, "Lexus")
 
     cols = st.columns(2)
-    for col, brand, row, logo, logo_height in [
-        (cols[0], "Toyota", toyota, TOYOTA_LOGO, "38px"),
-        (cols[1], "Lexus", lexus, LEXUS_LOGO, "28px"),
-    ]:
-        with col:
-            if row is None:
-                st.info(f"No {brand} data available for {market}.")
-                continue
-
-            st.markdown(
-                f"""
-                <div class="card">
-                    <img src="{logo}" style="height:{logo_height};max-width:220px;margin-bottom:18px;">
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            c1, c2, c3 = st.columns(3)
-            c1.metric("2025 conversion", f"{row['ConversionPct_2025']:.2f}%", f"{fmt_pp(row['Conv Var pp'])} vs 2024")
-            c2.metric("2025 passenger sales", fmt_int(row["Sales_2025"]), f"{fmt_pct(row['Sales YoY %'])} vs 2024")
-            c3.metric("2025 unique visitors", fmt_int(row["UniqueVisitors_2025"]), f"{fmt_pct(row['Visitors YoY %'])} vs 2024")
+    with cols[0]:
+        st.markdown(brand_detail_html("Toyota", toyota, TOYOTA_LOGO, "42px"), unsafe_allow_html=True)
+    with cols[1]:
+        st.markdown(brand_detail_html("Lexus", lexus, LEXUS_LOGO, "30px"), unsafe_allow_html=True)
 
 
 def benchmark_card(title, copy, metric):
-    st.markdown(
-        f"""
-        <div class="card">
-            <div class="benchmark-title">{title}</div>
-            <div class="benchmark-copy">{copy}</div>
-            <div class="benchmark-metric">{metric}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        "<div class='card'>"
+        f"<div class='benchmark-title'>{title}</div>"
+        f"<div class='benchmark-copy'>{copy}</div>"
+        f"<div class='benchmark-metric'>{metric}</div>"
+        "</div>"
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_benchmark_cards(data, market):
@@ -668,17 +756,17 @@ def render_market_weakness(data):
 
 def make_insight(kind, title, copy, metric, tag, market=None):
     label = {"opportunity": "Opportunity", "risk": "Risk Alert", "intelligence": "Intelligence"}[kind]
-    flag = f'<div class="market-flag">{market}</div>' if market else ""
-    return f"""
-    <div class="insight-card {kind}">
-        {flag}
-        <div class="insight-label {kind}">{label}</div>
-        <div class="insight-title">{title}</div>
-        <div class="insight-copy">{copy}</div>
-        <div class="insight-metric">{metric}</div>
-        <div class="tag">{tag}</div>
-    </div>
-    """
+    flag = f"<div class='market-flag'>{market}</div>" if market else ""
+    return (
+        f"<div class='insight-card {kind}'>"
+        f"{flag}"
+        f"<div class='insight-label {kind}'>{label}</div>"
+        f"<div class='insight-title'>{title}</div>"
+        f"<div class='insight-copy'>{copy}</div>"
+        f"<div class='insight-metric'>{metric}</div>"
+        f"<div class='tag'>{tag}</div>"
+        f"</div>"
+    )
 
 
 def market_action_text(brand, market, row, leader, gap):
