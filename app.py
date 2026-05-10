@@ -372,6 +372,124 @@ st.markdown(
     div[data-testid="stMetricValue"] {{
         color: #000000;
     }}
+
+    .top-table-wrap {
+        background: #ffffff;
+        border: 1px solid #e6e9ed;
+        border-radius: 14px;
+        padding: 18px 22px;
+        box-shadow: 0 1px 8px rgba(0,0,0,.035);
+        margin: 16px 0 22px 0;
+    }
+
+    .top-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .top-table thead th {
+        background: #f5f6f8;
+        color: #8D96A0;
+        text-transform: uppercase;
+        letter-spacing: .18em;
+        font-size: 11px;
+        padding: 13px 14px;
+        text-align: left;
+        border-bottom: 1px solid #e1e5ea;
+    }
+
+    .top-table tbody td {
+        padding: 13px 14px;
+        border-bottom: 1px solid #edf0f2;
+        color: #0A2342;
+    }
+
+    .top-table tbody tr:nth-child(1) {
+        background: #f7f9fc;
+        font-weight: 700;
+    }
+
+    .rank-cell {
+        color: #8D96A0;
+        width: 50px;
+    }
+
+    .brand-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 8px;
+        background: #2563EB;
+    }
+
+    .badge-pos {
+        background: #DDF8EC;
+        color: #12C76B;
+        padding: 5px 9px;
+        border-radius: 6px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .badge-neg {
+        background: #FFE5EF;
+        color: #FF2F6D;
+        padding: 5px 9px;
+        border-radius: 6px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .badge-neutral {
+        background: #EEF2F6;
+        color: #6F6F6F;
+        padding: 5px 9px;
+        border-radius: 6px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .benchmark-card {
+        background: #ffffff;
+        border: 1px solid #e6e9ed;
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 1px 8px rgba(0,0,0,.035);
+        min-height: 155px;
+    }
+
+    .benchmark-title {
+        font-size: 17px;
+        font-weight: 800;
+        color: #0A2342;
+        margin-bottom: 8px;
+    }
+
+    .benchmark-copy {
+        color: #6F7782;
+        line-height: 1.45;
+        font-size: 14px;
+    }
+
+    .benchmark-metric {
+        font-size: 26px;
+        color: #0A2342;
+        margin-top: 10px;
+    }
+
+    .freshness {
+        display: inline-block;
+        background: #F3F3F3;
+        border-left: 5px solid #009FE3;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        color: #0A2342;
+        margin-bottom: 18px;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -1070,7 +1188,188 @@ def render_exec_visuals(data, market, selected_oems):
         )
 
 
+
+
+def badge_html(value, suffix="%"):
+    try:
+        v = float(value)
+    except Exception:
+        return '<span class="badge-neutral">n/a</span>'
+    cls = "badge-pos" if v > 0 else "badge-neg" if v < 0 else "badge-neutral"
+    sign = "+" if v > 0 else ""
+    return f'<span class="{cls}">{sign}{v:.1f}{suffix}</span>'
+
+
+def fmt_short_num(value):
+    try:
+        v = float(value)
+    except Exception:
+        return "n/a"
+    if abs(v) >= 1_000_000:
+        return f"{v/1_000_000:.2f}M"
+    if abs(v) >= 1_000:
+        return f"{v/1_000:.1f}K"
+    return f"{v:,.0f}"
+
+
+def render_top10_glance(data, market, selected_oems):
+    yoy = get_yoy_table(data, market, selected_oems)
+    if yoy.empty:
+        return
+
+    top = yoy.sort_values("UniqueVisitors_2025", ascending=False).head(10).copy()
+    top["Rank"] = range(1, len(top) + 1)
+
+    rows = []
+    colors = ["#2563EB", "#B544F4", "#FFB000", "#FF3B77", "#FF7A1A", "#27C59A", "#27C59A", "#4C78FF", "#B544F4", "#22B8CF"]
+
+    for idx, (_, r) in enumerate(top.iterrows()):
+        pages_placeholder = "—"
+        duration_placeholder = "—"
+        bounce_placeholder = "—"
+        rows.append(
+            f"""
+            <tr>
+                <td class="rank-cell">{int(r['Rank'])}</td>
+                <td><span class="brand-dot" style="background:{colors[idx % len(colors)]};"></span><b>{r['OEM']}</b></td>
+                <td>{fmt_short_num(r['UniqueVisitors_2025'])}</td>
+                <td>{fmt_short_num(r['UniqueVisitors_2024'])}</td>
+                <td>{badge_html(r['Visitors YoY %'])}</td>
+                <td>{r['Sales_2025']:,.0f}</td>
+                <td>{r['ConversionPct_2025']:.2f}%</td>
+                <td>{r['Conv Var pp']:+.2f}pp</td>
+            </tr>
+            """
+        )
+
+    table = f"""
+    <div class="section-kicker">Top 10 brands at a glance</div>
+    <div class="top-table-wrap">
+        <table class="top-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Brand</th>
+                    <th>Visits 2025</th>
+                    <th>Visits 2024</th>
+                    <th>YoY</th>
+                    <th>Passenger sales</th>
+                    <th>Conv rate</th>
+                    <th>Conv var</th>
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(rows)}
+            </tbody>
+        </table>
+    </div>
+    """
+    st.markdown(table, unsafe_allow_html=True)
+
+
+def benchmark_card_html(title, copy, metric):
+    return f"""
+    <div class="benchmark-card">
+        <div class="benchmark-title">{title}</div>
+        <div class="benchmark-copy">{copy}</div>
+        <div class="benchmark-metric">{metric}</div>
+    </div>
+    """
+
+
+def render_toyota_lexus_benchmarks(data, market):
+    yoy_all = get_yoy_table(data, market, None)
+    if yoy_all.empty:
+        return
+
+    st.markdown('<div class="section-kicker">Toyota / Lexus benchmark callouts</div>', unsafe_allow_html=True)
+
+    cards = []
+
+    for brand, cohort in [
+        ("Toyota", TOYOTA_SET),
+        ("Lexus", LEXUS_SET),
+    ]:
+        row = get_row(yoy_all, brand)
+        cohort_df = yoy_all[yoy_all["OEM"].isin(cohort)].copy()
+
+        if row is None or cohort_df.empty:
+            continue
+
+        cohort_df["Conv Rank"] = cohort_df["ConversionPct_2025"].rank(method="min", ascending=False)
+        brand_rank = int(cohort_df.loc[cohort_df["OEM"].str.lower() == brand.lower(), "Conv Rank"].iloc[0])
+        leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+        gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
+        visits_to_sale_gap = row["Visits to Sale 2025"] - leader["Visits to Sale 2025"]
+
+        copy = (
+            f"{brand} ranks #{brand_rank} of {len(cohort_df)} in its benchmark set. "
+            f"The conversion gap to {leader['OEM']} is {gap:+.2f}pp. "
+            f"Visits-to-sale gap is {visits_to_sale_gap:+.0f}."
+        )
+
+        metric = f"{row['ConversionPct_2025']:.2f}% conv"
+        cards.append(benchmark_card_html(f"{brand} benchmark", copy, metric))
+
+    if cards:
+        cols = st.columns(len(cards))
+        for col, card in zip(cols, cards):
+            with col:
+                st.markdown(card, unsafe_allow_html=True)
+
+
+def render_market_weakness_summary(data):
+    st.markdown('<div class="section-kicker">Market weakness summary — Toyota & Lexus</div>', unsafe_allow_html=True)
+
+    rows = []
+    for market in ["UK", "France", "Germany", "Italy", "Spain"]:
+        yoy = get_yoy_table(data, market, None)
+        if yoy.empty:
+            continue
+
+        for brand, cohort in [("Toyota", TOYOTA_SET), ("Lexus", LEXUS_SET)]:
+            row = get_row(yoy, brand)
+            cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
+            if row is None or cohort_df.empty:
+                continue
+            leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+            rows.append({
+                "Brand": brand,
+                "Market": market,
+                "2025 conversion": row["ConversionPct_2025"],
+                "Benchmark leader": leader["OEM"],
+                "Leader conversion": leader["ConversionPct_2025"],
+                "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
+                "Sales YoY": row["Sales YoY %"],
+                "Visitor YoY": row["Visitors YoY %"],
+            })
+
+    if not rows:
+        return
+
+    summary = pd.DataFrame(rows).sort_values("Gap to leader")
+
+    display = summary.copy()
+    display["2025 conversion"] = display["2025 conversion"].map(lambda v: f"{v:.2f}%")
+    display["Leader conversion"] = display["Leader conversion"].map(lambda v: f"{v:.2f}%")
+    display["Gap to leader"] = display["Gap to leader"].map(lambda v: f"{v:+.2f}pp")
+    display["Sales YoY"] = display["Sales YoY"].map(lambda v: f"{v:+.1f}%")
+    display["Visitor YoY"] = display["Visitor YoY"].map(lambda v: f"{v:+.1f}%")
+
+    st.dataframe(display, use_container_width=True, hide_index=True)
+
+
+def render_definitions_tooltips():
+    st.markdown('<div class="section-kicker">Metric definitions</div>', unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns(4)
+    c1.info("**Unique visitors**: Similarweb website audience measure.")
+    c2.info("**Passenger sales**: Marklines passenger car sales.")
+    c3.info("**Conversion rate**: passenger sales divided by unique visitors.")
+    c4.info("**Visits to sale**: unique visitors required for one passenger sale. Lower is better.")
+
+
 def render_exec_summary(data, market, selected_oems):
+    st.markdown('<div class="freshness">Data period: 2024–2025 | Sources: Marklines passenger car sales + Similarweb unique visitors</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="section-kicker">Executive insights — data-driven narratives from the {market} OEM cohort</div>', unsafe_allow_html=True)
 
     latest = get_market_data(data, market, 2025, selected_oems)
@@ -1097,6 +1396,13 @@ def render_exec_summary(data, market, selected_oems):
     c3.metric("2025 conversion", f"{conv_2025:.2f}%", f"{conv_2025 - conv_2024:+.2f}pp")
     c4.metric("Visits to sale", f"{(total_uv / total_sales):,.0f}" if total_sales else "n/a")
 
+    render_top10_glance(data, market, selected_oems)
+
+    st.markdown('<div class="section-kicker">Performance visuals — YoY growth and visitor scale</div>', unsafe_allow_html=True)
+    render_exec_visuals(data, market, selected_oems)
+
+    render_toyota_lexus_benchmarks(data, market)
+
     cards = generate_insight_cards(data, market, selected_oems)
 
     for i in range(0, len(cards), 3):
@@ -1105,8 +1411,9 @@ def render_exec_summary(data, market, selected_oems):
             with col:
                 st.markdown(card, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-kicker">Performance visuals — YoY growth and visitor scale</div>', unsafe_allow_html=True)
-    render_exec_visuals(data, market, selected_oems)
+    render_market_weakness_summary(data)
+    render_definitions_tooltips()
+
 
 
 def render_bubble_page(data, selected_oems, year_view, show_logos):
@@ -1217,7 +1524,7 @@ year_view = st.sidebar.selectbox(
 preset = st.sidebar.selectbox(
     "Preset",
     ["Toyota volume competitors", "Lexus premium competitors", "Chinese disruptors", "All OEMs"],
-    index=0,
+    index=3,
 )
 
 default_oems = preset_selection(preset, available_oems)
