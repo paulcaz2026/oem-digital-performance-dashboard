@@ -648,12 +648,16 @@ def get_yoy_table(data, market, selected_oems=None):
     d24 = get_market_data(data, market, 2024, selected_oems)
     d25 = get_market_data(data, market, 2025, selected_oems)
 
+    if d24.empty or d25.empty:
+        return pd.DataFrame()
+
     merged = d25.merge(d24, on=["OEM", "Market"], suffixes=("_2025", "_2024"))
 
     if merged.empty:
         return merged
 
-    merged["Sales YoY vs 2024 %"] = (merged["Sales_2025"] / merged["Sales_2024"] - 1) * 100
+    # Stable internal calculation columns. Do not rename these for display purposes.
+    merged["Sales YoY %"] = (merged["Sales_2025"] / merged["Sales_2024"] - 1) * 100
     merged["Visitors YoY %"] = (merged["UniqueVisitors_2025"] / merged["UniqueVisitors_2024"] - 1) * 100
     merged["Conv Var pp"] = merged["ConversionPct_2025"] - merged["ConversionPct_2024"]
     merged["Visits to Sale 2024"] = merged["UniqueVisitors_2024"] / merged["Sales_2024"]
@@ -693,7 +697,7 @@ def calculate_scorecard(data, market, selected_oems=None):
             "Visitors YoY %",
             "Passenger Sales 2024",
             "Passenger Sales 2025",
-            "Sales YoY vs 2024 %",
+            "Sales YoY %",
             "Conv Rate 2024",
             "Conv Rate 2025",
             "Conv Var pp",
@@ -734,7 +738,7 @@ def style_scorecard(scorecard):
     for col in ["Website Visitors 2024", "Website Visitors 2025", "Passenger Sales 2024", "Passenger Sales 2025"]:
         display[col] = display[col].map(lambda x: f"{x:,.0f}")
 
-    for col in ["Visitors YoY %", "Sales YoY vs 2024 %"]:
+    for col in ["Visitors YoY %", "Sales YoY %"]:
         display[col] = display[col].map(fmt_pct_delta)
 
     for col in ["Conv Rate 2024", "Conv Rate 2025"]:
@@ -747,7 +751,7 @@ def style_scorecard(scorecard):
 
     display["Conv Ranking"] = display["Conv Ranking"].map(rank_badge)
 
-    yoy_cols = ["Visitors YoY %", "Sales YoY vs 2024 %", "Conv Var pp"]
+    yoy_cols = ["Visitors YoY %", "Sales YoY %", "Conv Var pp"]
 
     def yoy_badge_style(value):
         text = str(value)
@@ -853,7 +857,7 @@ def make_market_insight(kind, market, title, copy, metric, tag):
 
 
 def get_market_action_narrative(brand, market, row, leader, gap):
-    sales_yoy = row["Sales YoY vs 2024 %"]
+    sales_yoy = row["Sales YoY %"]
     visitor_yoy = row["Visitors YoY %"]
     conv_var = row["Conv Var pp"]
 
@@ -915,8 +919,8 @@ def generate_toyota_lexus_market_cards(data):
             leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
             gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
 
-            severity = abs(gap) + (0.5 if row["Sales YoY vs 2024 %"] < 0 else 0) + (0.25 if row["Visitors YoY %"] > row["Sales YoY vs 2024 %"] else 0)
-            kind = "risk" if gap < -0.75 or row["Sales YoY vs 2024 %"] < 0 else "opportunity"
+            severity = abs(gap) + (0.5 if row["Sales YoY %"] < 0 else 0) + (0.25 if row["Visitors YoY %"] > row["Sales YoY %"] else 0)
+            kind = "risk" if gap < -0.75 or row["Sales YoY %"] < 0 else "opportunity"
 
             title = f"{brand}: {market} conversion gap to {leader['OEM']}"
             copy = get_market_action_narrative(brand, market, row, leader, gap)
@@ -960,7 +964,7 @@ def generate_insight_cards(data, market, selected_oems):
 
     cards = []
 
-    yoy["Sales YoY vs 2024 % safe"] = yoy["Sales YoY vs 2024 %"].replace([float("inf"), float("-inf")], pd.NA)
+    yoy["Sales YoY vs 2024 % safe"] = yoy["Sales YoY %"].replace([float("inf"), float("-inf")], pd.NA)
     yoy["Visitors YoY % safe"] = yoy["Visitors YoY %"].replace([float("inf"), float("-inf")], pd.NA)
     yoy["Sales Efficiency Gap"] = yoy["Sales YoY vs 2024 % safe"] - yoy["Visitors YoY % safe"]
 
@@ -987,7 +991,7 @@ def generate_insight_cards(data, market, selected_oems):
             "risk" if lexus["ConversionPct_2025"] < yoy["ConversionPct_2025"].median() else "opportunity",
             "Lexus: premium consideration is not converting hard enough",
             f"Lexus generated {lexus['UniqueVisitors_2025']:,.0f} visitors and {lexus['Sales_2025']:,.0f} sales in 2025. Conversion is {lexus['ConversionPct_2025']:.2f}%, with a YoY movement of {lexus['Conv Var pp']:+.2f}pp. The recommendation is sharper premium lead handling, finance/stock visibility and stronger lower-funnel retail prompts.",
-            f"{lexus['Sales YoY vs 2024 %']:+.1f}% sales YoY",
+            f"{lexus['Sales YoY %']:+.1f}% sales YoY",
             "Lexus recommendation"
         ))
 
@@ -1002,7 +1006,7 @@ def generate_insight_cards(data, market, selected_oems):
     cards.append(make_insight(
         "intelligence",
         f"{top_traffic_growth['OEM']}: fastest visitor growth",
-        f"{top_traffic_growth['OEM']} had the strongest visitor growth in the selected cohort. Visitor growth was {top_traffic_growth['Visitors YoY %']:+.1f}% YoY, while sales growth was {top_traffic_growth['Sales YoY vs 2024 %']:+.1f}%. This shows whether awareness is converting into actual demand.",
+        f"{top_traffic_growth['OEM']} had the strongest visitor growth in the selected cohort. Visitor growth was {top_traffic_growth['Visitors YoY %']:+.1f}% YoY, while sales growth was {top_traffic_growth['Sales YoY %']:+.1f}%. This shows whether awareness is converting into actual demand.",
         f"{top_traffic_growth['Visitors YoY %']:+.1f}% visits YoY",
         top_traffic_growth["OEM"]
     ))
@@ -1010,8 +1014,8 @@ def generate_insight_cards(data, market, selected_oems):
     cards.append(make_insight(
         "opportunity",
         f"{top_sales_growth['OEM']}: strongest sales growth",
-        f"{top_sales_growth['OEM']} posted the strongest passenger sales growth in the selected cohort. Sales increased {top_sales_growth['Sales YoY vs 2024 %']:+.1f}% YoY against visitor growth of {top_sales_growth['Visitors YoY %']:+.1f}%. This is the clearest signal of demand momentum.",
-        f"{top_sales_growth['Sales YoY vs 2024 %']:+.1f}% sales YoY",
+        f"{top_sales_growth['OEM']} posted the strongest passenger sales growth in the selected cohort. Sales increased {top_sales_growth['Sales YoY %']:+.1f}% YoY against visitor growth of {top_sales_growth['Visitors YoY %']:+.1f}%. This is the clearest signal of demand momentum.",
+        f"{top_sales_growth['Sales YoY %']:+.1f}% sales YoY",
         top_sales_growth["OEM"]
     ))
 
@@ -1415,7 +1419,7 @@ def render_exec_summary(data, market, selected_oems):
                 st.metric(
                     "Passenger sales",
                     f"{toyota_row['Sales_2025']:,.0f}",
-                    f"{toyota_row['Sales YoY vs 2024 %']:+.1f}% YoY",
+                    f"{toyota_row['Sales YoY %']:+.1f}% YoY",
                 )
                 st.metric(
                     "Unique visitors",
@@ -1441,7 +1445,7 @@ def render_exec_summary(data, market, selected_oems):
                 st.metric(
                     "Passenger sales",
                     f"{lexus_row['Sales_2025']:,.0f}",
-                    f"{lexus_row['Sales YoY vs 2024 %']:+.1f}% YoY",
+                    f"{lexus_row['Sales YoY %']:+.1f}% YoY",
                 )
                 st.metric(
                     "Unique visitors",
@@ -1568,7 +1572,7 @@ def render_market_weakness_summary(data):
                 "Benchmark leader": leader["OEM"],
                 "Leader conversion": leader["ConversionPct_2025"],
                 "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
-                "Sales YoY vs 2024": row["Sales YoY vs 2024 %"],
+                "Sales YoY vs 2024": row["Sales YoY %"],
                 "Visitor YoY vs 2024": row["Visitors YoY %"],
             })
 
@@ -1582,7 +1586,7 @@ def render_market_weakness_summary(data):
     for _, r in summary.iterrows():
         gap_badge = badge_html(r["Gap to leader"], suffix="pp")
         sales_badge = badge_html(r["Sales YoY vs 2024"], suffix="%")
-        visitor_badge = badge_html(r["Visitor YoY vs 2024"], suffix="%")
+        visitor_badge = badge_html(r["Visitors YoY %"], suffix="%")
 
         row_html += (
             "<tr>"
@@ -1651,7 +1655,7 @@ def brand_detail_card(brand, row, logo_url, logo_height="34px"):
         """
 
     conv_delta_class = delta_class(row["Conv Var pp"])
-    sales_delta_class = delta_class(row["Sales YoY vs 2024 %"])
+    sales_delta_class = delta_class(row["Sales YoY %"])
     visitor_delta_class = delta_class(row["Visitors YoY %"])
 
     return f"""
@@ -1668,7 +1672,7 @@ def brand_detail_card(brand, row, logo_url, logo_height="34px"):
             <div class="tl-mini-metric">
                 <div class="tl-mini-label">2025 passenger sales</div>
                 <div class="tl-mini-value">{row['Sales_2025']:,.0f}</div>
-                <div class="{sales_delta_class}">{row['Sales YoY vs 2024 %']:+.1f}% vs 2024</div>
+                <div class="{sales_delta_class}">{row['Sales YoY %']:+.1f}% vs 2024</div>
             </div>
             <div class="tl-mini-metric">
                 <div class="tl-mini-label">2025 unique visitors</div>
