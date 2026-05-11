@@ -717,6 +717,63 @@ div[data-testid="stPlotlyChart"] {
     border-radius:4px;
 }
 
+
+.bubble-control-note {
+    background:#F7F9FC;
+    border-left:6px solid #009FE3;
+    border-radius:14px;
+    padding:16px 18px;
+    color:#0A2342;
+    line-height:1.5;
+    margin: 8px 0 18px 0;
+}
+.bubble-side-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:16px;
+    padding:18px;
+    box-shadow:0 1px 8px rgba(0,0,0,.035);
+    max-height:720px;
+    overflow:auto;
+}
+.bubble-side-title {
+    color:#0A2342;
+    font-size:16px;
+    font-weight:800;
+    margin-bottom:12px;
+}
+.bubble-row {
+    display:grid;
+    grid-template-columns: 22px 1fr auto;
+    gap:8px;
+    align-items:center;
+    border-bottom:1px solid #EEF2F6;
+    padding:9px 0;
+}
+.bubble-row:last-child {
+    border-bottom:none;
+}
+.bubble-row-dot {
+    width:12px;
+    height:12px;
+    border-radius:4px;
+}
+.bubble-row-brand {
+    color:#0A2342;
+    font-weight:700;
+    font-size:13px;
+}
+.bubble-row-meta {
+    color:#8B95A1;
+    font-size:12px;
+}
+.bubble-row-value {
+    color:#0A2342;
+    font-weight:800;
+    font-size:13px;
+    text-align:right;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1378,9 +1435,30 @@ def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
         return fig
 
     max_sales = max(chart_df["Sales"].max(), 1)
-    max_x = max(chart_df["UniqueVisitors"].max() * 1.15, 1)
-    max_y = max(chart_df["ConversionPct"].max() * 1.20, 0.1)
+    max_x = max(chart_df["UniqueVisitors"].max() * 1.18, 1)
+    max_y = max(chart_df["ConversionPct"].max() * 1.25, 0.1)
 
+    selected_2025 = chart_df[chart_df["Year"] == 2025].copy()
+    x_mid = selected_2025["UniqueVisitors"].median() if not selected_2025.empty else chart_df["UniqueVisitors"].median()
+    y_mid = selected_2025["ConversionPct"].median() if not selected_2025.empty else chart_df["ConversionPct"].median()
+
+    # Quadrant background zones.
+    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=max_y, fillcolor="rgba(0,159,227,0.05)", line=dict(width=0), layer="below")
+    fig.add_shape(type="rect", x0=x_mid, x1=max_x, y0=y_mid, y1=max_y, fillcolor="rgba(18,199,107,0.07)", line=dict(width=0), layer="below")
+    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=0, y1=y_mid, fillcolor="rgba(111,111,111,0.04)", line=dict(width=0), layer="below")
+    fig.add_shape(type="rect", x0=x_mid, x1=max_x, y0=0, y1=y_mid, fillcolor="rgba(255,176,0,0.06)", line=dict(width=0), layer="below")
+
+    # Median guide lines.
+    fig.add_shape(type="line", x0=x_mid, x1=x_mid, y0=0, y1=max_y, line=dict(color="rgba(10,35,66,0.12)", width=1), layer="below")
+    fig.add_shape(type="line", x0=0, x1=max_x, y0=y_mid, y1=y_mid, line=dict(color="rgba(10,35,66,0.12)", width=1), layer="below")
+
+    # Quadrant labels.
+    fig.add_annotation(x=max_x * 0.02, y=max_y * 0.95, text="Efficient challengers", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="left")
+    fig.add_annotation(x=max_x * 0.98, y=max_y * 0.95, text="Leading players", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="right")
+    fig.add_annotation(x=max_x * 0.02, y=max_y * 0.06, text="Developing players", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="left")
+    fig.add_annotation(x=max_x * 0.98, y=max_y * 0.06, text="Scale without efficiency", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="right")
+
+    # Movement arrows from 2024 to 2025.
     if year_view == "2024 and 2025 + shift":
         for oem in selected_oems:
             d24 = chart_df[(chart_df["OEM"] == oem) & (chart_df["Year"] == 2024)]
@@ -1388,57 +1466,111 @@ def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
             if len(d24) and len(d25):
                 r24 = d24.iloc[0]
                 r25 = d25.iloc[0]
-                fig.add_trace(
-                    go.Scatter(
-                        x=[r24["UniqueVisitors"], r25["UniqueVisitors"]],
-                        y=[r24["ConversionPct"], r25["ConversionPct"]],
-                        mode="lines",
-                        line=dict(width=2, dash="dot", color="rgba(111,111,111,0.6)"),
-                        hoverinfo="skip",
-                        showlegend=False,
-                    )
+                cluster = cluster_for_oem(oem)
+                color = CLUSTER_COLORS.get(cluster, "#6F6F6F")
+                fig.add_annotation(
+                    x=r25["UniqueVisitors"],
+                    y=r25["ConversionPct"],
+                    ax=r24["UniqueVisitors"],
+                    ay=r24["ConversionPct"],
+                    xref="x",
+                    yref="y",
+                    axref="x",
+                    ayref="y",
+                    showarrow=True,
+                    arrowhead=3,
+                    arrowsize=1.2,
+                    arrowwidth=1.6,
+                    arrowcolor=color,
+                    opacity=0.78,
                 )
 
-    years = [2024, 2025] if year_view == "2024 and 2025 + shift" else [int(year_view)]
-    colors = {2024: VALTECH_BLUE, 2025: VALTECH_GREY}
-
-    for year in years:
-        df = chart_df[chart_df["Year"] == year].copy()
-        if df.empty:
-            continue
-        sizes = df["Sales"].apply(lambda s: max(18, math.sqrt(s / max_sales) * 74))
-        fig.add_trace(
-            go.Scatter(
-                x=df["UniqueVisitors"],
-                y=df["ConversionPct"],
-                mode="markers" if show_logos else "markers+text",
-                text=None if show_logos else df["OEM"],
-                textposition="top center",
-                name=str(year),
-                marker=dict(size=sizes, color=colors[year], opacity=0.68, line=dict(width=1.3, color="black")),
-                customdata=df[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct"]],
-                hovertemplate="<b>%{customdata[0]}</b><br>Market: %{customdata[1]}<br>Year: %{customdata[2]}<br>Sales: %{customdata[3]:,.0f}<br>Visitors: %{customdata[4]:,.0f}<br>Website-to-Contract Rate: %{customdata[5]:.2f}%<extra></extra>",
+    # 2024 faded markers.
+    if year_view == "2024 and 2025 + shift":
+        df24 = chart_df[chart_df["Year"] == 2024].copy()
+        if not df24.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=df24["UniqueVisitors"],
+                    y=df24["ConversionPct"],
+                    mode="markers",
+                    name="2024",
+                    marker=dict(
+                        size=df24["Sales"].apply(lambda s: max(18, math.sqrt(s / max_sales) * 72)),
+                        color="rgba(190,198,208,0.45)",
+                        line=dict(width=1.4, color="rgba(10,35,66,0.25)"),
+                        symbol="circle",
+                    ),
+                    customdata=df24[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct"]],
+                    hovertemplate="<b>%{customdata[0]}</b><br>Year: %{customdata[2]}<br>Sales: %{customdata[3]:,.0f}<br>Visitors: %{customdata[4]:,.0f}<br>W2C Rate: %{customdata[5]:.2f}%<extra></extra>",
+                )
             )
-        )
 
-    if show_logos:
-        add_logo_images(fig, chart_df, max_x, max_y)
+    primary_year = 2025 if year_view == "2024 and 2025 + shift" else int(year_view)
+    primary = chart_df[chart_df["Year"] == primary_year].copy()
+
+    if not primary.empty:
+        primary["Cluster"] = primary["OEM"].map(cluster_for_oem)
+        for cluster in sorted(primary["Cluster"].unique()):
+            dfc = primary[primary["Cluster"] == cluster].copy()
+            color = CLUSTER_COLORS.get(cluster, "#6F6F6F")
+            sizes = dfc["Sales"].apply(lambda s: max(24, math.sqrt(s / max_sales) * 88))
+            fig.add_trace(
+                go.Scatter(
+                    x=dfc["UniqueVisitors"],
+                    y=dfc["ConversionPct"],
+                    mode="markers+text" if not show_logos else "markers",
+                    text=None if show_logos else dfc["OEM"],
+                    textposition="top center",
+                    name=f"{cluster} · {primary_year}",
+                    marker=dict(
+                        size=sizes,
+                        color=color,
+                        opacity=0.78,
+                        line=dict(width=2.2, color="white"),
+                    ),
+                    customdata=dfc[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct", "Cluster"]],
+                    hovertemplate="<b>%{customdata[0]}</b><br>Category: %{customdata[6]}<br>Year: %{customdata[2]}<br>Sales: %{customdata[3]:,.0f}<br>Visitors: %{customdata[4]:,.0f}<br>W2C Rate: %{customdata[5]:.2f}%<extra></extra>",
+                )
+            )
+
+    if show_logos and not primary.empty:
+        add_logo_images(fig, primary, max_x, max_y)
 
     fig.update_layout(
-        title=f"{market} | Unique visitors vs Website-to-Contract Conversion Rate",
-        xaxis_title="Unique visitors",
-        yaxis_title="Website-to-Contract Conversion Rate (%)",
-        height=720,
+        title=dict(
+            text=f"{market} | Audience scale vs Website-to-Contract Conversion Rate",
+            x=0.02,
+            y=0.98,
+            font=dict(size=20, color="#0A2342"),
+        ),
+        xaxis_title="Audience size: unique website visitors",
+        yaxis_title="Website-to-Contract Conversion Rate",
+        height=760,
         hovermode="closest",
-        legend=dict(orientation="h", y=1.08, x=0),
-        margin=dict(l=70, r=40, t=90, b=70),
-        plot_bgcolor=WHITE,
-        paper_bgcolor=WHITE,
+        legend=dict(orientation="h", y=1.08, x=0, font=dict(size=11)),
+        margin=dict(l=75, r=45, t=105, b=75),
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
     )
-    fig.update_xaxes(range=[0, max_x], tickformat=",", gridcolor="#e6e6e6")
-    fig.update_yaxes(range=[0, max_y], ticksuffix="%", gridcolor="#e6e6e6")
-    return fig
+    fig.update_xaxes(
+        range=[0, max_x],
+        tickformat=",",
+        gridcolor="#EDF1F5",
+        zeroline=False,
+        showline=True,
+        linecolor="#E1E7EF",
+    )
+    fig.update_yaxes(
+        range=[0, max_y],
+        ticksuffix="%",
+        gridcolor="#EDF1F5",
+        zeroline=False,
+        showline=True,
+        linecolor="#E1E7EF",
+    )
 
+    return fig
 
 
 def render_start_here_page(data):
@@ -1732,9 +1864,49 @@ def render_market_performance_page(data, market, selected_oems):
     render_footer()
 
 
+
+def render_bubble_side_table(df, market):
+    latest = df[df["Year"] == 2025].copy()
+    if latest.empty:
+        latest = df.copy()
+
+    latest = latest.sort_values("UniqueVisitors", ascending=False).head(15)
+
+    rows = ""
+    for _, r in latest.iterrows():
+        cluster = cluster_for_oem(r["OEM"])
+        color = CLUSTER_COLORS.get(cluster, "#6F6F6F")
+        rows += (
+            "<div class='bubble-row'>"
+            f"<span class='bubble-row-dot' style='background:{color};'></span>"
+            "<div>"
+            f"<div class='bubble-row-brand'>{r['OEM']}</div>"
+            f"<div class='bubble-row-meta'>{r['ConversionPct']:.2f}% W2C · {fmt_int(r['Sales'])} sales</div>"
+            "</div>"
+            f"<div class='bubble-row-value'>{fmt_short(r['UniqueVisitors'])}</div>"
+            "</div>"
+        )
+
+    st.markdown(
+        f"<div class='bubble-side-card'>"
+        f"<div class='bubble-side-title'>{market} selected OEMs</div>"
+        f"{rows}"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
 def render_bubble_page(data, selected_oems, year_view, show_logos):
     section("Bubble chart")
     render_cluster_legend(selected_clusters)
+    st.markdown(
+        "<div class='bubble-control-note'>"
+        "<b>How to read this view:</b> bubble position shows audience scale versus Website-to-Contract Conversion Rate. "
+        "Bubble size reflects passenger sales. In the 2024 and 2025 shift view, arrows show the movement from 2024 to 2025."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
     tabs = st.tabs(MARKETS)
     for market, tab in zip(MARKETS, tabs):
         with tab:
@@ -1744,8 +1916,14 @@ def render_bubble_page(data, selected_oems, year_view, show_logos):
             if df.empty:
                 st.info("No bubble chart data for this selection.")
                 continue
-            fig = build_bubble_chart(df, selected_oems, market, year_view, show_logos)
-            st.plotly_chart(fig, use_container_width=True)
+
+            chart_col, side_col = st.columns([4.2, 1.15])
+            with chart_col:
+                fig = build_bubble_chart(df, selected_oems, market, year_view, show_logos)
+                st.plotly_chart(fig, use_container_width=True)
+            with side_col:
+                render_bubble_side_table(df, market)
+
 
 
 def scorecard_table(data, market, selected_oems):
