@@ -502,6 +502,56 @@ div[data-testid="stPlotlyChart"] {
     .start-factors-grid { grid-template-columns: 1fr; }
 }
 
+
+.methodology-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:18px;
+    margin-bottom:20px;
+}
+.methodology-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:16px;
+    padding:22px;
+    box-shadow:0 1px 8px rgba(0,0,0,.035);
+    height:100%;
+}
+.methodology-card h4 {
+    margin:0 0 10px 0;
+    font-size:20px;
+    color:#0A2342;
+}
+.methodology-callout {
+    display:inline-block;
+    background:#EEF3F8;
+    color:#0A2342;
+    border-left:5px solid #009FE3;
+    padding:8px 12px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:14px;
+}
+.methodology-formula {
+    background:#F7F9FC;
+    border:1px solid #E3E8EE;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:14px;
+    color:#111827;
+    margin:10px 0 12px 0;
+    line-height:1.45;
+}
+.methodology-card ul {
+    margin: 10px 0 0 18px;
+    color:#6F7782;
+    line-height:1.6;
+}
+@media (max-width: 900px) {
+    .methodology-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -739,7 +789,7 @@ def render_footer():
     st.markdown(
         """
         <div class="footer-note">
-        <b>Definitions and caveats:</b> This is not a total market-share dashboard. It uses passenger car sales from Marklines and unique visitor website data from Similarweb. It does not include fleet, LCV or tactical registrations. Conversion rate = passenger car sales divided by unique visitors. Data period: 2024–2025.
+        <b>Definitions and caveats:</b> This is not a total market-share dashboard. It uses passenger car sales from Marklines and unique visitor website data from Similarweb. It does not include fleet, LCV or tactical registrations. <b>Website-to-Contract Conversion Rate</b> = passenger car sales / unique website visitors. Data period: 2024–2025.
         </div>
         """,
         unsafe_allow_html=True,
@@ -783,7 +833,7 @@ def brand_detail_html(brand, row, logo, logo_height="38px"):
         f"<div class='tl-detail-logo'><img src='{logo}' style='height:{logo_height};' alt='{brand} logo'></div>"
         "<div class='tl-detail-grid'>"
         "<div class='tl-detail-metric'>"
-        "<div class='tl-detail-label'>2025 conversion</div>"
+        "<div class='tl-detail-label'>2025 Website-to-Contract Conversion Rate</div>"
         f"<div class='tl-detail-value'>{row['ConversionPct_2025']:.2f}%</div>"
         f"<div class='{conv_delta_class}'>{fmt_pp(row['Conv Var pp'])} vs 2024</div>"
         "</div>"
@@ -827,7 +877,7 @@ def benchmark_card(title, copy, metric):
 
 
 def render_benchmark_cards(data, market):
-    section("Toyota / Lexus benchmark callouts")
+    section("Toyota / Lexus Website-to-Contract benchmark callouts")
     yoy = yoy_table(data, market, None)
     if yoy.empty:
         st.info("No benchmark data available.")
@@ -848,13 +898,13 @@ def render_benchmark_cards(data, market):
             vts_gap = row["Visits to Sale 2025"] - leader["Visits to Sale 2025"]
             benchmark_card(
                 f"{brand} benchmark",
-                f"{brand} ranks #{rank} of {len(cohort_df)} in its benchmark set. The 2025 conversion gap to {leader['OEM']} is {gap:+.2f}pp. Visits-to-sale gap is {vts_gap:+.0f}.",
-                f"2025 conversion: {row['ConversionPct_2025']:.2f}%",
+                f"{brand} ranks #{rank} of {len(cohort_df)} in its benchmark set. The 2025 Website-to-Contract Conversion Rate gap to {leader['OEM']} is {gap:+.2f}pp. Visits-to-sale gap is {vts_gap:+.0f}.",
+                f"2025 Website-to-Contract Conversion Rate: {row['ConversionPct_2025']:.2f}%",
             )
 
 
 def render_market_weakness(data):
-    section("Market weakness summary — Toyota & Lexus")
+    section("Market weakness summary — Toyota & Lexus Website-to-Contract performance")
     rows = []
     for market in ["UK", "France", "Germany", "Italy", "Spain"]:
         yoy = yoy_table(data, market, None)
@@ -870,9 +920,9 @@ def render_market_weakness(data):
                 {
                     "Brand": brand,
                     "Market": market,
-                    "2025 conversion": f"{row['ConversionPct_2025']:.2f}%",
+                    "2025 Website-to-Contract Conversion Rate": f"{row['ConversionPct_2025']:.2f}%",
                     "Benchmark leader": leader["OEM"],
-                    "Leader conversion": f"{leader['ConversionPct_2025']:.2f}%",
+                    "Leader W2C rate": f"{leader['ConversionPct_2025']:.2f}%",
                     "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
                     "Sales YoY vs 2024": row["Sales YoY %"],
                     "Visitor YoY vs 2024": row["Visitors YoY %"],
@@ -980,13 +1030,13 @@ def render_top10_table(data, market, selected_oems):
                 "Visits 2024": fmt_short(r["UniqueVisitors_2024"]),
                 "Visitor YoY vs 2024": fmt_pct(r["Visitors YoY %"]),
                 "Passenger sales": fmt_int(r["Sales_2025"]),
-                "Conv rate": f"{r['ConversionPct_2025']:.2f}%",
-                "Conv var vs 2024": fmt_pp(r["Conv Var pp"]),
+                "W2C rate": f"{r['ConversionPct_2025']:.2f}%",
+                "W2C var vs 2024": fmt_pp(r["Conv Var pp"]),
             }
         )
     display = pd.DataFrame(rows)
     st.dataframe(
-        display.style.map(badge_style, subset=["Visitor YoY vs 2024", "Conv var vs 2024"]),
+        display.style.map(badge_style, subset=["Visitor YoY vs 2024", "W2C var vs 2024"]),
         use_container_width=True,
         hide_index=True,
     )
@@ -1045,11 +1095,11 @@ def render_market_insights(data, market, selected_oems):
     weakest = yoy.sort_values("ConversionPct_2025", ascending=True).iloc[0]
 
     cards = [
-        make_insight("opportunity", f"{top_conv['OEM']}: strongest conversion performer", f"{top_conv['OEM']} leads this cohort on 2025 conversion. Visits-to-sale is {top_conv['Visits to Sale 2025']:.0f}, showing stronger website-to-contract efficiency than peers.", f"{top_conv['ConversionPct_2025']:.2f}% conv", top_conv["OEM"]),
+        make_insight("opportunity", f"{top_conv['OEM']}: strongest Website-to-Contract performer", f"{top_conv['OEM']} leads this cohort on 2025 Website-to-Contract Conversion Rate. Visits-to-sale is {top_conv['Visits to Sale 2025']:.0f}, showing stronger website-to-contract efficiency than peers.", f"{top_conv['ConversionPct_2025']:.2f}% conv", top_conv["OEM"]),
         make_insight("opportunity", f"{top_sales['OEM']}: strongest sales growth", f"{top_sales['OEM']} posted the strongest passenger sales growth, with sales {fmt_pct(top_sales['Sales YoY %'])} vs 2024 and visitors {fmt_pct(top_sales['Visitors YoY %'])} vs 2024.", f"{fmt_pct(top_sales['Sales YoY %'])} sales", top_sales["OEM"]),
         make_insight("intelligence", f"{top_visits['OEM']}: fastest visitor growth", f"{top_visits['OEM']} generated the strongest visitor growth. The key question is whether this awareness converts into contracts at the same rate.", f"{fmt_pct(top_visits['Visitors YoY %'])} visits", top_visits["OEM"]),
-        make_insight("risk", f"{worst_conv['OEM']}: conversion movement deteriorating", f"{worst_conv['OEM']} had the weakest conversion movement: {fmt_pp(worst_conv['Conv Var pp'])} vs 2024. This suggests lower-quality traffic or leakage deeper in the funnel.", f"{fmt_pp(worst_conv['Conv Var pp'])}", worst_conv["OEM"]),
-        make_insight("risk", f"{weakest['OEM']}: weakest 2025 conversion", f"{weakest['OEM']} has the lowest 2025 conversion rate in this selection, creating a clear efficiency gap against the cohort leader.", f"{weakest['ConversionPct_2025']:.2f}% conv", weakest["OEM"]),
+        make_insight("risk", f"{worst_conv['OEM']}: Website-to-Contract movement deteriorating", f"{worst_conv['OEM']} had the weakest conversion movement: {fmt_pp(worst_conv['Conv Var pp'])} vs 2024. This suggests lower-quality traffic or leakage deeper in the funnel.", f"{fmt_pp(worst_conv['Conv Var pp'])}", worst_conv["OEM"]),
+        make_insight("risk", f"{weakest['OEM']}: weakest 2025 Website-to-Contract Conversion Rate", f"{weakest['OEM']} has the lowest 2025 Website-to-Contract Conversion Rate rate in this selection, creating a clear efficiency gap against the cohort leader.", f"{weakest['ConversionPct_2025']:.2f}% conv", weakest["OEM"]),
     ]
     for i in range(0, len(cards), 3):
         cols = st.columns(3)
@@ -1141,7 +1191,7 @@ def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
                 name=str(year),
                 marker=dict(size=sizes, color=colors[year], opacity=0.68, line=dict(width=1.3, color="black")),
                 customdata=df[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct"]],
-                hovertemplate="<b>%{customdata[0]}</b><br>Market: %{customdata[1]}<br>Year: %{customdata[2]}<br>Sales: %{customdata[3]:,.0f}<br>Visitors: %{customdata[4]:,.0f}<br>Conversion: %{customdata[5]:.2f}%<extra></extra>",
+                hovertemplate="<b>%{customdata[0]}</b><br>Market: %{customdata[1]}<br>Year: %{customdata[2]}<br>Sales: %{customdata[3]:,.0f}<br>Visitors: %{customdata[4]:,.0f}<br>Website-to-Contract Rate: %{customdata[5]:.2f}%<extra></extra>",
             )
         )
 
@@ -1149,9 +1199,9 @@ def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
         add_logo_images(fig, chart_df, max_x, max_y)
 
     fig.update_layout(
-        title=f"{market} | Unique visitors vs conversion rate",
+        title=f"{market} | Unique visitors vs Website-to-Contract Conversion Rate",
         xaxis_title="Unique visitors",
-        yaxis_title="Conversion rate (%)",
+        yaxis_title="Website-to-Contract Conversion Rate (%)",
         height=720,
         hovermode="closest",
         legend=dict(orientation="h", y=1.08, x=0),
@@ -1178,7 +1228,36 @@ def render_start_here_page(data):
     )
     st.markdown(intro_html, unsafe_allow_html=True)
 
-    section("Factors that can influence conversion efficiency")
+    section("Read me — keep these two conversion metrics distinct")
+    methodology_html = (
+        "<div class='methodology-grid'>"
+        "<div class='methodology-card'>"
+        "<div class='methodology-callout'>Focus: solely website effectiveness</div>"
+        "<h4>Website Conversion Rate</h4>"
+        "<div class='methodology-formula'><b>Overall Website Conversion Rate</b><br>Percentage of total website visitors who completed any kind of lead = converted visitors / total visitors.</div>"
+        "<ul>"
+        "<li><b>Transactional leads:</b> brochure requests, keep-me-informed, newsletter, contest and similar forms.</li>"
+        "<li><b>E-commerce leads:</b> TME OSB or local OSB forms for after-sales and online transactions for new / used / stock cars and pre-sales.</li>"
+        "<li><b>Marketing leads:</b> forms classified as Marketing Lead.</li>"
+        "<li><b>General Contact Leads:</b> general or non-transactional contact forms classified as Contact Lead.</li>"
+        "</ul>"
+        "</div>"
+        "<div class='methodology-card'>"
+        "<div class='methodology-callout'>Focus: bigger-picture conversion efficiency</div>"
+        "<h4>Website-to-Contract Conversion Rate</h4>"
+        "<div class='methodology-formula'><b>Website-to-Contract Conversion Rate</b><br>Passenger new car customer contracts / unique website visitors.</div>"
+        "<ul>"
+        "<li>Uses <b>Similarweb unique website visitors</b> as the demand base.</li>"
+        "<li>Uses <b>passenger new car customer contracts / sales</b> as the outcome.</li>"
+        "<li>Should be interpreted as a broader commercial efficiency metric, not purely a website UX metric.</li>"
+        "<li>Captures the combined effect of digital demand, website experience, retailer execution, offer competitiveness and operating model.</li>"
+        "</ul>"
+        "</div>"
+        "</div>"
+    )
+    st.markdown(methodology_html, unsafe_allow_html=True)
+
+    section("Factors that can influence Website-to-Contract Conversion Rate")
     factors = [
         "Brand Strategy",
         "Marketing Strategy",
@@ -1259,7 +1338,7 @@ def render_gap_analysis_page(data, market):
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("2025 Toyota/Lexus passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs 2024")
     c2.metric("2025 Toyota/Lexus unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs 2024")
-    c3.metric("2025 weighted conversion", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs 2024")
+    c3.metric("2025 Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs 2024")
     c4.metric("2025 visits-to-sale efficiency", fmt_int(visitors_25 / sales_25))
 
     render_brand_detail(data, market)
@@ -1287,7 +1366,7 @@ def render_market_performance_page(data, market, selected_oems):
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("2025 passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs 2024" if sales_24 else "n/a")
     c2.metric("2025 unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs 2024" if visitors_24 else "n/a")
-    c3.metric("2025 conversion", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs 2024")
+    c3.metric("2025 Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs 2024")
     c4.metric("2025 visits-to-sale efficiency", fmt_int(visitors_25 / sales_25))
 
     render_top10_table(data, market, selected_oems)
@@ -1317,8 +1396,8 @@ def scorecard_table(data, market, selected_oems):
     if yoy.empty:
         return pd.DataFrame()
     out = yoy.copy()
-    out["Conv Ranking"] = out["ConversionPct_2025"].rank(method="first", ascending=False).astype(int)
-    out = out.sort_values("Conv Ranking")
+    out["W2C Ranking"] = out["ConversionPct_2025"].rank(method="first", ascending=False).astype(int)
+    out = out.sort_values("W2C Ranking")
     return out[
         [
             "OEM",
@@ -1334,7 +1413,7 @@ def scorecard_table(data, market, selected_oems):
             "Visits to Sale 2024",
             "Visits to Sale 2025",
             "Visits to Sale Var",
-            "Conv Ranking",
+            "W2C Ranking",
         ]
     ]
 
@@ -1356,9 +1435,9 @@ def render_scorecard_page(data, selected_oems):
             "Sales_2024": "Passenger sales 2024",
             "Sales_2025": "Passenger sales 2025",
             "Sales YoY %": "Sales YoY vs 2024",
-            "ConversionPct_2024": "Conv rate 2024",
-            "ConversionPct_2025": "Conv rate 2025",
-            "Conv Var pp": "Conv var vs 2024",
+            "ConversionPct_2024": "W2C rate 2024",
+            "ConversionPct_2025": "W2C rate 2025",
+            "Conv Var pp": "W2C var vs 2024",
         }
     ).copy()
 
@@ -1366,14 +1445,14 @@ def render_scorecard_page(data, selected_oems):
         display[col] = display[col].map(fmt_int)
     for col in ["Visitor YoY vs 2024", "Sales YoY vs 2024"]:
         display[col] = display[col].map(fmt_pct)
-    for col in ["Conv rate 2024", "Conv rate 2025"]:
+    for col in ["W2C rate 2024", "W2C rate 2025"]:
         display[col] = display[col].map(lambda x: f"{x:.2f}%")
-    display["Conv var vs 2024"] = display["Conv var vs 2024"].map(fmt_pp)
+    display["W2C var vs 2024"] = display["W2C var vs 2024"].map(fmt_pp)
     for col in ["Visits to Sale 2024", "Visits to Sale 2025", "Visits to Sale Var"]:
         display[col] = display[col].map(fmt_int)
 
     st.dataframe(
-        display.style.map(badge_style, subset=["Visitor YoY vs 2024", "Sales YoY vs 2024", "Conv var vs 2024"]),
+        display.style.map(badge_style, subset=["Visitor YoY vs 2024", "Sales YoY vs 2024", "W2C var vs 2024"]),
         use_container_width=True,
         hide_index=True,
     )
