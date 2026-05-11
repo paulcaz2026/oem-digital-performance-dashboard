@@ -11,7 +11,7 @@ import streamlit as st
 # =========================
 
 st.set_page_config(
-    page_title="OEM Omnichannel Conversion Funnel",
+    page_title="OEM Macro Conversion Funnel",
     page_icon="🚗",
     layout="wide",
 )
@@ -530,8 +530,8 @@ div[data-testid="stPlotlyChart"] {
     background:#F5F6F7;
     border-left:8px solid #B8EC63;
     border-radius:8px;
-    min-height:110px;
-    padding:24px 18px;
+    min-height:72px;
+    padding:14px 16px;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -1048,7 +1048,7 @@ def render_hero():
         f"""
         <div class="hero">
             <div class="hero-logo"><img src="{VALTECH_LOGO}" alt="Valtech logo"></div>
-            <div class="hero-title">OEM Omnichannel Conversion Funnel</div>
+            <div class="hero-title">OEM Macro Conversion Funnel</div>
             <div class="hero-subtitle">
                 Website to customer contract conversion across MM5. Explores how unique visitors demand converts into passenger new car customer contracts, and where Toyota/Lexus under- or over-perform by market.
             </div>
@@ -1586,7 +1586,25 @@ def render_start_here_page(data):
     )
     st.markdown(intro_html, unsafe_allow_html=True)
 
-    section("Read me — keep these two conversion metrics distinct")
+    section("Factors that can influence Website-to-Contract Conversion Rate")
+    factors = [
+        "Brand Strategy",
+        "Marketing Strategy",
+        "Ecommerce Strategy",
+        "Website Usability",
+        "Website Experience",
+        "Pricing & Promotions Strategy",
+        "Ownership Options",
+        "Product Strategy",
+        "Stock Availability",
+        "Network Strategy",
+        "Powertrain Strategy",
+        "Macro Economic factors",
+    ]
+    cards_html = "".join([f"<div class='start-factor-card'>{factor}</div>" for factor in factors])
+    st.markdown(f"<div class='start-factors-grid'>{cards_html}</div>", unsafe_allow_html=True)
+
+    section("Two conversion metrics for different purposes")
     methodology_html = (
         "<div class='methodology-grid'>"
         "<div class='methodology-card'>"
@@ -1594,6 +1612,7 @@ def render_start_here_page(data):
         "<h4>Website Conversion Rate</h4>"
         "<div class='methodology-formula'><b>Overall Website Conversion Rate</b><br>Percentage of total website visitors who completed any kind of lead = converted visitors / total visitors.</div>"
         "<ul>"
+        "<li><b>Used by TME today</b> to optimise website performance.</li>"
         "<li><b>Transactional leads:</b> brochure requests, keep-me-informed, newsletter, contest and similar forms.</li>"
         "<li><b>E-commerce leads:</b> TME OSB or local OSB forms for after-sales and online transactions for new / used / stock cars and pre-sales.</li>"
         "<li><b>Marketing leads:</b> forms classified as Marketing Lead.</li>"
@@ -1614,24 +1633,6 @@ def render_start_here_page(data):
         "</div>"
     )
     st.markdown(methodology_html, unsafe_allow_html=True)
-
-    section("Factors that can influence Website-to-Contract Conversion Rate")
-    factors = [
-        "Brand Strategy",
-        "Marketing Strategy",
-        "Ecommerce Strategy",
-        "Website Usability",
-        "Website Experience",
-        "Pricing & Promotions Strategy",
-        "Ownership Options",
-        "Product Strategy",
-        "Stock Availability",
-        "Network Strategy",
-        "Powertrain Strategy",
-        "Macro Economic factors",
-    ]
-    cards_html = "".join([f"<div class='start-factor-card'>{factor}</div>" for factor in factors])
-    st.markdown(f"<div class='start-factors-grid'>{cards_html}</div>", unsafe_allow_html=True)
 
     section("How to interpret Similarweb unique visitors")
     c1, c2 = st.columns(2)
@@ -1667,135 +1668,6 @@ def render_start_here_page(data):
     oems = sorted(data["OEM"].dropna().astype(str).unique().tolist())
     pills = "".join([f"<span class='oem-pill'>{o}</span>" for o in oems])
     st.markdown(f"<div class='oem-pill-wrap'>{pills}</div>", unsafe_allow_html=True)
-
-    render_footer()
-
-
-def usecase_card(audience, title, copy, reports, audience_class="shared"):
-    reports_html = "<br>".join([f"• {r}" for r in reports])
-    return (
-        f"<div class='usecase-card {audience_class}'>"
-        f"<div class='usecase-audience'>{audience}</div>"
-        f"<div class='usecase-title'>{title}</div>"
-        f"<div class='usecase-copy'>{copy}</div>"
-        f"<div class='usecase-report'><b>Recommended report view</b><br>{reports_html}</div>"
-        f"</div>"
-    )
-
-
-def render_use_cases_page(data):
-    section("Use cases — what to use this dashboard for")
-
-    st.markdown(
-        """
-        <div class="usecase-note">
-            This dashboard is designed to help both <b>NMSCs</b> and <b>TME</b> ask sharper questions about Website-to-Contract Conversion Rate.
-            The same metric can support different decisions: NMSCs will typically use it to improve marketing, content and local funnel execution,
-            while TME will typically use it to identify product, powertrain, pricing and market-structure implications.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    cards = [
-        usecase_card(
-            "NMSC / TME",
-            "Identify which OEMs are outperforming in your market",
-            "Use this to understand which OEMs are converting website demand into customer contracts most efficiently in a specific market. This should trigger investigation into whether the driver is brand demand, offer strength, stock availability, retailer execution or website experience.",
-            ["Market Performance", "Scorecard", "Bubble chart"],
-            "shared",
-        ),
-        usecase_card(
-            "NMSC / TME",
-            "Assess different types of OEMs",
-            "Compare volume OEMs, premium OEMs and Chinese disruptors to understand whether conversion efficiency is structurally different by business model, price point, product mix or market maturity.",
-            ["Preset selector", "Bubble chart", "Scorecard"],
-            "shared",
-        ),
-        usecase_card(
-            "NMSC",
-            "Prioritise marketing and content optimisation",
-            "Use market-level gaps to identify where Toyota or Lexus may need sharper content, clearer CTAs, better offer visibility, stronger model pages or more effective lower-funnel journeys.",
-            ["Toyota & Lexus Gap Analysis", "Market Performance", "Start Here methodology"],
-            "nmsc",
-        ),
-        usecase_card(
-            "NMSC",
-            "Diagnose whether traffic growth is quality traffic",
-            "If unique visitors are growing but Website-to-Contract Conversion Rate is flat or declining, the issue may be traffic quality, audience targeting, message-market fit or weak lower-funnel content.",
-            ["Market Performance", "YoY unique visitor growth chart", "Top 10 brands at a glance"],
-            "nmsc",
-        ),
-        usecase_card(
-            "NMSC",
-            "Dig deeper into competitor marketing strategies",
-            "Use this dashboard to identify which competitors need deeper investigation, then move into the market-specific marketing intelligence dashboards to review competitor activity, messaging and channel strategy.",
-            ["Market Performance", "External market dashboards linked below"],
-            "nmsc",
-        ),
-        usecase_card(
-            "TME",
-            "Identify product and powertrain pressure points",
-            "Where Toyota or Lexus underperform consistently across markets, the cause may not be local digital execution. It may signal product-market fit, powertrain competitiveness, availability, pricing or customer proposition issues.",
-            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Scorecard"],
-            "tme",
-        ),
-        usecase_card(
-            "TME",
-            "Compare market readiness for future product strategy",
-            "Use cross-market differences to understand where certain propositions appear to convert better. This can inform future model launches, powertrain emphasis, grade strategy and central product messaging.",
-            ["Toyota & Lexus Gap Analysis", "Bubble chart", "Scorecard"],
-            "tme",
-        ),
-        usecase_card(
-            "TME",
-            "Spot structural network or distribution constraints",
-            "If a brand has strong visitor demand but weak contract conversion in multiple countries, investigate retailer footprint, sales model, availability, lead handling and distribution constraints before assuming a website problem.",
-            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Start Here causal factors"],
-            "tme",
-        ),
-        usecase_card(
-            "NMSC / TME",
-            "Separate website effectiveness from commercial conversion",
-            "Use the Start Here page to align stakeholders that Website Conversion Rate and Website-to-Contract Conversion Rate are different. One is about lead capture; the other is about broader demand-to-contract efficiency.",
-            ["Start Here", "Read Me methodology boxes"],
-            "shared",
-        ),
-        usecase_card(
-            "NMSC",
-            "Prepare local action plans",
-            "For NMSCs, the dashboard should be used to identify where to run deeper diagnostics: landing page effectiveness, offer prominence, lead quality, retailer follow-up, campaign audience quality and local content gaps.",
-            ["Toyota & Lexus Gap Analysis", "Market Performance", "Scorecard"],
-            "nmsc",
-        ),
-    ]
-
-    for i in range(0, len(cards), 2):
-        cols = st.columns(2)
-        for col, card in zip(cols, cards[i:i + 2]):
-            with col:
-                st.markdown(card, unsafe_allow_html=True)
-
-    section("Market-specific competitor marketing dashboards")
-    st.markdown(
-        """
-        <div class="usecase-note">
-            Separate market-level competitor marketing dashboards have been created to support deeper investigation into local marketing and content strategy.
-            The UK example is shown below; use the same URL pattern by changing the market code to <b>DE</b>, <b>FR</b>, <b>IT</b> or <b>ES</b>.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    market_links = {
-        "UK": "https://valtech-uk-auto.netlify.app/",
-        "DE": "https://valtech-de-auto.netlify.app/",
-        "FR": "https://valtech-fr-auto.netlify.app/",
-        "IT": "https://valtech-it-auto.netlify.app/",
-        "ES": "https://valtech-es-auto.netlify.app/",
-    }
-    links_html = "".join([f"<a class='market-link-card' href='{url}' target='_blank'>{market}</a>" for market, url in market_links.items()])
-    st.markdown(f"<div class='market-link-grid'>{links_html}</div>", unsafe_allow_html=True)
 
     render_footer()
 
