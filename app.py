@@ -38,6 +38,50 @@ TOYOTA_SET = ["Toyota", "VW", "Ford", "Peugeot", "Renault", "Hyundai", "Kia", "N
 LEXUS_SET = ["Lexus", "BMW", "Mercedes-Benz", "Audi", "Volvo", "Tesla", "Jaguar", "Land Rover", "Porsche", "Polestar"]
 CHINESE_SET = ["BYD Auto", "MG", "XPeng", "NIO", "Geely", "Omoda", "Jaecoo", "Leapmotor", "GWM Ora"]
 
+OEM_CLUSTERS = {
+    "Volume Leaders": [
+        "BMW", "Toyota", "Mercedes-Benz", "Audi", "Ford", "Kia", "VW", "Volkswagen",
+        "Nissan", "Skoda", "Honda"
+    ],
+    "EV Challengers": [
+        "Tesla", "BYD", "BYD Auto", "Polestar", "NIO", "Zeekr", "Leapmotor", "AION"
+    ],
+    "European Mass Market": [
+        "Vauxhall", "Opel", "Renault", "Peugeot", "Dacia", "Citroën", "Citroen",
+        "SEAT", "Fiat", "DS Automobiles", "Alpine"
+    ],
+    "Luxury & Performance": [
+        "Volvo", "Land Rover", "Porsche", "Lexus", "Ferrari", "Jaguar", "Aston Martin",
+        "Bentley", "Lamborghini", "Maserati", "Rolls-Royce"
+    ],
+    "Asian Mainstream": [
+        "Hyundai", "MINI", "Mazda", "CUPRA", "Suzuki", "Genesis", "Subaru", "Mitsubishi"
+    ],
+    "Chinese New Entrants": [
+        "MG", "Smart", "Jaecoo", "KGM", "Omoda", "GWM", "GWM Ora", "Isuzu",
+        "Chery", "SAIC Maxus", "XPeng", "Geely"
+    ],
+}
+
+CLUSTER_DESCRIPTIONS = {
+    "Volume Leaders": "Established mass-market brands with the largest digital footprint",
+    "EV Challengers": "Electric-first brands disrupting the traditional OEM landscape",
+    "European Mass Market": "European mainstream brands competing on value and heritage",
+    "Luxury & Performance": "Premium and ultra-premium brands targeting high-intent affluent buyers",
+    "Asian Mainstream": "Japanese and Korean mainstream brands with strong hybrid / EV portfolios",
+    "Chinese New Entrants": "Chinese OEMs building digital presence ahead of market entry or expansion",
+}
+
+CLUSTER_COLORS = {
+    "Volume Leaders": "#2563EB",
+    "EV Challengers": "#12C76B",
+    "European Mass Market": "#FFB000",
+    "Luxury & Performance": "#B544F4",
+    "Asian Mainstream": "#FF7A1A",
+    "Chinese New Entrants": "#FF3B77",
+}
+
+
 LOGO_DOMAIN_MAP = {
     "Toyota": "toyota.com",
     "Lexus": "lexus.com",
@@ -552,6 +596,127 @@ div[data-testid="stPlotlyChart"] {
     .methodology-grid { grid-template-columns: 1fr; }
 }
 
+
+.usecase-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:18px;
+    margin-bottom:22px;
+}
+.usecase-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:16px;
+    padding:22px;
+    box-shadow:0 1px 8px rgba(0,0,0,.035);
+    min-height:255px;
+}
+.usecase-card.nmsc {
+    border-left:7px solid #009FE3;
+}
+.usecase-card.tme {
+    border-left:7px solid #6F6F6F;
+}
+.usecase-card.shared {
+    border-left:7px solid #B8EC63;
+}
+.usecase-audience {
+    display:inline-block;
+    background:#EEF3F8;
+    color:#0A2342;
+    border-radius:999px;
+    padding:5px 10px;
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:12px;
+}
+.usecase-title {
+    font-size:20px;
+    font-weight:800;
+    color:#0A2342;
+    margin-bottom:10px;
+}
+.usecase-copy {
+    color:#6F7782;
+    font-size:14px;
+    line-height:1.55;
+    margin-bottom:14px;
+}
+.usecase-report {
+    background:#F7F9FC;
+    border-radius:10px;
+    padding:12px 14px;
+    color:#111827;
+    font-size:14px;
+    line-height:1.5;
+}
+.usecase-report b {
+    color:#0A2342;
+}
+.market-link-grid {
+    display:grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap:12px;
+    margin:12px 0 22px 0;
+}
+.market-link-card {
+    display:block;
+    text-decoration:none !important;
+    background:#000000;
+    color:#ffffff !important;
+    border-radius:14px;
+    padding:16px;
+    text-align:center;
+    font-weight:800;
+    box-shadow:0 1px 8px rgba(0,0,0,.08);
+}
+.market-link-card:hover {
+    background:#009FE3;
+    color:#000000 !important;
+}
+.usecase-note {
+    background:#F7F9FC;
+    border-left:6px solid #009FE3;
+    border-radius:14px;
+    padding:18px 20px;
+    color:#0A2342;
+    line-height:1.55;
+    margin-bottom:18px;
+}
+@media (max-width: 900px) {
+    .usecase-grid { grid-template-columns: 1fr; }
+    .market-link-grid { grid-template-columns: 1fr; }
+}
+
+
+.cluster-legend {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin: 8px 0 18px 0;
+}
+.cluster-chip {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#F7F9FC;
+    border:1px solid #E1E7EF;
+    border-radius:999px;
+    padding:8px 12px;
+    color:#0A2342;
+    font-size:13px;
+}
+.cluster-chip span:last-child {
+    color:#8B95A1;
+    font-weight:500;
+}
+.cluster-dot {
+    display:inline-block;
+    width:11px;
+    height:11px;
+    border-radius:4px;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -755,6 +920,66 @@ def preset_selection(preset_name, all_oems):
     else:
         preset = all_oems
     return [x for x in preset if x in all_oems]
+
+
+def normalise_cluster_oem(oem):
+    if oem == "VW":
+        return "Volkswagen"
+    if oem == "Citroen":
+        return "Citroën"
+    if oem == "BYD":
+        return "BYD Auto"
+    return oem
+
+
+def cluster_for_oem(oem):
+    normalised = normalise_cluster_oem(oem)
+    for cluster, brands in OEM_CLUSTERS.items():
+        normalised_brands = [normalise_cluster_oem(b) for b in brands]
+        if normalised in normalised_brands:
+            return cluster
+    return "Uncategorised"
+
+
+def oems_for_clusters(clusters, available_oems):
+    if not clusters or "All categories" in clusters:
+        return available_oems
+
+    allowed = set()
+    for cluster in clusters:
+        for brand in OEM_CLUSTERS.get(cluster, []):
+            normalised = normalise_cluster_oem(brand)
+            for available in available_oems:
+                if normalise_cluster_oem(available) == normalised:
+                    allowed.add(available)
+
+    return sorted(allowed)
+
+
+def filter_oems_by_cluster(selected_oems, clusters, available_oems):
+    allowed = oems_for_clusters(clusters, available_oems)
+    if not selected_oems:
+        return allowed
+    return sorted([oem for oem in selected_oems if oem in allowed])
+
+
+def render_cluster_legend(selected_clusters):
+    active = [c for c in selected_clusters if c != "All categories"]
+    if not active:
+        active = list(OEM_CLUSTERS.keys())
+
+    chips = ""
+    for cluster in active:
+        color = CLUSTER_COLORS.get(cluster, "#6F6F6F")
+        desc = CLUSTER_DESCRIPTIONS.get(cluster, "")
+        chips += (
+            f"<div class='cluster-chip'>"
+            f"<span class='cluster-dot' style='background:{color};'></span>"
+            f"<b>{cluster}</b><span>{desc}</span>"
+            f"</div>"
+        )
+
+    st.markdown(f"<div class='cluster-legend'>{chips}</div>", unsafe_allow_html=True)
 
 
 # =========================
@@ -1026,6 +1251,7 @@ def render_top10_table(data, market, selected_oems):
             {
                 "#": i,
                 "Brand": r["OEM"],
+                "Category": cluster_for_oem(r["OEM"]),
                 "Visits 2025": fmt_short(r["UniqueVisitors_2025"]),
                 "Visits 2024": fmt_short(r["UniqueVisitors_2024"]),
                 "Visitor YoY vs 2024": fmt_pct(r["Visitors YoY %"]),
@@ -1312,6 +1538,135 @@ def render_start_here_page(data):
 
     render_footer()
 
+
+def usecase_card(audience, title, copy, reports, audience_class="shared"):
+    reports_html = "<br>".join([f"• {r}" for r in reports])
+    return (
+        f"<div class='usecase-card {audience_class}'>"
+        f"<div class='usecase-audience'>{audience}</div>"
+        f"<div class='usecase-title'>{title}</div>"
+        f"<div class='usecase-copy'>{copy}</div>"
+        f"<div class='usecase-report'><b>Recommended report view</b><br>{reports_html}</div>"
+        f"</div>"
+    )
+
+
+def render_use_cases_page(data):
+    section("Use cases — what to use this dashboard for")
+
+    st.markdown(
+        """
+        <div class="usecase-note">
+            This dashboard is designed to help both <b>NMSCs</b> and <b>TME</b> ask sharper questions about Website-to-Contract Conversion Rate.
+            The same metric can support different decisions: NMSCs will typically use it to improve marketing, content and local funnel execution,
+            while TME will typically use it to identify product, powertrain, pricing and market-structure implications.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    cards = [
+        usecase_card(
+            "NMSC / TME",
+            "Identify which OEMs are outperforming in your market",
+            "Use this to understand which OEMs are converting website demand into customer contracts most efficiently in a specific market. This should trigger investigation into whether the driver is brand demand, offer strength, stock availability, retailer execution or website experience.",
+            ["Market Performance", "Scorecard", "Bubble chart"],
+            "shared",
+        ),
+        usecase_card(
+            "NMSC / TME",
+            "Assess different types of OEMs",
+            "Compare volume OEMs, premium OEMs and Chinese disruptors to understand whether conversion efficiency is structurally different by business model, price point, product mix or market maturity.",
+            ["Preset selector", "Bubble chart", "Scorecard"],
+            "shared",
+        ),
+        usecase_card(
+            "NMSC",
+            "Prioritise marketing and content optimisation",
+            "Use market-level gaps to identify where Toyota or Lexus may need sharper content, clearer CTAs, better offer visibility, stronger model pages or more effective lower-funnel journeys.",
+            ["Toyota & Lexus Gap Analysis", "Market Performance", "Start Here methodology"],
+            "nmsc",
+        ),
+        usecase_card(
+            "NMSC",
+            "Diagnose whether traffic growth is quality traffic",
+            "If unique visitors are growing but Website-to-Contract Conversion Rate is flat or declining, the issue may be traffic quality, audience targeting, message-market fit or weak lower-funnel content.",
+            ["Market Performance", "YoY unique visitor growth chart", "Top 10 brands at a glance"],
+            "nmsc",
+        ),
+        usecase_card(
+            "NMSC",
+            "Dig deeper into competitor marketing strategies",
+            "Use this dashboard to identify which competitors need deeper investigation, then move into the market-specific marketing intelligence dashboards to review competitor activity, messaging and channel strategy.",
+            ["Market Performance", "External market dashboards linked below"],
+            "nmsc",
+        ),
+        usecase_card(
+            "TME",
+            "Identify product and powertrain pressure points",
+            "Where Toyota or Lexus underperform consistently across markets, the cause may not be local digital execution. It may signal product-market fit, powertrain competitiveness, availability, pricing or customer proposition issues.",
+            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Scorecard"],
+            "tme",
+        ),
+        usecase_card(
+            "TME",
+            "Compare market readiness for future product strategy",
+            "Use cross-market differences to understand where certain propositions appear to convert better. This can inform future model launches, powertrain emphasis, grade strategy and central product messaging.",
+            ["Toyota & Lexus Gap Analysis", "Bubble chart", "Scorecard"],
+            "tme",
+        ),
+        usecase_card(
+            "TME",
+            "Spot structural network or distribution constraints",
+            "If a brand has strong visitor demand but weak contract conversion in multiple countries, investigate retailer footprint, sales model, availability, lead handling and distribution constraints before assuming a website problem.",
+            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Start Here causal factors"],
+            "tme",
+        ),
+        usecase_card(
+            "NMSC / TME",
+            "Separate website effectiveness from commercial conversion",
+            "Use the Start Here page to align stakeholders that Website Conversion Rate and Website-to-Contract Conversion Rate are different. One is about lead capture; the other is about broader demand-to-contract efficiency.",
+            ["Start Here", "Read Me methodology boxes"],
+            "shared",
+        ),
+        usecase_card(
+            "NMSC",
+            "Prepare local action plans",
+            "For NMSCs, the dashboard should be used to identify where to run deeper diagnostics: landing page effectiveness, offer prominence, lead quality, retailer follow-up, campaign audience quality and local content gaps.",
+            ["Toyota & Lexus Gap Analysis", "Market Performance", "Scorecard"],
+            "nmsc",
+        ),
+    ]
+
+    for i in range(0, len(cards), 2):
+        cols = st.columns(2)
+        for col, card in zip(cols, cards[i:i + 2]):
+            with col:
+                st.markdown(card, unsafe_allow_html=True)
+
+    section("Market-specific competitor marketing dashboards")
+    st.markdown(
+        """
+        <div class="usecase-note">
+            Separate market-level competitor marketing dashboards have been created to support deeper investigation into local marketing and content strategy.
+            The UK example is shown below; use the same URL pattern by changing the market code to <b>DE</b>, <b>FR</b>, <b>IT</b> or <b>ES</b>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    market_links = {
+        "UK": "https://valtech-uk-auto.netlify.app/",
+        "DE": "https://valtech-de-auto.netlify.app/",
+        "FR": "https://valtech-fr-auto.netlify.app/",
+        "IT": "https://valtech-it-auto.netlify.app/",
+        "ES": "https://valtech-es-auto.netlify.app/",
+    }
+    links_html = "".join([f"<a class='market-link-card' href='{url}' target='_blank'>{market}</a>" for market, url in market_links.items()])
+    st.markdown(f"<div class='market-link-grid'>{links_html}</div>", unsafe_allow_html=True)
+
+    render_footer()
+
 # =========================
 # Pages
 # =========================
@@ -1350,6 +1705,7 @@ def render_gap_analysis_page(data, market):
 
 def render_market_performance_page(data, market, selected_oems):
     section(f"Market performance — {market} OEM cohort")
+    render_cluster_legend(selected_clusters)
     current = market_year(data, market, 2025, selected_oems)
     previous = market_year(data, market, 2024, selected_oems)
     if current.empty:
@@ -1378,6 +1734,7 @@ def render_market_performance_page(data, market, selected_oems):
 
 def render_bubble_page(data, selected_oems, year_view, show_logos):
     section("Bubble chart")
+    render_cluster_legend(selected_clusters)
     tabs = st.tabs(MARKETS)
     for market, tab in zip(MARKETS, tabs):
         with tab:
@@ -1401,6 +1758,7 @@ def scorecard_table(data, market, selected_oems):
     return out[
         [
             "OEM",
+            "Category",
             "UniqueVisitors_2024",
             "UniqueVisitors_2025",
             "Visitors YoY %",
@@ -1488,7 +1846,7 @@ st.sidebar.header("Filters")
 
 page = st.sidebar.radio(
     "Dashboard page",
-    ["Start Here", "Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
+    ["Start Here", "Use Cases", "Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
     index=0,
 )
 
@@ -1506,11 +1864,24 @@ preset = st.sidebar.selectbox(
     index=3,
 )
 
-default_oems = preset_selection(preset, all_oems)
+cluster_options = ["All categories"] + list(OEM_CLUSTERS.keys())
+
+selected_clusters = st.sidebar.multiselect(
+    "OEM categories",
+    cluster_options,
+    default=["All categories"],
+    help="Filter the dashboard by OEM grouping. These categories are based on the brand clusters used in the companion marketing dashboards.",
+)
+
+cluster_filtered_oems = oems_for_clusters(selected_clusters, all_oems)
+
+default_oems = [o for o in preset_selection(preset, all_oems) if o in cluster_filtered_oems]
+if not default_oems:
+    default_oems = cluster_filtered_oems
 
 selected_oems = st.sidebar.multiselect(
     "OEMs",
-    all_oems,
+    cluster_filtered_oems,
     default=default_oems,
 )
 
@@ -1523,10 +1894,12 @@ show_logos = st.sidebar.toggle(
 if show_logos and not get_brandfetch_client_id():
     st.sidebar.warning("Brandfetch Client ID not found. Add BRANDFETCH_CLIENT_ID in Streamlit Secrets or turn logos off.")
 
-selected_oems = selected_or_all(selected_oems, all_oems)
+selected_oems = selected_or_all(selected_oems, cluster_filtered_oems)
 
 if page == "Start Here":
     render_start_here_page(data)
+elif page == "Use Cases":
+    render_use_cases_page(data)
 elif page == "Toyota & Lexus Gap Analysis":
     render_gap_analysis_page(data, summary_market)
 elif page == "Market Performance":
