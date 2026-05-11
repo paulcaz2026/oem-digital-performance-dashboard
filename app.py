@@ -1671,6 +1671,130 @@ def render_start_here_page(data):
 
     render_footer()
 
+
+def usecase_card(audience, title, copy, reports, audience_class="shared"):
+    reports_html = "<br>".join([f"• {r}" for r in reports])
+    return (
+        f"<div class='usecase-card {audience_class}'>"
+        f"<div class='usecase-audience'>{audience}</div>"
+        f"<div class='usecase-title'>{title}</div>"
+        f"<div class='usecase-copy'>{copy}</div>"
+        f"<div class='usecase-report'><b>Recommended report view</b><br>{reports_html}</div>"
+        f"</div>"
+    )
+
+
+def render_use_cases_page(data):
+    section("Use cases — what to use this dashboard for")
+
+    st.markdown(
+        "<div class='usecase-note'>"
+        "This dashboard is designed to help both <b>NMSCs</b> and <b>TME</b> ask sharper questions about Website-to-Contract Conversion Rate. "
+        "The same metric can support different decisions: NMSCs will typically use it to improve marketing, content and local funnel execution, "
+        "while TME will typically use it to identify product, powertrain, pricing and market-structure implications."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    cards = [
+        usecase_card(
+            "NMSC / TME",
+            "Identify which OEMs are outperforming in your market",
+            "Use this to understand which OEMs are converting website demand into customer contracts most efficiently in a specific market. This should trigger investigation into whether the driver is brand demand, offer strength, stock availability, retailer execution or website experience.",
+            ["Market Performance", "Scorecard", "Bubble chart"],
+            "shared",
+        ),
+        usecase_card(
+            "NMSC / TME",
+            "Assess different types of OEMs",
+            "Compare volume OEMs, premium OEMs and Chinese disruptors to understand whether conversion efficiency is structurally different by business model, price point, product mix or market maturity.",
+            ["OEM category filter", "Bubble chart", "Scorecard"],
+            "shared",
+        ),
+        usecase_card(
+            "NMSC",
+            "Prioritise marketing and content optimisation",
+            "Use market-level gaps to identify where Toyota or Lexus may need sharper content, clearer CTAs, better offer visibility, stronger model pages or more effective lower-funnel journeys.",
+            ["Toyota & Lexus Gap Analysis", "Market Performance", "Start Here methodology"],
+            "nmsc",
+        ),
+        usecase_card(
+            "NMSC",
+            "Diagnose whether traffic growth is quality traffic",
+            "If unique visitors are growing but Website-to-Contract Conversion Rate is flat or declining, the issue may be traffic quality, audience targeting, message-market fit or weak lower-funnel content.",
+            ["Market Performance", "YoY unique visitor growth chart", "Top 10 brands at a glance"],
+            "nmsc",
+        ),
+        usecase_card(
+            "NMSC",
+            "Dig deeper into competitor marketing strategies",
+            "Use this dashboard to identify which competitors need deeper investigation, then move into the market-specific marketing intelligence dashboards to review competitor activity, messaging and channel strategy.",
+            ["Market Performance", "External market dashboards linked below"],
+            "nmsc",
+        ),
+        usecase_card(
+            "TME",
+            "Identify product and powertrain pressure points",
+            "Where Toyota or Lexus underperform consistently across markets, the cause may not be local digital execution. It may signal product-market fit, powertrain competitiveness, availability, pricing or customer proposition issues.",
+            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Scorecard"],
+            "tme",
+        ),
+        usecase_card(
+            "TME",
+            "Compare market readiness for future product strategy",
+            "Use cross-market differences to understand where certain propositions appear to convert better. This can inform future model launches, powertrain emphasis, grade strategy and central product messaging.",
+            ["Toyota & Lexus Gap Analysis", "Bubble chart", "Scorecard"],
+            "tme",
+        ),
+        usecase_card(
+            "TME",
+            "Spot structural network or distribution constraints",
+            "If a brand has strong visitor demand but weak contract conversion in multiple countries, investigate retailer footprint, sales model, availability, lead handling and distribution constraints before assuming a website problem.",
+            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Start Here causal factors"],
+            "tme",
+        ),
+        usecase_card(
+            "NMSC / TME",
+            "Separate website effectiveness from commercial conversion",
+            "Use the Start Here page to align stakeholders that Website Conversion Rate and Website-to-Contract Conversion Rate are different. One is about lead capture; the other is about broader demand-to-contract efficiency.",
+            ["Start Here", "Two conversion metrics for different purposes"],
+            "shared",
+        ),
+        usecase_card(
+            "NMSC",
+            "Prepare local action plans",
+            "For NMSCs, the dashboard should be used to identify where to run deeper diagnostics: landing page effectiveness, offer prominence, lead quality, retailer follow-up, campaign audience quality and local content gaps.",
+            ["Toyota & Lexus Gap Analysis", "Market Performance", "Scorecard"],
+            "nmsc",
+        ),
+    ]
+
+    for i in range(0, len(cards), 2):
+        cols = st.columns(2)
+        for col, card in zip(cols, cards[i:i + 2]):
+            with col:
+                st.markdown(card, unsafe_allow_html=True)
+
+    section("Market-specific competitor marketing dashboards")
+    st.markdown(
+        "<div class='usecase-note'>"
+        "Separate market-level competitor marketing dashboards have been created to support deeper investigation into local marketing and content strategy."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    market_links = {
+        "UK": "https://valtech-uk-auto.netlify.app/",
+        "DE": "https://valtech-de-auto.netlify.app/",
+        "FR": "https://valtech-fr-auto.netlify.app/",
+        "IT": "https://valtech-it-auto.netlify.app/",
+        "ES": "https://valtech-es-auto.netlify.app/",
+    }
+    links_html = "".join([f"<a class='market-link-card' href='{url}' target='_blank'>{market}</a>" for market, url in market_links.items()])
+    st.markdown(f"<div class='market-link-grid'>{links_html}</div>", unsafe_allow_html=True)
+
+    render_footer()
+
 # =========================
 # Pages
 # =========================
