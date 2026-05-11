@@ -1752,28 +1752,31 @@ def scorecard_table(data, market, selected_oems):
     yoy = yoy_table(data, market, selected_oems)
     if yoy.empty:
         return pd.DataFrame()
+
     out = yoy.copy()
+    out["Category"] = out["OEM"].map(cluster_for_oem)
     out["W2C Ranking"] = out["ConversionPct_2025"].rank(method="first", ascending=False).astype(int)
     out = out.sort_values("W2C Ranking")
-    return out[
-        [
-            "OEM",
-            "Category",
-            "UniqueVisitors_2024",
-            "UniqueVisitors_2025",
-            "Visitors YoY %",
-            "Sales_2024",
-            "Sales_2025",
-            "Sales YoY %",
-            "ConversionPct_2024",
-            "ConversionPct_2025",
-            "Conv Var pp",
-            "Visits to Sale 2024",
-            "Visits to Sale 2025",
-            "Visits to Sale Var",
-            "W2C Ranking",
-        ]
+
+    columns = [
+        "OEM",
+        "Category",
+        "UniqueVisitors_2024",
+        "UniqueVisitors_2025",
+        "Visitors YoY %",
+        "Sales_2024",
+        "Sales_2025",
+        "Sales YoY %",
+        "ConversionPct_2024",
+        "ConversionPct_2025",
+        "Conv Var pp",
+        "Visits to Sale 2024",
+        "Visits to Sale 2025",
+        "Visits to Sale Var",
+        "W2C Ranking",
     ]
+
+    return out[[col for col in columns if col in out.columns]]
 
 
 def render_scorecard_page(data, selected_oems):
@@ -1800,17 +1803,25 @@ def render_scorecard_page(data, selected_oems):
     ).copy()
 
     for col in ["Website visitors 2024", "Website visitors 2025", "Passenger sales 2024", "Passenger sales 2025"]:
-        display[col] = display[col].map(fmt_int)
+        if col in display.columns:
+            display[col] = display[col].map(fmt_int)
     for col in ["Visitor YoY vs 2024", "Sales YoY vs 2024"]:
-        display[col] = display[col].map(fmt_pct)
+        if col in display.columns:
+            display[col] = display[col].map(fmt_pct)
     for col in ["W2C rate 2024", "W2C rate 2025"]:
-        display[col] = display[col].map(lambda x: f"{x:.2f}%")
-    display["W2C var vs 2024"] = display["W2C var vs 2024"].map(fmt_pp)
+        if col in display.columns:
+            display[col] = display[col].map(lambda x: f"{x:.2f}%")
+    if "W2C var vs 2024" in display.columns:
+        display["W2C var vs 2024"] = display["W2C var vs 2024"].map(fmt_pp)
     for col in ["Visits to Sale 2024", "Visits to Sale 2025", "Visits to Sale Var"]:
-        display[col] = display[col].map(fmt_int)
+        if col in display.columns:
+            display[col] = display[col].map(fmt_int)
+
+    badge_cols = [c for c in ["Visitor YoY vs 2024", "Sales YoY vs 2024", "W2C var vs 2024"] if c in display.columns]
+    styler = display.style.map(badge_style, subset=badge_cols) if badge_cols else display.style
 
     st.dataframe(
-        display.style.map(badge_style, subset=["Visitor YoY vs 2024", "Sales YoY vs 2024", "W2C var vs 2024"]),
+        styler,
         use_container_width=True,
         hide_index=True,
     )
