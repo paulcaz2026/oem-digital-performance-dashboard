@@ -1185,7 +1185,7 @@ def brand_detail_html(brand, row, logo, logo_height="38px"):
         f"<div class='{sales_delta_class}'>{fmt_pct(row['Sales YoY %'])} vs previous period</div>"
         "</div>"
         "<div class='tl-detail-metric'>"
-        f"<div class='tl-detail-label'>Monthly unique visitors</div>"
+        f"<div class='tl-detail-label'>Unique visitors</div>"
         f"<div class='tl-detail-value'>{fmt_metric_number(row['UniqueVisitors_2025'])}</div>"
         f"<div class='{visitor_delta_class}'>{fmt_pct(row['Visitors YoY %'])} vs previous period</div>"
         "</div>"
@@ -1265,6 +1265,7 @@ def render_market_weakness(data):
                     "Visitor YoY vs Prev Period": row["Visitors YoY %"],
                     "Sales YoY vs Previous Period": row["Sales YoY %"],
                     "W2C Conv Rate": f"{row['ConversionPct_2025']:.2f}%",
+                    "Benchmark Leader": leader["OEM"],
                     "Leader W2C Rate": f"{leader['ConversionPct_2025']:.2f}%",
                     "Gap to Leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
                 }
@@ -1281,6 +1282,7 @@ def render_market_weakness(data):
             "Visitor YoY vs Prev Period",
             "Sales YoY vs Previous Period",
             "W2C Conv Rate",
+            "Benchmark Leader",
             "Leader W2C Rate",
             "Gap to Leader",
         ]
@@ -1892,7 +1894,7 @@ def render_gap_analysis_page(data, market):
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(f"Toyota/Lexus passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs previous period" if sales_24 else "n/a")
-    c2.metric(f"Toyota/Lexus monthly unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
+    c2.metric(f"Toyota/Lexus Unique Visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
     c3.metric(f"Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs previous period")
     c4.metric(f"Visits per contract", fmt_int(visitors_25 / sales_25))
 
@@ -1922,7 +1924,7 @@ def render_market_performance_page(data, market, selected_oems):
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric(f"Passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs previous period" if sales_24 else "n/a")
-    c2.metric(f"Monthly unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
+    c2.metric(f"Unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
     c3.metric(f"Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs previous period")
     c4.metric(f"Visits per contract", fmt_int(visitors_25 / sales_25))
 
