@@ -456,7 +456,7 @@ div[data-testid="stPlotlyChart"] {
     position:absolute;
     width:240px;
     min-height:96px;
-    background:#F5F6F7;
+    background:transparent;
     border-left:8px solid #B8EC63;
     padding:18px 16px;
     display:flex;
@@ -1167,6 +1167,29 @@ div[data-testid="stTextInput"] input {
     .da-simple-title { font-size:34px; }
     .da-simple-copy { font-size:16px; }
     .da-simple-question { width:100%; }
+}
+
+
+/* Toyota / Lexus logo sizing cleanup */
+.tl-logo-strip img[src*="ToyotaLogo"],
+.tl-logo-strip img[src*="BHUB_Logo_ToyotaLogo"],
+.brand-strip img[src*="ToyotaLogo"],
+.brand-strip img[src*="BHUB_Logo_ToyotaLogo"],
+img[src*="BHUB_Logo_ToyotaLogo_01.svg"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    width: 210px !important;
+    max-width: 210px !important;
+    height: auto !important;
+    object-fit: contain !important;
+}
+
+.tl-logo-strip,
+.brand-strip {
+    background: transparent !important;
 }
 
 </style>
