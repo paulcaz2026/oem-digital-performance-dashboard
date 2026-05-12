@@ -439,7 +439,7 @@ div[data-testid="stPlotlyChart"] {
     color:#0A2342;
     font-size:16px;
     line-height:1.6;
-    margin-bottom:18px;
+    margin-bottom:10px;
 }
 .start-shell {
     position: relative;
@@ -579,7 +579,7 @@ div[data-testid="stPlotlyChart"] {
     background:#ffffff;
     border:1px solid #E6E9ED;
     border-radius:16px;
-    padding:22px;
+    padding:18px;
     box-shadow:0 1px 8px rgba(0,0,0,.035);
     height:100%;
 }
@@ -623,13 +623,13 @@ div[data-testid="stPlotlyChart"] {
     display:grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap:18px;
-    margin-bottom:22px;
+    margin-bottom:14px;
 }
 .usecase-card {
     background:#ffffff;
     border:1px solid #E6E9ED;
     border-radius:16px;
-    padding:22px;
+    padding:18px;
     box-shadow:0 1px 8px rgba(0,0,0,.035);
     min-height:255px;
 }
@@ -703,7 +703,7 @@ div[data-testid="stPlotlyChart"] {
     padding:18px 20px;
     color:#0A2342;
     line-height:1.55;
-    margin-bottom:18px;
+    margin-bottom:10px;
 }
 @media (max-width: 900px) {
     .usecase-grid { grid-template-columns: 1fr; }
@@ -895,7 +895,7 @@ div[data-testid="stPlotlyChart"] {
 /* Data Assistant premium concierge treatment */
 .da-hero {
     position: relative;
-    min-height: 520px;
+    min-height: 360px;
     border-radius: 26px;
     overflow: hidden;
     margin: 6px 0 28px 0;
@@ -920,7 +920,7 @@ div[data-testid="stPlotlyChart"] {
 .da-hero-content {
     position: relative;
     z-index: 2;
-    padding: 58px 60px 44px 60px;
+    padding: 34px 44px 32px 44px;
     text-align: center;
     color:#ffffff;
 }
@@ -934,22 +934,22 @@ div[data-testid="stPlotlyChart"] {
     font-weight:800;
     letter-spacing:.14em;
     text-transform:uppercase;
-    margin-bottom:28px;
+    margin-bottom:14px;
 }
 .da-title {
-    font-size:72px;
+    font-size:52px;
     line-height:0.98;
     font-weight:800;
     letter-spacing:-0.055em;
-    margin:0 auto 28px auto;
+    margin:0 auto 18px auto;
     max-width:900px;
 }
 .da-subtitle {
-    font-size:22px;
+    font-size:17px;
     line-height:1.45;
     color:rgba(255,255,255,0.88);
     max-width:1040px;
-    margin:0 auto 64px auto;
+    margin:0 auto 30px auto;
     font-weight:500;
 }
 .da-popular-label {
@@ -958,7 +958,7 @@ div[data-testid="stPlotlyChart"] {
     font-weight:800;
     letter-spacing:.16em;
     text-transform:uppercase;
-    margin-bottom:18px;
+    margin-bottom:10px;
 }
 .da-popular-grid {
     display:flex;
@@ -970,15 +970,15 @@ div[data-testid="stPlotlyChart"] {
     background:#ffffff;
     color:#101820;
     border-radius:12px;
-    padding:16px 22px;
+    padding:12px 18px;
     font-size:16px;
     font-weight:700;
     box-shadow:0 3px 14px rgba(0,0,0,.16);
-    min-width:260px;
+    min-width:230px;
 }
 .da-privacy {
     position:absolute;
-    bottom:22px;
+    bottom:14px;
     left:0;
     right:0;
     text-align:center;
@@ -1048,9 +1048,9 @@ div[data-testid="stPlotlyChart"] {
     background:#ffffff;
     border:1px solid #E6E9ED;
     border-radius:18px;
-    padding:22px;
+    padding:18px;
     box-shadow:0 4px 18px rgba(10,35,66,.06);
-    min-height:210px;
+    min-height:175px;
 }
 .assistant-card.primary {
     border-left:7px solid #009FE3;
@@ -1079,7 +1079,7 @@ div[data-testid="stPlotlyChart"] {
 }
 .assistant-card-metric {
     color:#000000;
-    font-size:31px;
+    font-size:27px;
     line-height:1.1;
     font-weight:850;
     margin-top:8px;
@@ -1101,6 +1101,22 @@ div[data-testid="stPlotlyChart"] {
     .da-subtitle { font-size:18px; margin-bottom:40px; }
     .da-popular-pill { width:100%; min-width:0; }
     .assistant-result-grid { grid-template-columns: 1fr; }
+}
+
+
+/* Real Data Assistant input */
+div[data-testid="stTextInput"] input {
+    border: 1.5px solid rgba(184, 117, 84, .65) !important;
+    border-radius: 999px !important;
+    min-height: 58px !important;
+    padding: 0 22px !important;
+    font-size: 20px !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 26px rgba(0,0,0,.06) !important;
+}
+div[data-testid="stTextInput"] input:focus {
+    border: 1.5px solid #B87554 !important;
+    box-shadow: 0 0 0 3px rgba(184,117,84,.16) !important;
 }
 
 </style>
@@ -1988,20 +2004,30 @@ def extract_market_from_question(question):
 
 def extract_brand_from_question(question, available_oems):
     q = question.lower()
-    # Longest first avoids partial matches.
-    for brand in sorted(available_oems, key=len, reverse=True):
-        if brand.lower() in q:
-            return brand
+
     aliases = {
         "volkswagen": "VW",
         "vw": "VW",
         "byd": "BYD Auto",
+        "byd auto": "BYD Auto",
         "ds automobiles": "DS",
         "citroen": "Citroen",
     }
-    for key, brand in aliases.items():
-        if key in q and brand in available_oems:
+
+    # Match aliases and brand names as whole tokens/phrases only.
+    # This prevents short brands such as "DS" being detected inside words like "leads".
+    candidates = []
+    for brand in available_oems:
+        candidates.append((brand.lower(), brand))
+    for alias, brand in aliases.items():
+        if brand in available_oems:
+            candidates.append((alias.lower(), brand))
+
+    for token, brand in sorted(candidates, key=lambda x: len(x[0]), reverse=True):
+        pattern = r"(?<![a-z0-9])" + re.escape(token) + r"(?![a-z0-9])"
+        if re.search(pattern, q):
             return brand
+
     return None
 
 
@@ -2238,13 +2264,30 @@ def generate_assistant_cards(data, question, selected_oems):
         if "conversion" in q or "w2c" in q or "website" in q:
             return explain_metric_cards()
 
+    # Leaderboard-style questions must be answered before brand detection.
+    # Example: "who leads W2C in Germany?" should return the #1 OEM, not detect "DS" inside "leads".
+    leaderboard_terms = ["leader", "leads", "lead", "best", "top", "outperform", "highest", "worst", "weakest", "lowest", "underperform"]
+    metric_terms = ["w2c", "conversion", "sales", "visitor", "traffic", "audience", "contract"]
+    if any(term in q for term in leaderboard_terms) or any(term in q for term in metric_terms):
+        # If the question specifically names Toyota and Lexus, handle that comparison first.
+        if "toyota" in q and "lexus" in q:
+            return toyota_lexus_cards(data, market)
+
+        # If the question is about a named brand and asks "how is X performing", return brand detail.
+        if brand and any(term in q for term in ["how is", "how are", "performance", "performing", "gap", "compare"]):
+            return brand_cards(data, market, brand)
+
+        # Otherwise answer as a ranking / top-bottom question.
+        if any(term in q for term in leaderboard_terms) or any(term in q for term in ["highest", "lowest", "top", "best", "worst"]):
+            return top_brands_cards(data, market, selected_oems, q)
+
     if "toyota" in q and "lexus" in q:
         return toyota_lexus_cards(data, market)
 
     if brand:
         return brand_cards(data, market, brand)
 
-    if any(term in q for term in ["leader", "best", "top", "outperform", "highest", "worst", "weakest", "lowest", "underperform", "sales", "visitor", "traffic", "audience"]):
+    if any(term in q for term in ["sales", "visitor", "traffic", "audience"]):
         return top_brands_cards(data, market, selected_oems, q)
 
     return [
@@ -2271,7 +2314,7 @@ def render_data_assistant(data, selected_oems):
         "<div class='da-hero-content'>"
         "<div class='da-eyebrow'>Data Assistant</div>"
         "<div class='da-title'>Good afternoon,<br>how can I help?</div>"
-        "<div class='da-subtitle'>Try the intelligent dashboard assistant. Ask a question about markets, OEMs, Website-to-Contract Conversion Rate, sales, visitors or Toyota/Lexus gaps.</div>"
+        "<div class='da-subtitle'>Ask a question about markets, OEMs, Website-to-Contract Conversion Rate, sales, visitors or Toyota/Lexus gaps.</div>"
         "<div class='da-popular-label'>Popular questions</div>"
         "<div class='da-popular-grid'>"
         "<div class='da-popular-pill'>Who leads W2C in Germany?</div>"
@@ -2292,13 +2335,11 @@ def render_data_assistant(data, selected_oems):
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div class='da-search-wrap'><div class='da-search-icon'>✦</div>", unsafe_allow_html=True)
     question = st.text_input(
         "Ask a question of the data",
         placeholder="Search...",
         key="data_assistant_question",
     )
-    st.markdown("</div>", unsafe_allow_html=True)
 
     if question:
         cards = generate_assistant_cards(data, question, selected_oems)
