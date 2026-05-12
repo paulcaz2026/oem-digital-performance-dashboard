@@ -29,7 +29,7 @@ PINK = "#FF5C8A"
 AMBER = "#FFB000"
 INTELLIGENCE = "#2563EB"
 
-TOYOTA_LOGO = "https://brand.toyota.com/content/dam/brandhub/guidelines/logo/two-column/BHUB_Logo_ToyotaLogo_01.svg"
+TOYOTA_LOGO = str(Path(__file__).parent / "toyota_logo.png")
 LEXUS_LOGO = "https://upload.wikimedia.org/wikipedia/commons/7/75/Lexus.svg"
 VALTECH_LOGO = "https://mma.prnewswire.com/media/2728124/Valtech_Logo.jpg"
 
@@ -1190,6 +1190,125 @@ img[src*="BHUB_Logo_ToyotaLogo_01.svg"] {
 .tl-logo-strip,
 .brand-strip {
     background: transparent !important;
+}
+
+
+/* Executive Market Summary */
+.exec-kpi-grid {
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap:16px;
+    margin: 12px 0 22px 0;
+}
+.exec-kpi-card {
+    background:#F7F9FC;
+    border-radius:18px;
+    padding:20px;
+    border:1px solid #E6E9ED;
+    min-height:145px;
+}
+.exec-kpi-label {
+    color:#6F7782;
+    font-size:14px;
+    font-weight:800;
+    margin-bottom:10px;
+}
+.exec-kpi-value {
+    color:#000000;
+    font-size:34px;
+    line-height:1.05;
+    font-weight:850;
+}
+.exec-kpi-delta {
+    display:inline-block;
+    margin-top:12px;
+    border-radius:999px;
+    padding:5px 10px;
+    font-weight:800;
+    font-size:13px;
+    background:#EEF3F8;
+    color:#0A2342;
+}
+.share-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:18px;
+    margin: 12px 0 24px 0;
+}
+.share-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 2px 14px rgba(10,35,66,.04);
+}
+.share-title {
+    font-size:20px;
+    font-weight:850;
+    color:#0A2342;
+    margin-bottom:14px;
+}
+.share-metric-row {
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    border-top:1px solid #EEF2F6;
+    padding:12px 0;
+}
+.share-metric-row:first-of-type {
+    border-top:0;
+}
+.share-label {
+    color:#6F7782;
+    font-weight:700;
+}
+.share-value {
+    color:#000000;
+    font-weight:850;
+}
+.takeaway-grid {
+    display:grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap:14px;
+    margin: 12px 0 22px 0;
+}
+.takeaway-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-left:7px solid #009FE3;
+    border-radius:16px;
+    padding:18px;
+    min-height:185px;
+    box-shadow:0 2px 14px rgba(10,35,66,.04);
+}
+.takeaway-card.risk { border-left-color:#FF5C8A; }
+.takeaway-card.positive { border-left-color:#12C76B; }
+.takeaway-card.neutral { border-left-color:#B87554; }
+.takeaway-label {
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    font-weight:850;
+    color:#8B95A1;
+    margin-bottom:10px;
+}
+.takeaway-title {
+    color:#0A2342;
+    font-size:16px;
+    font-weight:850;
+    line-height:1.25;
+    margin-bottom:9px;
+}
+.takeaway-copy {
+    color:#6F7782;
+    font-size:13px;
+    line-height:1.5;
+}
+@media (max-width: 1100px) {
+    .exec-kpi-grid, .takeaway-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 800px) {
+    .exec-kpi-grid, .share-grid, .takeaway-grid { grid-template-columns: 1fr; }
 }
 
 </style>
@@ -2552,7 +2671,7 @@ def render_use_cases_page(data):
             "NMSC / TME",
             "Identify which OEMs are outperforming in your market",
             "Use this to understand which OEMs are converting website demand into customer contracts most efficiently in a specific market. This should trigger investigation into whether the driver is brand demand, offer strength, stock availability, retailer execution or website experience.",
-            ["Market Performance", "Scorecard", "Bubble chart"],
+            ["Market Summary", "Scorecard", "Bubble chart"],
             "shared",
         ),
         usecase_card(
@@ -2566,21 +2685,21 @@ def render_use_cases_page(data):
             "NMSC",
             "Prioritise marketing and content optimisation",
             "Use market-level gaps to identify where Toyota or Lexus may need sharper content, clearer CTAs, better offer visibility, stronger model pages or more effective lower-funnel journeys.",
-            ["Toyota & Lexus Gap Analysis", "Market Performance", "Start Here methodology"],
+            ["Toyota & Lexus Gap Analysis", "Market Summary", "Start Here methodology"],
             "nmsc",
         ),
         usecase_card(
             "NMSC",
             "Diagnose whether traffic growth is quality traffic",
             "If unique visitors are growing but Website-to-Contract Conversion Rate is flat or declining, the issue may be traffic quality, audience targeting, message-market fit or weak lower-funnel content.",
-            ["Market Performance", "YoY unique visitor growth chart", "Top 10 brands at a glance"],
+            ["Market Summary", "YoY unique visitor growth chart", "Top 10 brands at a glance"],
             "nmsc",
         ),
         usecase_card(
             "NMSC",
             "Dig deeper into competitor marketing strategies",
             "Use this dashboard to identify which competitors need deeper investigation, then move into the market-specific marketing intelligence dashboards to review competitor activity, messaging and channel strategy.",
-            ["Market Performance", "External market dashboards linked below"],
+            ["Market Summary", "External market dashboards linked below"],
             "nmsc",
         ),
         usecase_card(
@@ -2615,7 +2734,7 @@ def render_use_cases_page(data):
             "NMSC",
             "Prepare local action plans",
             "For NMSCs, the dashboard should be used to identify where to run deeper diagnostics: landing page effectiveness, offer prominence, lead quality, retailer follow-up, campaign audience quality and local content gaps.",
-            ["Toyota & Lexus Gap Analysis", "Market Performance", "Scorecard"],
+            ["Toyota & Lexus Gap Analysis", "Market Summary", "Scorecard"],
             "nmsc",
         ),
     ]
@@ -2683,33 +2802,170 @@ def render_gap_analysis_page(data, market):
     render_footer()
 
 
-def render_market_performance_page(data, market, selected_oems):
-    section(f"Market performance — {market} OEM cohort")
-    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
-    render_cluster_legend(selected_clusters)
+
+def exec_kpi_card(label, value, delta=None):
+    delta_html = f"<div class='exec-kpi-delta'>{delta}</div>" if delta is not None else ""
+    return (
+        f"<div class='exec-kpi-card'>"
+        f"<div class='exec-kpi-label'>{label}</div>"
+        f"<div class='exec-kpi-value'>{value}</div>"
+        f"{delta_html}"
+        f"</div>"
+    )
+
+
+def render_exec_kpis(data, market, selected_oems):
     current = market_year(data, market, 2025, selected_oems)
     previous = market_year(data, market, 2024, selected_oems)
+
     if current.empty:
         st.warning("No data available for this selection.")
-        return
+        return False
 
     sales_25 = current["Sales"].sum()
     visitors_25 = current["UniqueVisitors"].sum()
-    conv_25 = sales_25 / visitors_25 * 100
-    sales_24 = previous["Sales"].sum()
-    visitors_24 = previous["UniqueVisitors"].sum()
+    conv_25 = sales_25 / visitors_25 * 100 if visitors_25 else 0
+
+    sales_24 = previous["Sales"].sum() if not previous.empty else 0
+    visitors_24 = previous["UniqueVisitors"].sum() if not previous.empty else 0
     conv_24 = sales_24 / visitors_24 * 100 if visitors_24 else 0
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric(f"Passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs previous period" if sales_24 else "n/a")
-    c2.metric(f"Unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
-    c3.metric(f"Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs previous period")
-    c4.metric(f"Visits per contract", fmt_int(visitors_25 / sales_25))
+    cards = [
+        exec_kpi_card(f"{CURRENT_LABEL} market contracts", fmt_metric_number(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if sales_24 else "n/a"),
+        exec_kpi_card(f"{CURRENT_LABEL} unique visitors", fmt_metric_number(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if visitors_24 else "n/a"),
+        exec_kpi_card("Market W2C rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs {PREVIOUS_LABEL}"),
+        exec_kpi_card("Visits per contract", fmt_int(visitors_25 / sales_25) if sales_25 else "n/a", "lower is better"),
+    ]
+    st.markdown("<div class='exec-kpi-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
+    return True
 
-    render_top10_table(data, market, selected_oems)
-    section(f"Performance visuals — current period vs previous period unique visitor growth")
-    st.plotly_chart(build_yoy_growth_chart(data, market, selected_oems, top_n=10), use_container_width=True)
-    render_market_insights(data, market, selected_oems)
+
+def render_toyota_lexus_market_share(data, market):
+    current_all = market_year(data, market, 2025, None)
+    previous_all = market_year(data, market, 2024, None)
+    current_tl = market_year(data, market, 2025, ["Toyota", "Lexus"])
+    previous_tl = market_year(data, market, 2024, ["Toyota", "Lexus"])
+
+    if current_all.empty or current_tl.empty:
+        st.info("No Toyota/Lexus share data available for this market.")
+        return
+
+    all_visitors = current_all["UniqueVisitors"].sum()
+    all_sales = current_all["Sales"].sum()
+    tl_visitors = current_tl["UniqueVisitors"].sum()
+    tl_sales = current_tl["Sales"].sum()
+
+    prev_all_visitors = previous_all["UniqueVisitors"].sum() if not previous_all.empty else 0
+    prev_all_sales = previous_all["Sales"].sum() if not previous_all.empty else 0
+    prev_tl_visitors = previous_tl["UniqueVisitors"].sum() if not previous_tl.empty else 0
+    prev_tl_sales = previous_tl["Sales"].sum() if not previous_tl.empty else 0
+
+    visitor_share = tl_visitors / all_visitors * 100 if all_visitors else 0
+    contract_share = tl_sales / all_sales * 100 if all_sales else 0
+    prev_visitor_share = prev_tl_visitors / prev_all_visitors * 100 if prev_all_visitors else 0
+    prev_contract_share = prev_tl_sales / prev_all_sales * 100 if prev_all_sales else 0
+
+    html = (
+        "<div class='share-grid'>"
+        "<div class='share-card'>"
+        "<div class='share-title'>Toyota & Lexus share of unique visitors</div>"
+        f"<div class='share-metric-row'><span class='share-label'>Share of market visitors</span><span class='share-value'>{visitor_share:.1f}%</span></div>"
+        f"<div class='share-metric-row'><span class='share-label'>Unique visitors</span><span class='share-value'>{fmt_metric_number(tl_visitors)}</span></div>"
+        f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value'>{fmt_pp(visitor_share - prev_visitor_share)}</span></div>"
+        "</div>"
+        "<div class='share-card'>"
+        "<div class='share-title'>Toyota & Lexus share of customer contracts</div>"
+        f"<div class='share-metric-row'><span class='share-label'>Share of market contracts</span><span class='share-value'>{contract_share:.1f}%</span></div>"
+        f"<div class='share-metric-row'><span class='share-label'>Customer contracts</span><span class='share-value'>{fmt_metric_number(tl_sales)}</span></div>"
+        f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value'>{fmt_pp(contract_share - prev_contract_share)}</span></div>"
+        "</div>"
+        "</div>"
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def top10_leaders_table(data, market, selected_oems):
+    yoy = yoy_table(data, market, selected_oems)
+    if yoy.empty:
+        st.info("No Top 10 data available for this selection.")
+        return
+
+    top = yoy.sort_values("ConversionPct_2025", ascending=False).head(10).copy()
+    display = pd.DataFrame({
+        "Rank": range(1, len(top) + 1),
+        "Brand": top["OEM"],
+        "Category": top["OEM"].map(cluster_for_oem),
+        "W2C Conv Rate": top["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
+        "Unique Visitors": top["UniqueVisitors_2025"].map(fmt_metric_number),
+        "Customer Contracts": top["Sales_2025"].map(fmt_metric_number),
+        f"Visitor change vs {PREVIOUS_LABEL}": top["Visitors YoY %"].map(fmt_pct),
+        f"Sales change vs {PREVIOUS_LABEL}": top["Sales YoY %"].map(fmt_pct),
+    })
+    st.dataframe(display, use_container_width=True, hide_index=True)
+
+
+def render_market_takeaways(data, market, selected_oems):
+    yoy = yoy_table(data, market, selected_oems)
+    if yoy.empty:
+        return
+
+    top_w2c = yoy.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+    top_visitors = yoy.sort_values("UniqueVisitors_2025", ascending=False).iloc[0]
+    fastest_visitors = yoy.sort_values("Visitors YoY %", ascending=False).iloc[0]
+    weakest_w2c_move = yoy.sort_values("Conv Var pp", ascending=True).iloc[0]
+
+    tl = yoy[yoy["OEM"].isin(["Toyota", "Lexus"])].copy()
+    if not tl.empty:
+        tl_avg = tl["ConversionPct_2025"].mean()
+        market_avg = yoy["ConversionPct_2025"].mean()
+        tl_gap_text = f"Toyota/Lexus average W2C is {tl_avg:.2f}% versus cohort average {market_avg:.2f}%."
+        tl_metric = fmt_pp(tl_avg - market_avg)
+        tl_style = "positive" if tl_avg >= market_avg else "risk"
+    else:
+        tl_gap_text = "Toyota/Lexus data is not available in this market selection."
+        tl_metric = "n/a"
+        tl_style = "neutral"
+
+    cards = [
+        ("Leader", f"{top_w2c['OEM']} leads W2C", f"{top_w2c['OEM']} records the highest Website-to-Contract Conversion Rate in {market}.", f"{top_w2c['ConversionPct_2025']:.2f}%", "positive"),
+        ("Scale", f"{top_visitors['OEM']} leads visitor scale", f"{top_visitors['OEM']} has the largest unique visitor base in {market}.", fmt_metric_number(top_visitors["UniqueVisitors_2025"]), "primary"),
+        ("Growth", f"{fastest_visitors['OEM']} has fastest visitor growth", f"Unique visitors grew {fmt_pct(fastest_visitors['Visitors YoY %'])} versus {PREVIOUS_LABEL}.", fmt_pct(fastest_visitors["Visitors YoY %"]), "positive"),
+        ("Risk", f"{weakest_w2c_move['OEM']} has weakest W2C movement", f"W2C moved {fmt_pp(weakest_w2c_move['Conv Var pp'])} versus {PREVIOUS_LABEL}.", fmt_pp(weakest_w2c_move["Conv Var pp"]), "risk"),
+        ("Toyota/Lexus", "Toyota & Lexus position", tl_gap_text, tl_metric, tl_style),
+    ]
+
+    html = "<div class='takeaway-grid'>"
+    for label, title, copy, metric, style in cards:
+        html += (
+            f"<div class='takeaway-card {style}'>"
+            f"<div class='takeaway-label'>{label}</div>"
+            f"<div class='takeaway-title'>{title}</div>"
+            f"<div class='takeaway-copy'>{copy}</div>"
+            f"<div class='assistant-card-metric'>{metric}</div>"
+            f"</div>"
+        )
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+
+
+def render_market_summary_page(data, market, selected_oems):
+    section(f"Market Summary — {market}")
+    st.caption(f"Executive view for {CURRENT_LABEL} vs {PREVIOUS_LABEL}: market growth, Toyota/Lexus share, leading competitors and key takeaways.")
+    render_cluster_legend(selected_clusters)
+
+    if not render_exec_kpis(data, market, selected_oems):
+        return
+
+    section("Toyota & Lexus share of market demand and contracts")
+    render_toyota_lexus_market_share(data, market)
+
+    section("Leading competitors — Top 10 by Website-to-Contract Conversion Rate")
+    top10_leaders_table(data, market, selected_oems)
+
+    section("Five executive takeaways")
+    render_market_takeaways(data, market, selected_oems)
+
     render_footer()
 
 
@@ -2900,7 +3156,7 @@ st.sidebar.header("Filters")
 
 page = st.sidebar.radio(
     "Dashboard page",
-    ["Start Here", "Use Cases", "Data Assistant", "Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
+    ["Start Here", "Use Cases", "Market Summary", "Toyota & Lexus Gap Analysis", "Bubble chart", "Scorecard", "Data Assistant"],
     index=0,
 )
 
@@ -2954,13 +3210,13 @@ if page == "Start Here":
     render_start_here_page(data)
 elif page == "Use Cases":
     render_use_cases_page(data)
-elif page == "Data Assistant":
-    render_data_assistant_page(data, selected_oems)
+elif page == "Market Summary":
+    render_market_summary_page(data, summary_market, selected_oems)
 elif page == "Toyota & Lexus Gap Analysis":
     render_gap_analysis_page(data, summary_market)
-elif page == "Market Performance":
-    render_market_performance_page(data, summary_market, selected_oems)
 elif page == "Bubble chart":
     render_bubble_page(data, selected_oems, year_view, show_logos)
-else:
+elif page == "Scorecard":
     render_scorecard_page(data, selected_oems)
+else:
+    render_data_assistant_page(data, selected_oems)
