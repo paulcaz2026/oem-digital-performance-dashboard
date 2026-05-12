@@ -1,5 +1,6 @@
 from pathlib import Path
 import math
+import re
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -895,7 +896,7 @@ div[data-testid="stPlotlyChart"] {
 /* Data Assistant premium concierge treatment */
 .da-hero {
     position: relative;
-    min-height: 360px;
+    min-height: 320px;
     border-radius: 26px;
     overflow: hidden;
     margin: 6px 0 28px 0;
@@ -920,7 +921,7 @@ div[data-testid="stPlotlyChart"] {
 .da-hero-content {
     position: relative;
     z-index: 2;
-    padding: 34px 44px 32px 44px;
+    padding: 28px 38px 28px 38px;
     text-align: center;
     color:#ffffff;
 }
@@ -937,7 +938,7 @@ div[data-testid="stPlotlyChart"] {
     margin-bottom:14px;
 }
 .da-title {
-    font-size:52px;
+    font-size:46px;
     line-height:0.98;
     font-weight:800;
     letter-spacing:-0.055em;
@@ -949,7 +950,7 @@ div[data-testid="stPlotlyChart"] {
     line-height:1.45;
     color:rgba(255,255,255,0.88);
     max-width:1040px;
-    margin:0 auto 30px auto;
+    margin:0 auto 22px auto;
     font-weight:500;
 }
 .da-popular-label {
@@ -1104,19 +1105,13 @@ div[data-testid="stPlotlyChart"] {
 }
 
 
-/* Real Data Assistant input */
+
+
+/* Data Assistant input cleanup */
 div[data-testid="stTextInput"] input {
-    border: 1.5px solid rgba(184, 117, 84, .65) !important;
-    border-radius: 999px !important;
-    min-height: 58px !important;
-    padding: 0 22px !important;
-    font-size: 20px !important;
-    background: #ffffff !important;
-    box-shadow: 0 8px 26px rgba(0,0,0,.06) !important;
-}
-div[data-testid="stTextInput"] input:focus {
-    border: 1.5px solid #B87554 !important;
-    box-shadow: 0 0 0 3px rgba(184,117,84,.16) !important;
+    min-height: 48px !important;
+    font-size: 18px !important;
+    padding: 10px 14px !important;
 }
 
 </style>
@@ -2336,7 +2331,7 @@ def render_data_assistant(data, selected_oems):
     )
 
     question = st.text_input(
-        "Ask a question of the data",
+        "Ask the data",
         placeholder="Search...",
         key="data_assistant_question",
     )
