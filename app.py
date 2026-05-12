@@ -891,6 +891,218 @@ div[data-testid="stPlotlyChart"] {
     .assistant-result-grid { grid-template-columns: 1fr; }
 }
 
+
+/* Data Assistant premium concierge treatment */
+.da-hero {
+    position: relative;
+    min-height: 520px;
+    border-radius: 26px;
+    overflow: hidden;
+    margin: 6px 0 28px 0;
+    background:
+        linear-gradient(90deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.48) 42%, rgba(10,35,66,0.30) 100%),
+        radial-gradient(circle at 75% 20%, rgba(255,255,255,0.26), rgba(255,255,255,0) 32%),
+        linear-gradient(135deg, #050505 0%, #2A2F36 48%, #C9B7AA 100%);
+    border-bottom: 7px solid #009FE3;
+    box-shadow: 0 12px 38px rgba(0,0,0,0.16);
+}
+.da-hero::before {
+    content: "";
+    position:absolute;
+    left:0;
+    top:0;
+    width:38%;
+    height:100%;
+    background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 4px, transparent 4px, transparent 18px);
+    opacity: .72;
+}
+.da-hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 58px 60px 44px 60px;
+    text-align: center;
+    color:#ffffff;
+}
+.da-eyebrow {
+    display:inline-block;
+    background:rgba(255,255,255,0.14);
+    border:1px solid rgba(255,255,255,0.24);
+    border-radius:999px;
+    padding:8px 14px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    margin-bottom:28px;
+}
+.da-title {
+    font-size:72px;
+    line-height:0.98;
+    font-weight:800;
+    letter-spacing:-0.055em;
+    margin:0 auto 28px auto;
+    max-width:900px;
+}
+.da-subtitle {
+    font-size:22px;
+    line-height:1.45;
+    color:rgba(255,255,255,0.88);
+    max-width:1040px;
+    margin:0 auto 64px auto;
+    font-weight:500;
+}
+.da-popular-label {
+    color:#ffffff;
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    margin-bottom:18px;
+}
+.da-popular-grid {
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:18px;
+}
+.da-popular-pill {
+    background:#ffffff;
+    color:#101820;
+    border-radius:12px;
+    padding:16px 22px;
+    font-size:16px;
+    font-weight:700;
+    box-shadow:0 3px 14px rgba(0,0,0,.16);
+    min-width:260px;
+}
+.da-privacy {
+    position:absolute;
+    bottom:22px;
+    left:0;
+    right:0;
+    text-align:center;
+    color:rgba(255,255,255,0.72);
+    font-size:13px;
+    letter-spacing:.02em;
+    z-index:2;
+}
+.da-search-wrap {
+    background:#ffffff;
+    border:1.5px solid rgba(167, 100, 70, .55);
+    border-radius:999px;
+    padding:8px 18px 8px 20px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-height:68px;
+    box-shadow:0 8px 30px rgba(0,0,0,.08);
+    margin: 6px 0 26px 0;
+}
+.da-search-icon {
+    color:#B87554;
+    font-size:24px;
+    font-weight:900;
+}
+.da-search-wrap div[data-testid="stTextInput"] {
+    flex:1;
+}
+.da-search-wrap div[data-testid="stTextInput"] > label {
+    display:none;
+}
+.da-search-wrap div[data-testid="stTextInput"] input {
+    border:0 !important;
+    box-shadow:none !important;
+    font-size:21px !important;
+    color:#101820 !important;
+    background:#ffffff !important;
+}
+.da-search-wrap div[data-testid="stTextInput"] input:focus {
+    border:0 !important;
+    box-shadow:none !important;
+}
+.da-context-bar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    margin: 6px 0 18px 0;
+    color:#6F7782;
+    font-size:14px;
+}
+.da-context-chip {
+    background:#F7F9FC;
+    border:1px solid #E6E9ED;
+    color:#0A2342;
+    border-radius:999px;
+    padding:8px 12px;
+    font-weight:800;
+}
+.assistant-result-grid {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:18px;
+    margin: 16px 0 22px 0;
+}
+.assistant-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 4px 18px rgba(10,35,66,.06);
+    min-height:210px;
+}
+.assistant-card.primary {
+    border-left:7px solid #009FE3;
+}
+.assistant-card.positive {
+    border-left:7px solid #12C76B;
+}
+.assistant-card.risk {
+    border-left:7px solid #FF5C8A;
+}
+.assistant-card.neutral {
+    border-left:7px solid #B87554;
+}
+.assistant-card-title {
+    font-size:18px;
+    line-height:1.25;
+    color:#0A2342;
+    font-weight:850;
+    margin-bottom:10px;
+}
+.assistant-card-copy {
+    color:#6F7782;
+    font-size:14px;
+    line-height:1.58;
+    margin-bottom:14px;
+}
+.assistant-card-metric {
+    color:#000000;
+    font-size:31px;
+    line-height:1.1;
+    font-weight:850;
+    margin-top:8px;
+}
+.assistant-card-tag {
+    display:inline-block;
+    background:#F3F6FA;
+    color:#0A2342;
+    border-radius:8px;
+    padding:5px 10px;
+    font-size:12px;
+    font-weight:800;
+    margin-top:12px;
+}
+@media (max-width: 900px) {
+    .da-hero { min-height: 620px; }
+    .da-hero-content { padding: 40px 22px; }
+    .da-title { font-size:46px; }
+    .da-subtitle { font-size:18px; margin-bottom:40px; }
+    .da-popular-pill { width:100%; min-width:0; }
+    .assistant-result-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -2055,39 +2267,51 @@ def generate_assistant_cards(data, question, selected_oems):
 
 def render_data_assistant(data, selected_oems):
     st.markdown(
-        "<div class='assistant-shell'>"
-        "<div class='assistant-title'>Ask the data</div>"
-        "<div class='assistant-copy'>Ask a question about brands, markets, Website-to-Contract Conversion Rate, sales, visitors or Toyota/Lexus gaps. Answers are generated from the selected comparison view and returned as evidence cards.</div>"
-        "<div class='assistant-hint-row'>"
-        "<span class='assistant-hint'>Who leads W2C in Germany?</span>"
-        "<span class='assistant-hint'>How is Toyota performing in France?</span>"
-        "<span class='assistant-hint'>Compare Toyota and Lexus in MM5</span>"
-        "<span class='assistant-hint'>Which OEM has the highest visitors?</span>"
-        "<span class='assistant-hint'>Explain the conversion metric</span>"
+        "<div class='da-hero'>"
+        "<div class='da-hero-content'>"
+        "<div class='da-eyebrow'>Data Assistant</div>"
+        "<div class='da-title'>Good afternoon,<br>how can I help?</div>"
+        "<div class='da-subtitle'>Try the intelligent dashboard assistant. Ask a question about markets, OEMs, Website-to-Contract Conversion Rate, sales, visitors or Toyota/Lexus gaps.</div>"
+        "<div class='da-popular-label'>Popular questions</div>"
+        "<div class='da-popular-grid'>"
+        "<div class='da-popular-pill'>Who leads W2C in Germany?</div>"
+        "<div class='da-popular-pill'>How is Toyota performing in France?</div>"
+        "<div class='da-popular-pill'>Compare Toyota and Lexus in MM5</div>"
         "</div>"
+        "</div>"
+        "<div class='da-privacy'>Please avoid sharing personal information. Responses are generated from the dashboard dataset only.</div>"
         "</div>",
         unsafe_allow_html=True,
     )
 
+    st.markdown(
+        f"<div class='da-context-bar'>"
+        f"<div>Ask a question or use one of the example prompts above.</div>"
+        f"<div class='da-context-chip'>{CURRENT_LABEL} vs {PREVIOUS_LABEL}</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<div class='da-search-wrap'><div class='da-search-icon'>✦</div>", unsafe_allow_html=True)
     question = st.text_input(
         "Ask a question of the data",
-        placeholder="Example: Who has the highest Website-to-Contract Conversion Rate in the UK?",
+        placeholder="Search...",
         key="data_assistant_question",
     )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if question:
         cards = generate_assistant_cards(data, question, selected_oems)
         st.markdown(assistant_result_html(cards), unsafe_allow_html=True)
     else:
-        st.info("Type a question above to generate data-backed cards.")
-
+        st.info("Start by typing a question above. Example: 'Which OEM has the highest W2C rate in the UK?'")
 
 
 def render_data_assistant_page(data, selected_oems):
-    section("Data Assistant")
-    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
     render_data_assistant(data, selected_oems)
     render_footer()
+
+
 
 
 def render_start_here_page(data):
