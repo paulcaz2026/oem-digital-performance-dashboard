@@ -987,6 +987,18 @@ def fmt_short(v):
     return f"{v:,.0f}"
 
 
+def fmt_metric_number(v):
+    """Format KPI numbers so they do not wrap awkwardly in metric cards."""
+    if pd.isna(v):
+        return "n/a"
+    v = float(v)
+    if abs(v) >= 1_000_000:
+        return f"{v/1_000_000:.1f}M"
+    if abs(v) >= 1_000:
+        return f"{v:,.0f}"
+    return f"{v:.0f}"
+
+
 def badge_style(value):
     text = str(value)
     if text.startswith("+"):
@@ -1169,12 +1181,12 @@ def brand_detail_html(brand, row, logo, logo_height="38px"):
         "</div>"
         "<div class='tl-detail-metric'>"
         f"<div class='tl-detail-label'>Passenger sales</div>"
-        f"<div class='tl-detail-value'>{fmt_int(row['Sales_2025'])}</div>"
+        f"<div class='tl-detail-value'>{fmt_metric_number(row['Sales_2025'])}</div>"
         f"<div class='{sales_delta_class}'>{fmt_pct(row['Sales YoY %'])} vs previous period</div>"
         "</div>"
         "<div class='tl-detail-metric'>"
         f"<div class='tl-detail-label'>Monthly unique visitors</div>"
-        f"<div class='tl-detail-value'>{fmt_int(row['UniqueVisitors_2025'])}</div>"
+        f"<div class='tl-detail-value'>{fmt_metric_number(row['UniqueVisitors_2025'])}</div>"
         f"<div class='{visitor_delta_class}'>{fmt_pct(row['Visitors YoY %'])} vs previous period</div>"
         "</div>"
         "</div>"
@@ -1250,25 +1262,36 @@ def render_market_weakness(data):
                 {
                     "Brand": brand,
                     "Market": market,
-                    "Website-to-Contract Conversion Rate": f"{row['ConversionPct_2025']:.2f}%",
-                    "Benchmark leader": leader["OEM"],
-                    "Leader W2C rate": f"{leader['ConversionPct_2025']:.2f}%",
-                    "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
-                    "Sales YoY vs previous period": row["Sales YoY %"],
-                    "Visitor YoY vs previous period": row["Visitors YoY %"],
+                    "Visitor YoY vs Prev Period": row["Visitors YoY %"],
+                    "Sales YoY vs Previous Period": row["Sales YoY %"],
+                    "W2C Conv Rate": f"{row['ConversionPct_2025']:.2f}%",
+                    "Leader W2C Rate": f"{leader['ConversionPct_2025']:.2f}%",
+                    "Gap to Leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
                 }
             )
     if not rows:
         st.info("No Toyota/Lexus market gap data available.")
         return
 
-    df = pd.DataFrame(rows).sort_values("Gap to leader")
-    display = df.copy()
-    display["Gap to leader"] = display["Gap to leader"].map(fmt_pp)
-    display["Sales YoY vs previous period"] = display["Sales YoY vs previous period"].map(fmt_pct)
-    display["Visitor YoY vs previous period"] = display["Visitor YoY vs previous period"].map(fmt_pct)
+    df = pd.DataFrame(rows).sort_values("Gap to Leader")
+    display = df[
+        [
+            "Brand",
+            "Market",
+            "Visitor YoY vs Prev Period",
+            "Sales YoY vs Previous Period",
+            "W2C Conv Rate",
+            "Leader W2C Rate",
+            "Gap to Leader",
+        ]
+    ].copy()
 
-    styler = display.style.map(badge_style, subset=["Gap to leader", "Sales YoY vs previous period", "Visitor YoY vs previous period"])
+    display["Visitor YoY vs Prev Period"] = display["Visitor YoY vs Prev Period"].map(fmt_pct)
+    display["Sales YoY vs Previous Period"] = display["Sales YoY vs Previous Period"].map(fmt_pct)
+    display["Gap to Leader"] = display["Gap to Leader"].map(fmt_pp)
+
+    badge_cols = ["Visitor YoY vs Prev Period", "Sales YoY vs Previous Period", "Gap to Leader"]
+    styler = display.style.map(badge_style, subset=badge_cols)
     st.dataframe(styler, use_container_width=True, hide_index=True)
 
 
