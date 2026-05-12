@@ -1816,32 +1816,36 @@ def top_brands_cards(data, market, selected_oems, question):
         label = "Website-to-Contract Conversion Rate"
         formatter = lambda x: f"{x:.2f}%"
 
-    if any(term in q for term in ["worst", "weakest", "lowest", "underperform"]):
-        row = yoy.sort_values(metric, ascending=True).iloc[0]
-        direction = "lowest"
-        style = "risk"
-    else:
-        row = yoy.sort_values(metric, ascending=False).iloc[0]
-        direction = "highest"
-        style = "positive"
+    ascending = any(term in q for term in ["worst", "weakest", "lowest", "underperform"])
+    ranked = yoy.sort_values(metric, ascending=ascending).head(5)
 
-    return [
+    cards = []
+    for idx, (_, row) in enumerate(ranked.iterrows(), start=1):
+        style = "risk" if ascending else ("positive" if idx == 1 else "primary")
+        direction = "lowest" if ascending else "highest"
+        cards.append(
+            assistant_card(
+                f"#{idx}: {row['OEM']}",
+                f"In {market}, {row['OEM']} is ranked #{idx} for {label} in the selected set. "
+                f"Sales changed {fmt_pct(row['Sales YoY %'])}; unique visitors changed {fmt_pct(row['Visitors YoY %'])} versus {PREVIOUS_LABEL}.",
+                formatter(row[metric]),
+                f"{direction} {label}",
+                style,
+            )
+        )
+
+    leader = ranked.iloc[0]
+    cards.append(
         assistant_card(
-            f"{row['OEM']} has the {direction} {label}",
-            f"In {market}, {row['OEM']} records the {direction} {label} in the selected comparison set. "
-            f"The active comparison is {CURRENT_LABEL} vs {PREVIOUS_LABEL}.",
-            formatter(row[metric]),
-            f"{market} · {CURRENT_LABEL}",
-            style,
-        ),
-        assistant_card(
-            "Supporting movement",
-            f"Sales changed {fmt_pct(row['Sales YoY %'])} and unique visitors changed {fmt_pct(row['Visitors YoY %'])} versus {PREVIOUS_LABEL}.",
-            fmt_pp(row["Conv Var pp"]),
-            "W2C movement",
-            "primary" if row["Conv Var pp"] >= 0 else "risk",
-        ),
-    ]
+            "Read this correctly",
+            f"This is not proof that {leader['OEM']} has the best website. W2C performance can reflect brand demand, product fit, pricing, stock, retailer follow-up and network effects.",
+            "macro funnel",
+            f"{CURRENT_LABEL} vs {PREVIOUS_LABEL}",
+            "neutral",
+        )
+    )
+
+    return cards
 
 
 def brand_cards(data, market, brand):
@@ -1857,28 +1861,54 @@ def brand_cards(data, market, brand):
     cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
     leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0] if not cohort_df.empty else yoy.sort_values("ConversionPct_2025", ascending=False).iloc[0]
     gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
+    rank = int(cohort_df["ConversionPct_2025"].rank(method="min", ascending=False).loc[row.name]) if row.name in cohort_df.index else int(yoy["ConversionPct_2025"].rank(method="min", ascending=False).loc[row.name])
+
+    visitor_style = "positive" if row["Visitors YoY %"] >= 0 else "risk"
+    sales_style = "positive" if row["Sales YoY %"] >= 0 else "risk"
+    conv_style = "positive" if row["Conv Var pp"] >= 0 else "risk"
 
     cards = [
         assistant_card(
-            f"{brand} in {market}",
-            f"{brand}'s {CURRENT_LABEL} Website-to-Contract Conversion Rate is shown against its movement versus {PREVIOUS_LABEL}.",
+            f"{brand} W2C performance in {market}",
+            f"{brand}'s {CURRENT_LABEL} Website-to-Contract Conversion Rate is ranked #{rank} within the relevant comparison set.",
             f"{row['ConversionPct_2025']:.2f}%",
             "W2C rate",
             "primary",
         ),
         assistant_card(
-            "Demand and sales movement",
-            f"Unique visitors changed {fmt_pct(row['Visitors YoY %'])}; passenger sales changed {fmt_pct(row['Sales YoY %'])}.",
+            "Unique visitor movement",
+            f"Unique visitor demand moved versus {PREVIOUS_LABEL}. This helps separate demand generation from conversion efficiency.",
+            fmt_pct(row["Visitors YoY %"]),
             fmt_metric_number(row["UniqueVisitors_2025"]),
-            "unique visitors",
-            "positive" if row["Visitors YoY %"] >= 0 else "risk",
+            visitor_style,
         ),
         assistant_card(
-            "Benchmark gap",
+            "Passenger sales movement",
+            f"Passenger sales moved versus {PREVIOUS_LABEL}. Read this alongside visitor movement to understand whether demand is translating into contracts.",
+            fmt_pct(row["Sales YoY %"]),
+            fmt_metric_number(row["Sales_2025"]),
+            sales_style,
+        ),
+        assistant_card(
+            "W2C rate movement",
+            f"The W2C rate movement indicates whether conversion efficiency improved or deteriorated versus the prior period.",
+            fmt_pp(row["Conv Var pp"]),
+            f"vs {PREVIOUS_LABEL}",
+            conv_style,
+        ),
+        assistant_card(
+            "Benchmark leader gap",
             f"The benchmark leader is {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%.",
             fmt_pp(gap),
             f"gap to {leader['OEM']}",
             "positive" if gap >= 0 else "risk",
+        ),
+        assistant_card(
+            "Likely diagnostic route",
+            "Use this as a prompt for deeper diagnosis across marketing quality, model-page content, offers, stock visibility, lead handling and retailer follow-up.",
+            "next step",
+            "diagnostic",
+            "neutral",
         ),
     ]
     return cards
@@ -1886,6 +1916,9 @@ def brand_cards(data, market, brand):
 
 def toyota_lexus_cards(data, market):
     yoy = yoy_table(data, market, None)
+    if yoy.empty:
+        return [assistant_card("No data available", f"No comparable data was found for {market}.", "—", market, "neutral")]
+
     cards = []
     for brand in ["Toyota", "Lexus"]:
         row = get_row(yoy, brand)
@@ -1895,17 +1928,42 @@ def toyota_lexus_cards(data, market):
         cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
         leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
         gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
-        cards.append(
-            assistant_card(
-                f"{brand} gap in {market}",
-                f"{brand} converts at {row['ConversionPct_2025']:.2f}% versus {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%.",
-                fmt_pp(gap),
-                f"leader: {leader['OEM']}",
-                "positive" if gap >= 0 else "risk",
-            )
+        cards.extend(
+            [
+                assistant_card(
+                    f"{brand}: W2C rate in {market}",
+                    f"{brand}'s {CURRENT_LABEL} Website-to-Contract Conversion Rate is compared against its benchmark cohort.",
+                    f"{row['ConversionPct_2025']:.2f}%",
+                    brand,
+                    "primary",
+                ),
+                assistant_card(
+                    f"{brand}: benchmark gap",
+                    f"The benchmark leader is {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%.",
+                    fmt_pp(gap),
+                    f"leader: {leader['OEM']}",
+                    "positive" if gap >= 0 else "risk",
+                ),
+                assistant_card(
+                    f"{brand}: demand vs sales movement",
+                    f"Unique visitors moved {fmt_pct(row['Visitors YoY %'])}; sales moved {fmt_pct(row['Sales YoY %'])} versus {PREVIOUS_LABEL}.",
+                    f"{fmt_pct(row['Visitors YoY %'])} visitors",
+                    f"{fmt_pct(row['Sales YoY %'])} sales",
+                    "positive" if row["Conv Var pp"] >= 0 else "risk",
+                ),
+            ]
         )
-    if not cards:
-        cards.append(assistant_card("No Toyota/Lexus data", f"No Toyota or Lexus rows found for {market}.", "—", market, "neutral"))
+
+    cards.append(
+        assistant_card(
+            "How to use this",
+            "Where visitor growth is positive but sales or W2C decline, the likely issue is not just digital reach. Investigate traffic quality, offers, stock, retailer execution and proposition fit.",
+            "diagnostic lens",
+            "Toyota / Lexus",
+            "neutral",
+        )
+    )
+
     return cards
 
 
@@ -1913,24 +1971,45 @@ def explain_metric_cards():
     return [
         assistant_card(
             "Website Conversion Rate",
-            "This is the existing website effectiveness metric. It measures visitors who complete a lead or online action divided by total website visitors.",
-            "Converted visitors / total visitors",
-            "website-only",
+            "This is the existing website effectiveness metric used by TME today. It measures visitors who complete a lead or online action divided by total website visitors.",
+            "converted visitors / total visitors",
+            "website effectiveness",
             "neutral",
         ),
         assistant_card(
             "Website-to-Contract Conversion Rate",
             "This dashboard uses a broader commercial efficiency metric: passenger new car customer contracts divided by unique website visitors.",
             "contracts / unique visitors",
-            "big-picture conversion",
+            "macro conversion",
             "primary",
         ),
         assistant_card(
             "Why the distinction matters",
-            "A low W2C rate does not automatically mean a weak website. It can also reflect brand, pricing, product, stock, retailer or market factors.",
-            "macro funnel",
+            "A low W2C rate does not automatically mean a weak website. It can reflect brand demand, pricing, product, stock, retailer follow-up, channel mix or market structure.",
+            "not website-only",
             "interpretation",
             "positive",
+        ),
+        assistant_card(
+            "Unique visitor source",
+            "Unique visitors are sourced from Similarweb and should be used as a consistent market benchmark, not as a replacement for first-party web analytics.",
+            "Similarweb",
+            "data source",
+            "neutral",
+        ),
+        assistant_card(
+            "Sales source",
+            "Passenger car sales are sourced from Marklines. The metric does not include every possible sales channel interpretation such as fleet or tactical registrations.",
+            "Marklines",
+            "sales source",
+            "neutral",
+        ),
+        assistant_card(
+            "Best use",
+            "Use W2C to provoke bigger-picture questions about why demand does or does not translate into customer contracts.",
+            "diagnostic",
+            "use case",
+            "primary",
         ),
     ]
 
@@ -1984,6 +2063,7 @@ def render_data_assistant(data, selected_oems):
         "<span class='assistant-hint'>How is Toyota performing in France?</span>"
         "<span class='assistant-hint'>Compare Toyota and Lexus in MM5</span>"
         "<span class='assistant-hint'>Which OEM has the highest visitors?</span>"
+        "<span class='assistant-hint'>Explain the conversion metric</span>"
         "</div>"
         "</div>",
         unsafe_allow_html=True,
@@ -2002,6 +2082,14 @@ def render_data_assistant(data, selected_oems):
         st.info("Type a question above to generate data-backed cards.")
 
 
+
+def render_data_assistant_page(data, selected_oems):
+    section("Data Assistant")
+    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
+    render_data_assistant(data, selected_oems)
+    render_footer()
+
+
 def render_start_here_page(data):
     section("Start here — how to use this dashboard")
 
@@ -2014,8 +2102,6 @@ def render_start_here_page(data):
         "</div>"
     )
     st.markdown(intro_html, unsafe_allow_html=True)
-
-    render_data_assistant(data, selected_oems)
 
     section("Factors that can influence Website-to-Contract Conversion Rate")
     factors = [
@@ -2480,7 +2566,7 @@ st.sidebar.header("Filters")
 
 page = st.sidebar.radio(
     "Dashboard page",
-    ["Start Here", "Use Cases", "Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
+    ["Start Here", "Use Cases", "Data Assistant", "Toyota & Lexus Gap Analysis", "Market Performance", "Bubble chart", "Scorecard"],
     index=0,
 )
 
@@ -2534,6 +2620,8 @@ if page == "Start Here":
     render_start_here_page(data)
 elif page == "Use Cases":
     render_use_cases_page(data)
+elif page == "Data Assistant":
+    render_data_assistant_page(data, selected_oems)
 elif page == "Toyota & Lexus Gap Analysis":
     render_gap_analysis_page(data, summary_market)
 elif page == "Market Performance":
