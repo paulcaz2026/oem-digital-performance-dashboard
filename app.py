@@ -1114,6 +1114,61 @@ div[data-testid="stTextInput"] input {
     padding: 10px 14px !important;
 }
 
+
+/* Simplified Data Assistant */
+.da-simple {
+    margin: 8px 0 22px 0;
+}
+.da-simple-title {
+    color:#0A2342;
+    font-size:44px;
+    line-height:1.05;
+    font-weight:850;
+    letter-spacing:-0.04em;
+    margin-bottom:10px;
+}
+.da-simple-copy {
+    color:#6F7782;
+    font-size:18px;
+    line-height:1.45;
+    max-width:1120px;
+    margin-bottom:22px;
+}
+.da-simple-label {
+    color:#8B95A1;
+    font-size:13px;
+    font-weight:850;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    margin-bottom:12px;
+}
+.da-simple-questions {
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-bottom:18px;
+}
+.da-simple-question {
+    background:#ffffff;
+    color:#0A2342;
+    border:1px solid #E1E7EF;
+    border-radius:14px;
+    padding:13px 16px;
+    font-size:15px;
+    font-weight:800;
+    box-shadow:0 2px 10px rgba(10,35,66,.05);
+}
+.da-simple-note {
+    color:#8B95A1;
+    font-size:13px;
+    margin:8px 0 18px 0;
+}
+@media (max-width: 900px) {
+    .da-simple-title { font-size:34px; }
+    .da-simple-copy { font-size:16px; }
+    .da-simple-question { width:100%; }
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -2305,19 +2360,18 @@ def generate_assistant_cards(data, question, selected_oems):
 
 def render_data_assistant(data, selected_oems):
     st.markdown(
-        "<div class='da-hero'>"
-        "<div class='da-hero-content'>"
-        "<div class='da-eyebrow'>Data Assistant</div>"
-        "<div class='da-title'>Good afternoon,<br>how can I help?</div>"
-        "<div class='da-subtitle'>Ask a question about markets, OEMs, Website-to-Contract Conversion Rate, sales, visitors or Toyota/Lexus gaps.</div>"
-        "<div class='da-popular-label'>Popular questions</div>"
-        "<div class='da-popular-grid'>"
-        "<div class='da-popular-pill'>Who leads W2C in Germany?</div>"
-        "<div class='da-popular-pill'>How is Toyota performing in France?</div>"
-        "<div class='da-popular-pill'>Compare Toyota and Lexus in MM5</div>"
+        "<div class='da-simple'>"
+        "<div class='da-simple-title'>Welcome. How can I help?</div>"
+        "<div class='da-simple-copy'>Ask a question about markets, OEMs, Website-to-Contract Conversion Rate, sales, visitors or Toyota/Lexus gaps. Responses are generated from the dashboard dataset only.</div>"
+        "<div class='da-simple-label'>Example questions</div>"
+        "<div class='da-simple-questions'>"
+        "<div class='da-simple-question'>Who leads W2C in Germany?</div>"
+        "<div class='da-simple-question'>How is Toyota performing in France?</div>"
+        "<div class='da-simple-question'>Compare Toyota and Lexus in MM5</div>"
+        "<div class='da-simple-question'>Which OEM has the highest visitors in the UK?</div>"
+        "<div class='da-simple-question'>Explain the conversion metric</div>"
         "</div>"
-        "</div>"
-        "<div class='da-privacy'>Please avoid sharing personal information. Responses are generated from the dashboard dataset only.</div>"
+        "<div class='da-simple-note'>Please avoid sharing personal information.</div>"
         "</div>",
         unsafe_allow_html=True,
     )
