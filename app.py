@@ -29,7 +29,7 @@ PINK = "#FF5C8A"
 AMBER = "#FFB000"
 INTELLIGENCE = "#2563EB"
 
-TOYOTA_LOGO = "https://brand.toyota.com/content/dam/brandhub/guidelines/logo/four-column/BHUB_Logo_LogoFamily_01.svg"
+TOYOTA_LOGO = "https://brand.toyota.com/content/dam/brandhub/guidelines/logo/two-column/BHUB_Logo_ToyotaLogo_01.svg"
 LEXUS_LOGO = "https://upload.wikimedia.org/wikipedia/commons/7/75/Lexus.svg"
 VALTECH_LOGO = "https://mma.prnewswire.com/media/2728124/Valtech_Logo.jpg"
 
