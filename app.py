@@ -1098,7 +1098,7 @@ def render_hero():
             <div class="hero-logo"><img src="{VALTECH_LOGO}" alt="Valtech logo"></div>
             <div class="hero-title">OEM Macro Conversion Funnel</div>
             <div class="hero-subtitle">
-                Website to customer contract conversion across MM5. Explores how monthly deduplicated unique visitor demand converts into passenger new car customer contracts, and where Toyota/Lexus under- or over-perform by market.
+                Website to customer contract conversion across MM5. Explores how unique visitor demand converts into passenger new car customer contracts, and where Toyota/Lexus under- or over-perform by market.
             </div>
             <div class="hero-meta">
                 <b>Coverage:</b> 2024, 2025 &amp; 2026 (Jan to April) &nbsp;|&nbsp;
@@ -1163,19 +1163,19 @@ def brand_detail_html(brand, row, logo, logo_height="38px"):
         f"<div class='tl-detail-logo'><img src='{logo}' style='height:{logo_height};' alt='{brand} logo'></div>"
         "<div class='tl-detail-grid'>"
         "<div class='tl-detail-metric'>"
-        f"<div class='tl-detail-label'>{CURRENT_LABEL} Website-to-Contract Conversion Rate</div>"
+        f"<div class='tl-detail-label'>Website-to-Contract Conversion Rate</div>"
         f"<div class='tl-detail-value'>{row['ConversionPct_2025']:.2f}%</div>"
-        f"<div class='{conv_delta_class}'>{fmt_pp(row['Conv Var pp'])} vs {PREVIOUS_LABEL}</div>"
+        f"<div class='{conv_delta_class}'>{fmt_pp(row['Conv Var pp'])} vs previous period</div>"
         "</div>"
         "<div class='tl-detail-metric'>"
-        f"<div class='tl-detail-label'>{CURRENT_LABEL} passenger sales</div>"
+        f"<div class='tl-detail-label'>Passenger sales</div>"
         f"<div class='tl-detail-value'>{fmt_int(row['Sales_2025'])}</div>"
-        f"<div class='{sales_delta_class}'>{fmt_pct(row['Sales YoY %'])} vs {PREVIOUS_LABEL}</div>"
+        f"<div class='{sales_delta_class}'>{fmt_pct(row['Sales YoY %'])} vs previous period</div>"
         "</div>"
         "<div class='tl-detail-metric'>"
-        f"<div class='tl-detail-label'>{CURRENT_LABEL} monthly deduped unique visitors</div>"
+        f"<div class='tl-detail-label'>Monthly unique visitors</div>"
         f"<div class='tl-detail-value'>{fmt_int(row['UniqueVisitors_2025'])}</div>"
-        f"<div class='{visitor_delta_class}'>{fmt_pct(row['Visitors YoY %'])} vs {PREVIOUS_LABEL}</div>"
+        f"<div class='{visitor_delta_class}'>{fmt_pct(row['Visitors YoY %'])} vs previous period</div>"
         "</div>"
         "</div>"
         "</div>"
@@ -1183,7 +1183,7 @@ def brand_detail_html(brand, row, logo, logo_height="38px"):
 
 
 def render_brand_detail(data, market):
-    section("2025 Toyota & Lexus performance vs {PREVIOUS_LABEL}")
+    section("2025 Toyota & Lexus performance vs previous period")
     yoy = yoy_table(data, market, None)
     toyota = get_row(yoy, "Toyota")
     lexus = get_row(yoy, "Lexus")
@@ -1228,13 +1228,13 @@ def render_benchmark_cards(data, market):
             vts_gap = row["Visits to Sale 2025"] - leader["Visits to Sale 2025"]
             benchmark_card(
                 f"{brand} benchmark",
-                f"{brand} ranks #{rank} of {len(cohort_df)} in its benchmark set. The {CURRENT_LABEL} Website-to-Contract Conversion Rate gap to {leader['OEM']} is {gap:+.2f}pp. Visits-to-sale gap is {vts_gap:+.0f}.",
-                f"{CURRENT_LABEL} Website-to-Contract Conversion Rate: {row['ConversionPct_2025']:.2f}%",
+                f"{brand} ranks #{rank} of {len(cohort_df)} in its benchmark set. The Website-to-Contract Conversion Rate gap to {leader['OEM']} is {gap:+.2f}pp. Visits-to-sale gap is {vts_gap:+.0f}.",
+                f"Website-to-Contract Conversion Rate: {row['ConversionPct_2025']:.2f}%",
             )
 
 
 def render_market_weakness(data):
-    section("Market weakness summary — Toyota & Lexus Website-to-Contract performance")
+    section("Market Gap Analysis — Toyota & Lexus Website-to-Contract performance")
     rows = []
     for market in ["UK", "France", "Germany", "Italy", "Spain"]:
         yoy = yoy_table(data, market, None)
@@ -1250,25 +1250,25 @@ def render_market_weakness(data):
                 {
                     "Brand": brand,
                     "Market": market,
-                    "{CURRENT_LABEL} Website-to-Contract Conversion Rate": f"{row['ConversionPct_2025']:.2f}%",
+                    "Website-to-Contract Conversion Rate": f"{row['ConversionPct_2025']:.2f}%",
                     "Benchmark leader": leader["OEM"],
                     "Leader W2C rate": f"{leader['ConversionPct_2025']:.2f}%",
                     "Gap to leader": row["ConversionPct_2025"] - leader["ConversionPct_2025"],
-                    "Sales YoY vs {PREVIOUS_LABEL}": row["Sales YoY %"],
-                    "Visitor YoY vs {PREVIOUS_LABEL}": row["Visitors YoY %"],
+                    "Sales YoY vs previous period": row["Sales YoY %"],
+                    "Visitor YoY vs previous period": row["Visitors YoY %"],
                 }
             )
     if not rows:
-        st.info("No Toyota/Lexus market weakness data available.")
+        st.info("No Toyota/Lexus market gap data available.")
         return
 
     df = pd.DataFrame(rows).sort_values("Gap to leader")
     display = df.copy()
     display["Gap to leader"] = display["Gap to leader"].map(fmt_pp)
-    display["Sales YoY vs {PREVIOUS_LABEL}"] = display["Sales YoY vs {PREVIOUS_LABEL}"].map(fmt_pct)
-    display["Visitor YoY vs {PREVIOUS_LABEL}"] = display["Visitor YoY vs {PREVIOUS_LABEL}"].map(fmt_pct)
+    display["Sales YoY vs previous period"] = display["Sales YoY vs previous period"].map(fmt_pct)
+    display["Visitor YoY vs previous period"] = display["Visitor YoY vs previous period"].map(fmt_pct)
 
-    styler = display.style.map(badge_style, subset=["Gap to leader", "Sales YoY vs {PREVIOUS_LABEL}", "Visitor YoY vs {PREVIOUS_LABEL}"])
+    styler = display.style.map(badge_style, subset=["Gap to leader", "Sales YoY vs previous period", "Visitor YoY vs previous period"])
     st.dataframe(styler, use_container_width=True, hide_index=True)
 
 
@@ -1319,7 +1319,7 @@ def render_toyota_lexus_recommendations(data):
             kind = "risk" if gap < -0.75 or row["Sales YoY %"] < 0 else "opportunity"
             copy = (
                 f"{brand} converts at {row['ConversionPct_2025']:.2f}% versus {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%. "
-                f"Sales are {fmt_pct(row['Sales YoY %'])} vs {PREVIOUS_LABEL}; visitors are {fmt_pct(row['Visitors YoY %'])} vs {PREVIOUS_LABEL}. "
+                f"Sales are {fmt_pct(row['Sales YoY %'])} vs previous period; visitors are {fmt_pct(row['Visitors YoY %'])} vs previous period. "
                 + market_action_text(brand, market, row, leader, gap)
             )
             cards.append(
@@ -1357,17 +1357,17 @@ def render_top10_table(data, market, selected_oems):
                 "#": i,
                 "Brand": r["OEM"],
                 "Category": cluster_for_oem(r["OEM"]),
-                f"Visits {CURRENT_LABEL}": fmt_short(r["UniqueVisitors_2025"]),
-                f"Visits {PREVIOUS_LABEL}": fmt_short(r["UniqueVisitors_2024"]),
-                "Visitor YoY vs {PREVIOUS_LABEL}": fmt_pct(r["Visitors YoY %"]),
+                f"Visits current period": fmt_short(r["UniqueVisitors_2025"]),
+                f"Visits previous period": fmt_short(r["UniqueVisitors_2024"]),
+                "Visitor YoY vs previous period": fmt_pct(r["Visitors YoY %"]),
                 "Passenger sales": fmt_int(r["Sales_2025"]),
                 "W2C rate": f"{r['ConversionPct_2025']:.2f}%",
-                "W2C var vs {PREVIOUS_LABEL}": fmt_pp(r["Conv Var pp"]),
+                "W2C var vs previous period": fmt_pp(r["Conv Var pp"]),
             }
         )
     display = pd.DataFrame(rows)
     st.dataframe(
-        display.style.map(badge_style, subset=["Visitor YoY vs {PREVIOUS_LABEL}", "W2C var vs {PREVIOUS_LABEL}"]),
+        display.style.map(badge_style, subset=["Visitor YoY vs previous period", "W2C var vs previous period"]),
         use_container_width=True,
         hide_index=True,
     )
@@ -1398,7 +1398,7 @@ def build_yoy_growth_chart(data, market, selected_oems, top_n=10):
         )
     )
     fig.update_layout(
-        title=dict(text=f"YoY visit growth — 2025 vs {PREVIOUS_LABEL} (top & bottom {top_n})", x=0.02, font=dict(size=16, color="#8D96A0")),
+        title=dict(text=f"YoY visit growth — 2025 vs previous period (top & bottom {top_n})", x=0.02, font=dict(size=16, color="#8D96A0")),
         height=620,
         margin=dict(l=120, r=80, t=70, b=50),
         plot_bgcolor=WHITE,
@@ -1426,11 +1426,11 @@ def render_market_insights(data, market, selected_oems):
     weakest = yoy.sort_values("ConversionPct_2025", ascending=True).iloc[0]
 
     cards = [
-        make_insight("opportunity", f"{top_conv['OEM']}: strongest Website-to-Contract performer", f"{top_conv['OEM']} leads this cohort on {CURRENT_LABEL} Website-to-Contract Conversion Rate. Visits-to-sale is {top_conv['Visits to Sale 2025']:.0f}, showing stronger website-to-contract efficiency than peers.", f"{top_conv['ConversionPct_2025']:.2f}% conv", top_conv["OEM"]),
-        make_insight("opportunity", f"{top_sales['OEM']}: strongest sales growth", f"{top_sales['OEM']} posted the strongest passenger sales growth, with sales {fmt_pct(top_sales['Sales YoY %'])} vs {PREVIOUS_LABEL} and visitors {fmt_pct(top_sales['Visitors YoY %'])} vs {PREVIOUS_LABEL}.", f"{fmt_pct(top_sales['Sales YoY %'])} sales", top_sales["OEM"]),
+        make_insight("opportunity", f"{top_conv['OEM']}: strongest Website-to-Contract performer", f"{top_conv['OEM']} leads this cohort on Website-to-Contract Conversion Rate. Visits-to-sale is {top_conv['Visits to Sale 2025']:.0f}, showing stronger website-to-contract efficiency than peers.", f"{top_conv['ConversionPct_2025']:.2f}% conv", top_conv["OEM"]),
+        make_insight("opportunity", f"{top_sales['OEM']}: strongest sales growth", f"{top_sales['OEM']} posted the strongest passenger sales growth, with sales {fmt_pct(top_sales['Sales YoY %'])} vs previous period and visitors {fmt_pct(top_sales['Visitors YoY %'])} vs previous period.", f"{fmt_pct(top_sales['Sales YoY %'])} sales", top_sales["OEM"]),
         make_insight("intelligence", f"{top_visits['OEM']}: fastest visitor growth", f"{top_visits['OEM']} generated the strongest visitor growth. The key question is whether this awareness converts into contracts at the same rate.", f"{fmt_pct(top_visits['Visitors YoY %'])} visits", top_visits["OEM"]),
-        make_insight("risk", f"{worst_conv['OEM']}: Website-to-Contract movement deteriorating", f"{worst_conv['OEM']} had the weakest conversion movement: {fmt_pp(worst_conv['Conv Var pp'])} vs {PREVIOUS_LABEL}. This suggests lower-quality traffic or leakage deeper in the funnel.", f"{fmt_pp(worst_conv['Conv Var pp'])}", worst_conv["OEM"]),
-        make_insight("risk", f"{weakest['OEM']}: weakest {CURRENT_LABEL} Website-to-Contract Conversion Rate", f"{weakest['OEM']} has the lowest {CURRENT_LABEL} Website-to-Contract Conversion Rate rate in this selection, creating a clear efficiency gap against the cohort leader.", f"{weakest['ConversionPct_2025']:.2f}% conv", weakest["OEM"]),
+        make_insight("risk", f"{worst_conv['OEM']}: Website-to-Contract movement deteriorating", f"{worst_conv['OEM']} had the weakest conversion movement: {fmt_pp(worst_conv['Conv Var pp'])} vs previous period. This suggests lower-quality traffic or leakage deeper in the funnel.", f"{fmt_pp(worst_conv['Conv Var pp'])}", worst_conv["OEM"]),
+        make_insight("risk", f"{weakest['OEM']}: weakest Website-to-Contract Conversion Rate", f"{weakest['OEM']} has the lowest Website-to-Contract Conversion Rate rate in this selection, creating a clear efficiency gap against the cohort leader.", f"{weakest['ConversionPct_2025']:.2f}% conv", weakest["OEM"]),
     ]
     for i in range(0, len(cards), 3):
         cols = st.columns(3)
@@ -1784,7 +1784,7 @@ def render_use_cases_page(data):
             "TME",
             "Identify product and powertrain pressure points",
             "Where Toyota or Lexus underperform consistently across markets, the cause may not be local digital execution. It may signal product-market fit, powertrain competitiveness, availability, pricing or customer proposition issues.",
-            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Scorecard"],
+            ["Toyota & Lexus Gap Analysis", "Market Gap Analysis", "Scorecard"],
             "tme",
         ),
         usecase_card(
@@ -1798,7 +1798,7 @@ def render_use_cases_page(data):
             "TME",
             "Spot structural network or distribution constraints",
             "If a brand has strong visitor demand but weak contract conversion in multiple countries, investigate retailer footprint, sales model, availability, lead handling and distribution constraints before assuming a website problem.",
-            ["Toyota & Lexus Gap Analysis", "Market weakness summary", "Start Here causal factors"],
+            ["Toyota & Lexus Gap Analysis", "Market Gap Analysis", "Start Here causal factors"],
             "tme",
         ),
         usecase_card(
@@ -1849,7 +1849,8 @@ def render_use_cases_page(data):
 
 def render_gap_analysis_page(data, market):
     section(f"Toyota & Lexus gap analysis — {market}")
-    st.caption(f"All headline metrics reflect {CURRENT_LABEL} performance; variance badges show movement versus {PREVIOUS_LABEL}.")
+    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
+    st.caption(f"All headline metrics reflect current period performance; variance badges show movement versus previous period.")
     render_brand_strip()
 
     combined = market_year(data, market, 2025, ["Toyota", "Lexus"])
@@ -1867,10 +1868,10 @@ def render_gap_analysis_page(data, market):
     conv_24 = sales_24 / visitors_24 * 100 if visitors_24 else 0
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric(f"{CURRENT_LABEL} Toyota/Lexus passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if sales_24 else "n/a")
-    c2.metric(f"{CURRENT_LABEL} Toyota/Lexus monthly deduped unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if visitors_24 else "n/a")
-    c3.metric(f"{CURRENT_LABEL} Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs {PREVIOUS_LABEL}")
-    c4.metric(f"{CURRENT_LABEL} visits per contract", fmt_int(visitors_25 / sales_25))
+    c1.metric(f"Toyota/Lexus passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs previous period" if sales_24 else "n/a")
+    c2.metric(f"Toyota/Lexus monthly unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
+    c3.metric(f"Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs previous period")
+    c4.metric(f"Visits per contract", fmt_int(visitors_25 / sales_25))
 
     render_brand_detail(data, market)
     render_benchmark_cards(data, market)
@@ -1881,6 +1882,7 @@ def render_gap_analysis_page(data, market):
 
 def render_market_performance_page(data, market, selected_oems):
     section(f"Market performance — {market} OEM cohort")
+    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
     render_cluster_legend(selected_clusters)
     current = market_year(data, market, 2025, selected_oems)
     previous = market_year(data, market, 2024, selected_oems)
@@ -1896,13 +1898,13 @@ def render_market_performance_page(data, market, selected_oems):
     conv_24 = sales_24 / visitors_24 * 100 if visitors_24 else 0
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric(f"{CURRENT_LABEL} passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if sales_24 else "n/a")
-    c2.metric(f"{CURRENT_LABEL} monthly deduped unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if visitors_24 else "n/a")
-    c3.metric(f"{CURRENT_LABEL} Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs {PREVIOUS_LABEL}")
-    c4.metric(f"{CURRENT_LABEL} visits per contract", fmt_int(visitors_25 / sales_25))
+    c1.metric(f"Passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs previous period" if sales_24 else "n/a")
+    c2.metric(f"Monthly unique visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
+    c3.metric(f"Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs previous period")
+    c4.metric(f"Visits per contract", fmt_int(visitors_25 / sales_25))
 
     render_top10_table(data, market, selected_oems)
-    section(f"Performance visuals — {CURRENT_LABEL} vs {PREVIOUS_LABEL} unique visitor growth")
+    section(f"Performance visuals — current period vs previous period unique visitor growth")
     st.plotly_chart(build_yoy_growth_chart(data, market, selected_oems, top_n=10), use_container_width=True)
     render_market_insights(data, market, selected_oems)
     render_footer()
@@ -1941,6 +1943,7 @@ def render_bubble_side_table(df, market):
 
 def render_bubble_page(data, selected_oems, year_view, show_logos):
     section("Bubble chart")
+    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
     render_cluster_legend(selected_clusters)
     st.markdown(
         "<div class='bubble-control-note'>"
@@ -2003,6 +2006,7 @@ def scorecard_table(data, market, selected_oems):
 
 def render_scorecard_page(data, selected_oems):
     section("Leadership scorecard")
+    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
     market = st.selectbox("Scorecard market", MARKETS, index=0)
     score = scorecard_table(data, market, selected_oems)
     if score.empty:
@@ -2014,32 +2018,32 @@ def render_scorecard_page(data, selected_oems):
             "OEM": "Brand",
             "UniqueVisitors_2024": "Website visitors 2024",
             "UniqueVisitors_2025": "Website visitors 2025",
-            "Visitors YoY %": "Visitor YoY vs {PREVIOUS_LABEL}",
+            "Visitors YoY %": "Visitor YoY vs previous period",
             "Sales_2024": "Passenger sales 2024",
             "Sales_2025": "Passenger sales 2025",
-            "Sales YoY %": "Sales YoY vs {PREVIOUS_LABEL}",
+            "Sales YoY %": "Sales YoY vs previous period",
             "ConversionPct_2024": "W2C rate 2024",
             "ConversionPct_2025": "W2C rate 2025",
-            "Conv Var pp": "W2C var vs {PREVIOUS_LABEL}",
+            "Conv Var pp": "W2C var vs previous period",
         }
     ).copy()
 
     for col in ["Website visitors 2024", "Website visitors 2025", "Passenger sales 2024", "Passenger sales 2025"]:
         if col in display.columns:
             display[col] = display[col].map(fmt_int)
-    for col in ["Visitor YoY vs {PREVIOUS_LABEL}", "Sales YoY vs {PREVIOUS_LABEL}"]:
+    for col in ["Visitor YoY vs previous period", "Sales YoY vs previous period"]:
         if col in display.columns:
             display[col] = display[col].map(fmt_pct)
     for col in ["W2C rate 2024", "W2C rate 2025"]:
         if col in display.columns:
             display[col] = display[col].map(lambda x: f"{x:.2f}%")
-    if "W2C var vs {PREVIOUS_LABEL}" in display.columns:
-        display["W2C var vs {PREVIOUS_LABEL}"] = display["W2C var vs {PREVIOUS_LABEL}"].map(fmt_pp)
+    if "W2C var vs previous period" in display.columns:
+        display["W2C var vs previous period"] = display["W2C var vs previous period"].map(fmt_pp)
     for col in ["Visits to Sale 2024", "Visits to Sale 2025", "Visits to Sale Var"]:
         if col in display.columns:
             display[col] = display[col].map(fmt_int)
 
-    badge_cols = [c for c in ["Visitor YoY vs {PREVIOUS_LABEL}", "Sales YoY vs {PREVIOUS_LABEL}", "W2C var vs {PREVIOUS_LABEL}"] if c in display.columns]
+    badge_cols = [c for c in ["Visitor YoY vs previous period", "Sales YoY vs previous period", "W2C var vs previous period"] if c in display.columns]
     styler = display.style.map(badge_style, subset=badge_cols) if badge_cols else display.style
 
     st.dataframe(
