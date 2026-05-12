@@ -2368,17 +2368,14 @@ def render_data_assistant(data, selected_oems):
         "<div class='da-simple-question'>Who leads W2C in Germany?</div>"
         "<div class='da-simple-question'>How is Toyota performing in France?</div>"
         "<div class='da-simple-question'>Compare Toyota and Lexus in MM5</div>"
-        "<div class='da-simple-question'>Which OEM has the highest visitors in the UK?</div>"
-        "<div class='da-simple-question'>Explain the conversion metric</div>"
-        "</div>"
-        "<div class='da-simple-note'>Please avoid sharing personal information.</div>"
+                "</div>"
         "</div>",
         unsafe_allow_html=True,
     )
 
     st.markdown(
         f"<div class='da-context-bar'>"
-        f"<div>Ask a question or use one of the example prompts above.</div>"
+        f"<div></div>"
         f"<div class='da-context-chip'>{CURRENT_LABEL} vs {PREVIOUS_LABEL}</div>"
         f"</div>",
         unsafe_allow_html=True,
