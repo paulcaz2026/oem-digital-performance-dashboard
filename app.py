@@ -1,10 +1,23 @@
 from pathlib import Path
+import base64
 import math
 import re
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+
+
+
+def image_file_to_data_uri(path):
+    """Return a data URI so local images can be rendered inside raw HTML."""
+    image_path = Path(path)
+    if not image_path.exists():
+        return ""
+    suffix = image_path.suffix.lower()
+    mime = "image/png" if suffix == ".png" else "image/jpeg" if suffix in [".jpg", ".jpeg"] else "image/svg+xml"
+    encoded = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+    return f"data:{mime};base64,{encoded}"
 
 
 # =========================
@@ -29,7 +42,7 @@ PINK = "#FF5C8A"
 AMBER = "#FFB000"
 INTELLIGENCE = "#2563EB"
 
-TOYOTA_LOGO = str(Path(__file__).parent / "toyota_logo.png")
+TOYOTA_LOGO = image_file_to_data_uri(Path(__file__).parent / "toyota_logo.png")
 LEXUS_LOGO = "https://upload.wikimedia.org/wikipedia/commons/7/75/Lexus.svg"
 VALTECH_LOGO = "https://mma.prnewswire.com/media/2728124/Valtech_Logo.jpg"
 
@@ -1311,6 +1324,21 @@ img[src*="BHUB_Logo_ToyotaLogo_01.svg"] {
     .exec-kpi-grid, .share-grid, .takeaway-grid { grid-template-columns: 1fr; }
 }
 
+
+/* Toyota logo render fix */
+img[src^="data:image/png"][alt="Toyota logo"] {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    object-fit: contain !important;
+}
+.brand-strip img[alt="Toyota logo"],
+.tl-detail-logo img[src^="data:image/png"] {
+    max-height: 64px !important;
+    width: auto !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1657,7 +1685,7 @@ def render_brand_strip():
     st.markdown(
         f"""
         <div class="brand-strip">
-            <img src="{TOYOTA_LOGO}" style="height:46px;" alt="Toyota logo">
+            <img src="{TOYOTA_LOGO}" style="height:58px; width:auto; object-fit:contain;" alt="Toyota logo">
             <img src="{LEXUS_LOGO}" style="height:30px;" alt="Lexus logo">
         </div>
         """,
