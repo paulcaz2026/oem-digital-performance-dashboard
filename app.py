@@ -796,6 +796,101 @@ div[data-testid="stPlotlyChart"] {
     text-align:right;
 }
 
+
+.assistant-shell {
+    background:#000000;
+    color:#ffffff;
+    border-radius:20px;
+    padding:24px;
+    border-bottom:7px solid #009FE3;
+    margin: 10px 0 22px 0;
+}
+.assistant-title {
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:-0.02em;
+    margin-bottom:8px;
+}
+.assistant-copy {
+    color:#D9DDE3;
+    font-size:15px;
+    line-height:1.5;
+    max-width:1100px;
+}
+.assistant-hint-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:14px;
+}
+.assistant-hint {
+    background:#ffffff;
+    color:#0A2342;
+    border-radius:999px;
+    padding:7px 11px;
+    font-size:12px;
+    font-weight:800;
+}
+.assistant-result-grid {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:16px;
+    margin: 16px 0 22px 0;
+}
+.assistant-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 1px 8px rgba(0,0,0,.035);
+    min-height:190px;
+}
+.assistant-card.primary {
+    border-left:7px solid #009FE3;
+}
+.assistant-card.positive {
+    border-left:7px solid #12C76B;
+}
+.assistant-card.risk {
+    border-left:7px solid #FF5C8A;
+}
+.assistant-card.neutral {
+    border-left:7px solid #6F6F6F;
+}
+.assistant-card-title {
+    font-size:17px;
+    line-height:1.25;
+    color:#0A2342;
+    font-weight:800;
+    margin-bottom:8px;
+}
+.assistant-card-copy {
+    color:#6F7782;
+    font-size:14px;
+    line-height:1.55;
+    margin-bottom:12px;
+}
+.assistant-card-metric {
+    color:#0A2342;
+    font-size:28px;
+    line-height:1.1;
+    font-weight:800;
+    margin-top:8px;
+}
+.assistant-card-tag {
+    display:inline-block;
+    background:#EEF3FF;
+    color:#2563EB;
+    border-radius:6px;
+    padding:4px 9px;
+    font-size:12px;
+    font-weight:700;
+    margin-top:10px;
+}
+@media (max-width: 900px) {
+    .assistant-result-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1646,6 +1741,267 @@ def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
     return fig
 
 
+
+def assistant_card(title, copy, metric, tag, style="primary"):
+    return (
+        f"<div class='assistant-card {style}'>"
+        f"<div class='assistant-card-title'>{title}</div>"
+        f"<div class='assistant-card-copy'>{copy}</div>"
+        f"<div class='assistant-card-metric'>{metric}</div>"
+        f"<div class='assistant-card-tag'>{tag}</div>"
+        f"</div>"
+    )
+
+
+def extract_market_from_question(question):
+    q = question.lower()
+    market_aliases = {
+        "mm5": "MM5",
+        "uk": "UK",
+        "united kingdom": "UK",
+        "france": "France",
+        "french": "France",
+        "germany": "Germany",
+        "german": "Germany",
+        "italy": "Italy",
+        "italian": "Italy",
+        "spain": "Spain",
+        "spanish": "Spain",
+    }
+    for key, market in market_aliases.items():
+        if key in q:
+            return market
+    return "MM5"
+
+
+def extract_brand_from_question(question, available_oems):
+    q = question.lower()
+    # Longest first avoids partial matches.
+    for brand in sorted(available_oems, key=len, reverse=True):
+        if brand.lower() in q:
+            return brand
+    aliases = {
+        "volkswagen": "VW",
+        "vw": "VW",
+        "byd": "BYD Auto",
+        "ds automobiles": "DS",
+        "citroen": "Citroen",
+    }
+    for key, brand in aliases.items():
+        if key in q and brand in available_oems:
+            return brand
+    return None
+
+
+def assistant_result_html(cards):
+    return "<div class='assistant-result-grid'>" + "".join(cards) + "</div>"
+
+
+def top_brands_cards(data, market, selected_oems, question):
+    q = question.lower()
+    yoy = yoy_table(data, market, selected_oems)
+    if yoy.empty:
+        return [assistant_card("No data available", f"No comparable data was found for {market}.", "—", market, "neutral")]
+
+    if "sales" in q:
+        metric = "Sales_2025"
+        label = "passenger sales"
+        formatter = fmt_metric_number
+    elif "visitor" in q or "traffic" in q or "audience" in q:
+        metric = "UniqueVisitors_2025"
+        label = "unique visitors"
+        formatter = fmt_metric_number
+    else:
+        metric = "ConversionPct_2025"
+        label = "Website-to-Contract Conversion Rate"
+        formatter = lambda x: f"{x:.2f}%"
+
+    if any(term in q for term in ["worst", "weakest", "lowest", "underperform"]):
+        row = yoy.sort_values(metric, ascending=True).iloc[0]
+        direction = "lowest"
+        style = "risk"
+    else:
+        row = yoy.sort_values(metric, ascending=False).iloc[0]
+        direction = "highest"
+        style = "positive"
+
+    return [
+        assistant_card(
+            f"{row['OEM']} has the {direction} {label}",
+            f"In {market}, {row['OEM']} records the {direction} {label} in the selected comparison set. "
+            f"The active comparison is {CURRENT_LABEL} vs {PREVIOUS_LABEL}.",
+            formatter(row[metric]),
+            f"{market} · {CURRENT_LABEL}",
+            style,
+        ),
+        assistant_card(
+            "Supporting movement",
+            f"Sales changed {fmt_pct(row['Sales YoY %'])} and unique visitors changed {fmt_pct(row['Visitors YoY %'])} versus {PREVIOUS_LABEL}.",
+            fmt_pp(row["Conv Var pp"]),
+            "W2C movement",
+            "primary" if row["Conv Var pp"] >= 0 else "risk",
+        ),
+    ]
+
+
+def brand_cards(data, market, brand):
+    yoy = yoy_table(data, market, None)
+    if yoy.empty:
+        return [assistant_card("No data available", f"No comparable data was found for {market}.", "—", market, "neutral")]
+
+    row = get_row(yoy, brand)
+    if row is None:
+        return [assistant_card("Brand not found", f"I could not find {brand} in {market} for the active comparison.", "—", brand, "neutral")]
+
+    cohort = LEXUS_SET if brand == "Lexus" else TOYOTA_SET if brand == "Toyota" else sorted(yoy["OEM"].unique().tolist())
+    cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
+    leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0] if not cohort_df.empty else yoy.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+    gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
+
+    cards = [
+        assistant_card(
+            f"{brand} in {market}",
+            f"{brand}'s {CURRENT_LABEL} Website-to-Contract Conversion Rate is shown against its movement versus {PREVIOUS_LABEL}.",
+            f"{row['ConversionPct_2025']:.2f}%",
+            "W2C rate",
+            "primary",
+        ),
+        assistant_card(
+            "Demand and sales movement",
+            f"Unique visitors changed {fmt_pct(row['Visitors YoY %'])}; passenger sales changed {fmt_pct(row['Sales YoY %'])}.",
+            fmt_metric_number(row["UniqueVisitors_2025"]),
+            "unique visitors",
+            "positive" if row["Visitors YoY %"] >= 0 else "risk",
+        ),
+        assistant_card(
+            "Benchmark gap",
+            f"The benchmark leader is {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%.",
+            fmt_pp(gap),
+            f"gap to {leader['OEM']}",
+            "positive" if gap >= 0 else "risk",
+        ),
+    ]
+    return cards
+
+
+def toyota_lexus_cards(data, market):
+    yoy = yoy_table(data, market, None)
+    cards = []
+    for brand in ["Toyota", "Lexus"]:
+        row = get_row(yoy, brand)
+        if row is None:
+            continue
+        cohort = TOYOTA_SET if brand == "Toyota" else LEXUS_SET
+        cohort_df = yoy[yoy["OEM"].isin(cohort)].copy()
+        leader = cohort_df.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+        gap = row["ConversionPct_2025"] - leader["ConversionPct_2025"]
+        cards.append(
+            assistant_card(
+                f"{brand} gap in {market}",
+                f"{brand} converts at {row['ConversionPct_2025']:.2f}% versus {leader['OEM']} at {leader['ConversionPct_2025']:.2f}%.",
+                fmt_pp(gap),
+                f"leader: {leader['OEM']}",
+                "positive" if gap >= 0 else "risk",
+            )
+        )
+    if not cards:
+        cards.append(assistant_card("No Toyota/Lexus data", f"No Toyota or Lexus rows found for {market}.", "—", market, "neutral"))
+    return cards
+
+
+def explain_metric_cards():
+    return [
+        assistant_card(
+            "Website Conversion Rate",
+            "This is the existing website effectiveness metric. It measures visitors who complete a lead or online action divided by total website visitors.",
+            "Converted visitors / total visitors",
+            "website-only",
+            "neutral",
+        ),
+        assistant_card(
+            "Website-to-Contract Conversion Rate",
+            "This dashboard uses a broader commercial efficiency metric: passenger new car customer contracts divided by unique website visitors.",
+            "contracts / unique visitors",
+            "big-picture conversion",
+            "primary",
+        ),
+        assistant_card(
+            "Why the distinction matters",
+            "A low W2C rate does not automatically mean a weak website. It can also reflect brand, pricing, product, stock, retailer or market factors.",
+            "macro funnel",
+            "interpretation",
+            "positive",
+        ),
+    ]
+
+
+def generate_assistant_cards(data, question, selected_oems):
+    q = question.lower().strip()
+    market = extract_market_from_question(q)
+    brand = extract_brand_from_question(q, sorted(data["OEM"].unique()))
+
+    if not q:
+        return []
+
+    if any(term in q for term in ["define", "definition", "methodology", "what is", "explain"]):
+        if "conversion" in q or "w2c" in q or "website" in q:
+            return explain_metric_cards()
+
+    if "toyota" in q and "lexus" in q:
+        return toyota_lexus_cards(data, market)
+
+    if brand:
+        return brand_cards(data, market, brand)
+
+    if any(term in q for term in ["leader", "best", "top", "outperform", "highest", "worst", "weakest", "lowest", "underperform", "sales", "visitor", "traffic", "audience"]):
+        return top_brands_cards(data, market, selected_oems, q)
+
+    return [
+        assistant_card(
+            "Try asking a more specific data question",
+            "I can answer questions about leaders, weakest performers, Toyota/Lexus gaps, brand performance, sales, visitors and W2C conversion by market.",
+            "Example",
+            "Who leads W2C in Germany?",
+            "neutral",
+        ),
+        assistant_card(
+            "Useful prompts",
+            "Try: 'How is Toyota performing in Germany?', 'Who has the highest W2C rate in MM5?', or 'Explain the conversion metric'.",
+            "3 prompts",
+            "guided assistant",
+            "primary",
+        ),
+    ]
+
+
+def render_data_assistant(data, selected_oems):
+    st.markdown(
+        "<div class='assistant-shell'>"
+        "<div class='assistant-title'>Ask the data</div>"
+        "<div class='assistant-copy'>Ask a question about brands, markets, Website-to-Contract Conversion Rate, sales, visitors or Toyota/Lexus gaps. Answers are generated from the selected comparison view and returned as evidence cards.</div>"
+        "<div class='assistant-hint-row'>"
+        "<span class='assistant-hint'>Who leads W2C in Germany?</span>"
+        "<span class='assistant-hint'>How is Toyota performing in France?</span>"
+        "<span class='assistant-hint'>Compare Toyota and Lexus in MM5</span>"
+        "<span class='assistant-hint'>Which OEM has the highest visitors?</span>"
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    question = st.text_input(
+        "Ask a question of the data",
+        placeholder="Example: Who has the highest Website-to-Contract Conversion Rate in the UK?",
+        key="data_assistant_question",
+    )
+
+    if question:
+        cards = generate_assistant_cards(data, question, selected_oems)
+        st.markdown(assistant_result_html(cards), unsafe_allow_html=True)
+    else:
+        st.info("Type a question above to generate data-backed cards.")
+
+
 def render_start_here_page(data):
     section("Start here — how to use this dashboard")
 
@@ -1658,6 +2014,8 @@ def render_start_here_page(data):
         "</div>"
     )
     st.markdown(intro_html, unsafe_allow_html=True)
+
+    render_data_assistant(data, selected_oems)
 
     section("Factors that can influence Website-to-Contract Conversion Rate")
     factors = [
