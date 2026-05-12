@@ -1339,6 +1339,33 @@ img[src^="data:image/png"][alt="Toyota logo"] {
     width: auto !important;
 }
 
+
+/* Market Summary colour coding */
+.exec-kpi-delta.positive, .share-value.positive {
+    background:#DDF8EC !important;
+    color:#12C76B !important;
+}
+.exec-kpi-delta.negative, .share-value.negative {
+    background:#FFE5EF !important;
+    color:#FF2F6D !important;
+}
+.exec-kpi-delta.neutral, .share-value.neutral {
+    background:#EEF2F6 !important;
+    color:#0A2342 !important;
+}
+.share-value.positive, .share-value.negative, .share-value.neutral {
+    display:inline-block;
+    border-radius:999px;
+    padding:5px 10px;
+    font-weight:850;
+}
+.market-summary-note {
+    color:#6F7782;
+    font-size:13px;
+    margin-top:-6px;
+    margin-bottom:12px;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -2831,8 +2858,38 @@ def render_gap_analysis_page(data, market):
 
 
 
-def exec_kpi_card(label, value, delta=None):
-    delta_html = f"<div class='exec-kpi-delta'>{delta}</div>" if delta is not None else ""
+
+def signed_class(value):
+    """Return positive/negative/neutral from a numeric value or formatted delta string."""
+    try:
+        v = float(value)
+    except Exception:
+        text_value = str(value).strip()
+        if text_value.startswith('+'):
+            return 'positive'
+        if text_value.startswith('-'):
+            return 'negative'
+        return 'neutral'
+    if v > 0:
+        return 'positive'
+    if v < 0:
+        return 'negative'
+    return 'neutral'
+
+
+def styled_delta_html(value, label=None, suffix=''):
+    cls = signed_class(value)
+    if label is None:
+        label = str(value)
+    return f"<span class='{cls}'>{label}{suffix}</span>"
+
+
+def exec_kpi_card(label, value, delta=None, delta_class=None):
+    if delta is not None:
+        cls = delta_class or signed_class(delta)
+        delta_html = f"<div class='exec-kpi-delta {cls}'>{delta}</div>"
+    else:
+        delta_html = ""
     return (
         f"<div class='exec-kpi-card'>"
         f"<div class='exec-kpi-label'>{label}</div>"
@@ -2858,11 +2915,14 @@ def render_exec_kpis(data, market, selected_oems):
     visitors_24 = previous["UniqueVisitors"].sum() if not previous.empty else 0
     conv_24 = sales_24 / visitors_24 * 100 if visitors_24 else 0
 
+    sales_delta = (sales_25 / sales_24 - 1) * 100 if sales_24 else None
+    visitor_delta = (visitors_25 / visitors_24 - 1) * 100 if visitors_24 else None
+    conv_delta = conv_25 - conv_24
     cards = [
-        exec_kpi_card(f"{CURRENT_LABEL} market contracts", fmt_metric_number(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if sales_24 else "n/a"),
-        exec_kpi_card(f"{CURRENT_LABEL} unique visitors", fmt_metric_number(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs {PREVIOUS_LABEL}" if visitors_24 else "n/a"),
-        exec_kpi_card("Market W2C rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs {PREVIOUS_LABEL}"),
-        exec_kpi_card("Visits per contract", fmt_int(visitors_25 / sales_25) if sales_25 else "n/a", "lower is better"),
+        exec_kpi_card(f"{CURRENT_LABEL} market contracts", fmt_metric_number(sales_25), f"{fmt_pct(sales_delta)} vs {PREVIOUS_LABEL}" if sales_delta is not None else "n/a", signed_class(sales_delta) if sales_delta is not None else "neutral"),
+        exec_kpi_card(f"{CURRENT_LABEL} unique visitors", fmt_metric_number(visitors_25), f"{fmt_pct(visitor_delta)} vs {PREVIOUS_LABEL}" if visitor_delta is not None else "n/a", signed_class(visitor_delta) if visitor_delta is not None else "neutral"),
+        exec_kpi_card("Market W2C rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_delta)} vs {PREVIOUS_LABEL}", signed_class(conv_delta)),
+        exec_kpi_card("Visits per contract", fmt_int(visitors_25 / sales_25) if sales_25 else "n/a", "lower is better", "neutral"),
     ]
     st.markdown("<div class='exec-kpi-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
     return True
@@ -2893,19 +2953,21 @@ def render_toyota_lexus_market_share(data, market):
     prev_visitor_share = prev_tl_visitors / prev_all_visitors * 100 if prev_all_visitors else 0
     prev_contract_share = prev_tl_sales / prev_all_sales * 100 if prev_all_sales else 0
 
+    visitor_share_delta = visitor_share - prev_visitor_share
+    contract_share_delta = contract_share - prev_contract_share
     html = (
         "<div class='share-grid'>"
         "<div class='share-card'>"
         "<div class='share-title'>Toyota & Lexus share of unique visitors</div>"
         f"<div class='share-metric-row'><span class='share-label'>Share of market visitors</span><span class='share-value'>{visitor_share:.1f}%</span></div>"
         f"<div class='share-metric-row'><span class='share-label'>Unique visitors</span><span class='share-value'>{fmt_metric_number(tl_visitors)}</span></div>"
-        f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value'>{fmt_pp(visitor_share - prev_visitor_share)}</span></div>"
+        f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value {signed_class(visitor_share_delta)}'>{fmt_pp(visitor_share_delta)}</span></div>"
         "</div>"
         "<div class='share-card'>"
         "<div class='share-title'>Toyota & Lexus share of customer contracts</div>"
         f"<div class='share-metric-row'><span class='share-label'>Share of market contracts</span><span class='share-value'>{contract_share:.1f}%</span></div>"
         f"<div class='share-metric-row'><span class='share-label'>Customer contracts</span><span class='share-value'>{fmt_metric_number(tl_sales)}</span></div>"
-        f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value'>{fmt_pp(contract_share - prev_contract_share)}</span></div>"
+        f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value {signed_class(contract_share_delta)}'>{fmt_pp(contract_share_delta)}</span></div>"
         "</div>"
         "</div>"
     )
@@ -2913,23 +2975,45 @@ def render_toyota_lexus_market_share(data, market):
 
 
 def top10_leaders_table(data, market, selected_oems):
+    # Use the selected OEM universe for competitor ranking, but always include Toyota and Lexus
+    # when data is available so leaders can compare them against the top 10.
     yoy = yoy_table(data, market, selected_oems)
-    if yoy.empty:
+    yoy_all = yoy_table(data, market, None)
+    if yoy.empty and yoy_all.empty:
         st.info("No Top 10 data available for this selection.")
         return
 
-    top = yoy.sort_values("ConversionPct_2025", ascending=False).head(10).copy()
+    base = yoy_all.copy() if not yoy_all.empty else yoy.copy()
+    base = base.sort_values("ConversionPct_2025", ascending=False).reset_index(drop=True)
+    base["Rank"] = range(1, len(base) + 1)
+
+    top_oems = set(base.head(10)["OEM"].tolist())
+    for required in ["Toyota", "Lexus"]:
+        if required in base["OEM"].values:
+            top_oems.add(required)
+
+    table = base[base["OEM"].isin(top_oems)].copy().sort_values("Rank")
+    table["Brand"] = table["OEM"].apply(lambda x: f"★ {x}" if x in ["Toyota", "Lexus"] else x)
+
+    visitor_col = f"Visitor change vs {PREVIOUS_LABEL}"
+    sales_col = f"Sales change vs {PREVIOUS_LABEL}"
     display = pd.DataFrame({
-        "Rank": range(1, len(top) + 1),
-        "Brand": top["OEM"],
-        "Category": top["OEM"].map(cluster_for_oem),
-        "W2C Conv Rate": top["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
-        "Unique Visitors": top["UniqueVisitors_2025"].map(fmt_metric_number),
-        "Customer Contracts": top["Sales_2025"].map(fmt_metric_number),
-        f"Visitor change vs {PREVIOUS_LABEL}": top["Visitors YoY %"].map(fmt_pct),
-        f"Sales change vs {PREVIOUS_LABEL}": top["Sales YoY %"].map(fmt_pct),
+        "Rank": table["Rank"].astype(int),
+        "Brand": table["Brand"],
+        "Category": table["OEM"].map(cluster_for_oem),
+        "W2C Conv Rate": table["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
+        "Unique Visitors": table["UniqueVisitors_2025"].map(fmt_metric_number),
+        "Customer Contracts": table["Sales_2025"].map(fmt_metric_number),
+        visitor_col: table["Visitors YoY %"].map(fmt_pct),
+        sales_col: table["Sales YoY %"].map(fmt_pct),
     })
-    st.dataframe(display, use_container_width=True, hide_index=True)
+
+    styled = display.style.map(badge_style, subset=[visitor_col, sales_col])
+    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.markdown(
+        "<div class='market-summary-note'>★ Toyota and Lexus are locked into this view for comparison, even when outside the top 10.</div>",
+        unsafe_allow_html=True,
+    )
 
 
 def render_market_takeaways(data, market, selected_oems):
@@ -2988,7 +3072,7 @@ def render_market_summary_page(data, market, selected_oems):
     section("Toyota & Lexus share of market demand and contracts")
     render_toyota_lexus_market_share(data, market)
 
-    section("Leading competitors — Top 10 by Website-to-Contract Conversion Rate")
+    section("Leading competitors — Top 10 plus Toyota/Lexus")
     top10_leaders_table(data, market, selected_oems)
 
     section("Five executive takeaways")
