@@ -1591,19 +1591,8 @@ img[src^="data:image/png"][alt="Toyota logo"] {
     font-size:18px;
     margin-bottom:12px;
 }
-.scorecard-controls-card {
-    background:#F7F9FC;
-    border:1px solid #E6E9ED;
-    border-radius:18px;
-    padding:18px;
-    margin:10px 0 18px 0;
-}
-.scorecard-controls-title {
-    color:#0A2342;
-    font-weight:850;
-    font-size:18px;
-    margin-bottom:12px;
-}
+
+
 .brand-insight-card .brand-insight-meta {
     margin-top:10px;
 }
@@ -1874,6 +1863,15 @@ def cluster_for_oem(oem):
         if normalised in normalised_brands:
             return cluster
     return "Uncategorised"
+
+
+
+def available_oem_categories():
+    categories = []
+    for value in OEM_CLUSTERS.values():
+        if isinstance(value, str) and value.strip():
+            categories.append(value.strip())
+    return ["All categories"] + sorted(set(categories))
 
 
 def oems_for_clusters(clusters, available_oems):
@@ -3495,7 +3493,7 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
     chart_col, control_col = st.columns([3, 1], gap="large")
 
     with control_col:
-        st.markdown("<div class='bubble-controls-card'><div class='control-title'>Bubble controls</div>", unsafe_allow_html=True)
+        st.markdown("### Bubble controls")
         local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0)
         x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0)
 
@@ -3507,7 +3505,7 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
             help="Default is one market to keep the view readable. Add more markets if you want cross-market comparison.",
         )
 
-        category_options = ["All categories"] + sorted([c for c in set(OEM_CLUSTERS.values()) if c])
+        category_options = available_oem_categories()
         selected_category = st.selectbox("OEM category", category_options, index=category_options.index("Volume Leaders") if "Volume Leaders" in category_options else 0)
 
         preset = st.selectbox(
@@ -3529,7 +3527,6 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
             default=default_oems,
             help="Select the OEMs to plot.",
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     if not selected_markets:
         selected_markets = [summary_market if summary_market != "MM5" else "UK"]
@@ -3559,11 +3556,11 @@ def render_mm5_bubble_chart_page(data):
 
     chart_col, control_col = st.columns([3, 1], gap="large")
     with control_col:
-        st.markdown("<div class='bubble-controls-card'><div class='control-title'>Bubble controls</div>", unsafe_allow_html=True)
+        st.markdown("### Bubble controls")
         local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0, key="mm5_bubble_year")
         x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0, key="mm5_bubble_x")
 
-        category_options = ["All categories"] + sorted([c for c in set(OEM_CLUSTERS.values()) if c])
+        category_options = available_oem_categories()
         selected_category = st.selectbox("OEM category", category_options, index=0, key="mm5_bubble_category")
 
         preset = st.selectbox(
@@ -3587,7 +3584,6 @@ def render_mm5_bubble_chart_page(data):
             key="mm5_bubble_oems",
             help="The chart aggregates selected OEMs into the five market bubbles.",
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     if not selected_oems_mm5:
         selected_oems_mm5 = sorted(data["OEM"].unique())
@@ -3644,21 +3640,21 @@ def render_scorecard_page(data, selected_oems):
     section("Leadership scorecard")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
 
-    st.markdown("<div class='scorecard-controls-card'><div class='scorecard-controls-title'>Scorecard controls</div>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1.2, 1.2, 1])
+    c1, c2, spacer, c3, c4, c5 = st.columns([1.15, 1.25, 0.35, 0.85, 1.0, 1.0], gap="medium")
     with c1:
         market = st.selectbox("Scorecard market", MARKETS, index=0)
     with c2:
-        sort_by = st.selectbox("Sort table by", ["Locked brands then W2C ranking", "W2C rate", "W2C variance", "Passenger Car Sales", "Sales YoY", "Unique visitors", "Visitor YoY", "Visits to sale"], index=0)
+        sort_by = st.selectbox(
+            "Sort table by",
+            ["Locked brands then W2C ranking", "W2C rate", "W2C variance", "Passenger Car Sales", "Sales YoY", "Unique visitors", "Visitor YoY", "Visits to sale"],
+            index=0,
+        )
     with c3:
         descending = st.toggle("Sort large to small", value=True)
-
-    l1, l2 = st.columns(2)
-    with l1:
-        lock_toyota = st.checkbox("Keep Toyota at top of table", value=True)
-    with l2:
-        lock_lexus = st.checkbox("Keep Lexus at top of table", value=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    with c4:
+        lock_toyota = st.checkbox("Keep Toyota at top", value=True)
+    with c5:
+        lock_lexus = st.checkbox("Keep Lexus at top", value=True)
 
     score = scorecard_table(data, market, selected_oems, lock_toyota=lock_toyota, lock_lexus=lock_lexus)
     if score.empty:
