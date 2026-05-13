@@ -1366,6 +1366,42 @@ img[src^="data:image/png"][alt="Toyota logo"] {
     margin-bottom:12px;
 }
 
+
+/* v61 executive cleanup */
+.exec-market-grid {display:grid;grid-template-columns: repeat(5, minmax(0, 1fr));gap:14px;margin:10px 0 24px 0;}
+.exec-market-card {background:#ffffff;border:1px solid #E6E9ED;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(10,35,66,.04);}
+.exec-market-card.overall {background:#F7F9FC;border-left:7px solid #009FE3;}
+.exec-market-title {color:#0A2342;font-size:16px;font-weight:850;margin-bottom:10px;}
+.exec-market-row {display:flex;justify-content:space-between;gap:12px;border-top:1px solid #EEF2F6;padding:8px 0;font-size:13px;}
+.exec-market-row:first-of-type {border-top:0;}
+.exec-market-label {color:#6F7782;font-weight:700;}
+.exec-market-value {color:#000000;font-weight:850;text-align:right;}
+.html-table-wrap {width:100%;overflow-x:auto;border:1px solid #E6E9ED;border-radius:16px;margin:10px 0 22px 0;}
+.html-table {width:100%;border-collapse:collapse;font-size:14px;}
+.html-table th {background:#F7F9FC;color:#6F7782;text-align:left;padding:12px;border-bottom:1px solid #E6E9ED;font-weight:850;}
+.html-table td {padding:12px;border-bottom:1px solid #EEF2F6;color:#303642;vertical-align:middle;}
+.html-table tr:last-child td {border-bottom:0;}
+.html-table .sticky-brand {position:sticky;left:0;background:#ffffff;z-index:2;font-weight:850;color:#0A2342;}
+.html-table th.sticky-brand {background:#F7F9FC;z-index:3;}
+.table-highlight td, .table-highlight .sticky-brand {background:#FFF7E8 !important;}
+.score-top-grid {display:grid;grid-template-columns: repeat(2, minmax(0, 1fr));gap:16px;margin:12px 0 22px 0;}
+.score-podium-card {background:#ffffff;border:1px solid #E6E9ED;border-radius:18px;padding:20px;box-shadow:0 2px 14px rgba(10,35,66,.05);}
+.score-podium-title {color:#0A2342;font-weight:850;font-size:20px;margin-bottom:12px;}
+.score-podium-row {display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid #EEF2F6;}
+.score-podium-row:first-of-type {border-top:0;}
+.score-podium-brand {font-weight:850;color:#0A2342;}
+.score-podium-value {font-weight:850;color:#000000;}
+.methodology-source-row {display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.source-logo-pill {display:inline-block;background:#ffffff;border:1px solid #E1E7EF;border-radius:10px;padding:8px 12px;color:#0A2342;font-weight:850;box-shadow:0 1px 6px rgba(10,35,66,.04);}
+.flow-usecase-grid {display:grid;grid-template-columns: repeat(3, minmax(0, 1fr));gap:16px;margin:16px 0 24px 0;}
+.flow-usecase-card {background:#ffffff;border:1px solid #E6E9ED;border-radius:18px;padding:20px;box-shadow:0 2px 14px rgba(10,35,66,.05);min-height:185px;}
+.flow-number {width:34px;height:34px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:850;margin-bottom:12px;}
+.flow-title {color:#0A2342;font-weight:850;font-size:18px;line-height:1.25;}
+.flow-copy {color:#6F7782;font-size:14px;line-height:1.5;margin-top:10px;}
+.bubble-key {background:#F7F9FC;border:1px solid #E6E9ED;border-radius:14px;padding:12px 14px;color:#0A2342;font-weight:750;margin:8px 0 14px 0;}
+@media (max-width:1100px){.exec-market-grid,.flow-usecase-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.score-top-grid{grid-template-columns:1fr;}}
+@media (max-width:800px){.exec-market-grid,.flow-usecase-grid{grid-template-columns:1fr;}}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -1602,8 +1638,6 @@ def preset_selection(preset_name, all_oems):
         preset = TOYOTA_SET
     elif preset_name == "Lexus premium competitors":
         preset = LEXUS_SET
-    elif preset_name == "Chinese disruptors":
-        preset = CHINESE_SET
     else:
         preset = all_oems
     return [x for x in preset if x in all_oems]
@@ -1680,7 +1714,7 @@ def render_hero():
             <div class="hero-logo"><img src="{VALTECH_LOGO}" alt="Valtech logo"></div>
             <div class="hero-title">OEM Macro Conversion Funnel</div>
             <div class="hero-subtitle">
-                Website to customer contract conversion across MM5. Explores how unique visitor demand converts into passenger new car customer contracts, and where Toyota/Lexus under- or over-perform by market.
+                Website to customer contract conversion across MM5. Explores how unique visitor demand converts into passenger new car Passenger Car Sales, and where Toyota/Lexus under- or over-perform by market.
             </div>
             <div class="hero-meta">
                 <b>Coverage:</b> 2024, 2025 &amp; 2026 (Jan to April) &nbsp;|&nbsp;
@@ -2072,149 +2106,50 @@ def add_logo_images(fig, chart_df, x_max, y_max):
         )
 
 
-def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos):
+def build_bubble_chart(chart_df, selected_oems, market, year_view, show_logos, x_axis_metric="Unique Visitors", view_label="OEM"):
     fig = go.Figure()
     if chart_df.empty:
         return fig
-
-    max_sales = max(chart_df["Sales"].max(), 1)
-    max_x = max(chart_df["UniqueVisitors"].max() * 1.18, 1)
+    x_col = "Sales" if x_axis_metric == "Passenger Car Sales" else "UniqueVisitors"
+    size_col = "UniqueVisitors" if x_col == "Sales" else "Sales"
+    x_title = "Passenger Car Sales" if x_col == "Sales" else "Unique visitors"
+    size_title = "Unique visitors" if size_col == "UniqueVisitors" else "Passenger Car Sales"
+    max_size = max(chart_df[size_col].max(), 1)
+    max_x = max(chart_df[x_col].max() * 1.18, 1)
     max_y = max(chart_df["ConversionPct"].max() * 1.25, 0.1)
-
-    selected_2025 = chart_df[chart_df["Year"] == 2025].copy()
-    x_mid = selected_2025["UniqueVisitors"].median() if not selected_2025.empty else chart_df["UniqueVisitors"].median()
-    y_mid = selected_2025["ConversionPct"].median() if not selected_2025.empty else chart_df["ConversionPct"].median()
-
-    # Quadrant background zones.
-    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=y_mid, y1=max_y, fillcolor="rgba(0,159,227,0.05)", line=dict(width=0), layer="below")
-    fig.add_shape(type="rect", x0=x_mid, x1=max_x, y0=y_mid, y1=max_y, fillcolor="rgba(18,199,107,0.07)", line=dict(width=0), layer="below")
-    fig.add_shape(type="rect", x0=0, x1=x_mid, y0=0, y1=y_mid, fillcolor="rgba(111,111,111,0.04)", line=dict(width=0), layer="below")
-    fig.add_shape(type="rect", x0=x_mid, x1=max_x, y0=0, y1=y_mid, fillcolor="rgba(255,176,0,0.06)", line=dict(width=0), layer="below")
-
-    # Median guide lines.
+    current = chart_df[chart_df["Year"] == 2025].copy()
+    x_mid = current[x_col].median() if not current.empty else chart_df[x_col].median()
+    y_mid = current["ConversionPct"].median() if not current.empty else chart_df["ConversionPct"].median()
+    for x0,x1,y0,y1,fill in [(0,x_mid,y_mid,max_y,"rgba(0,159,227,0.05)"),(x_mid,max_x,y_mid,max_y,"rgba(18,199,107,0.07)"),(0,x_mid,0,y_mid,"rgba(111,111,111,0.04)"),(x_mid,max_x,0,y_mid,"rgba(255,176,0,0.06)")]:
+        fig.add_shape(type="rect", x0=x0, x1=x1, y0=y0, y1=y1, fillcolor=fill, line=dict(width=0), layer="below")
     fig.add_shape(type="line", x0=x_mid, x1=x_mid, y0=0, y1=max_y, line=dict(color="rgba(10,35,66,0.12)", width=1), layer="below")
     fig.add_shape(type="line", x0=0, x1=max_x, y0=y_mid, y1=y_mid, line=dict(color="rgba(10,35,66,0.12)", width=1), layer="below")
-
-    # Quadrant labels.
-    fig.add_annotation(x=max_x * 0.02, y=max_y * 0.95, text="Efficient challengers", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="left")
-    fig.add_annotation(x=max_x * 0.98, y=max_y * 0.95, text="Leading players", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="right")
-    fig.add_annotation(x=max_x * 0.02, y=max_y * 0.06, text="Developing players", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="left")
-    fig.add_annotation(x=max_x * 0.98, y=max_y * 0.06, text="Scale without efficiency", showarrow=False, font=dict(color="#8D96A0", size=14), xanchor="right")
-
-    # Movement arrows from 2024 to 2025.
+    id_col = "DisplayName" if "DisplayName" in chart_df.columns else "OEM"
     if year_view == "Previous and current + shift":
-        for oem in selected_oems:
-            d24 = chart_df[(chart_df["OEM"] == oem) & (chart_df["Year"] == 2024)]
-            d25 = chart_df[(chart_df["OEM"] == oem) & (chart_df["Year"] == 2025)]
+        for item in chart_df[id_col].dropna().unique():
+            d24 = chart_df[(chart_df[id_col] == item) & (chart_df["Year"] == 2024)]
+            d25 = chart_df[(chart_df[id_col] == item) & (chart_df["Year"] == 2025)]
             if len(d24) and len(d25):
-                r24 = d24.iloc[0]
-                r25 = d25.iloc[0]
-                cluster = cluster_for_oem(oem)
-                color = CLUSTER_COLORS.get(cluster, "#6F6F6F")
-                fig.add_annotation(
-                    x=r25["UniqueVisitors"],
-                    y=r25["ConversionPct"],
-                    ax=r24["UniqueVisitors"],
-                    ay=r24["ConversionPct"],
-                    xref="x",
-                    yref="y",
-                    axref="x",
-                    ayref="y",
-                    showarrow=True,
-                    arrowhead=3,
-                    arrowsize=1.2,
-                    arrowwidth=1.6,
-                    arrowcolor=color,
-                    opacity=0.78,
-                )
-
-    # 2024 faded markers.
-    if year_view == "Previous and current + shift":
-        df24 = chart_df[chart_df["Year"] == 2024].copy()
-        if not df24.empty:
-            fig.add_trace(
-                go.Scatter(
-                    x=df24["UniqueVisitors"],
-                    y=df24["ConversionPct"],
-                    mode="markers",
-                    name="Previous period",
-                    marker=dict(
-                        size=df24["Sales"].apply(lambda s: max(18, math.sqrt(s / max_sales) * 72)),
-                        color="rgba(190,198,208,0.45)",
-                        line=dict(width=1.4, color="rgba(10,35,66,0.25)"),
-                        symbol="circle",
-                    ),
-                    customdata=df24[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct"]],
-                    hovertemplate="<b>%{customdata[0]}</b><br>Year: %{customdata[2]}<br>Sales: %{customdata[3]:,.0f}<br>Visitors: %{customdata[4]:,.0f}<br>W2C Rate: %{customdata[5]:.2f}%<extra></extra>",
-                )
-            )
-
+                r24, r25 = d24.iloc[0], d25.iloc[0]
+                fig.add_annotation(x=r25[x_col], y=r25["ConversionPct"], ax=r24[x_col], ay=r24["ConversionPct"], xref="x", yref="y", axref="x", ayref="y", showarrow=True, arrowhead=3, arrowsize=1.1, arrowwidth=1.4, arrowcolor="#6F7782", opacity=0.70)
+        df_prev = chart_df[chart_df["Year"] == 2024].copy()
+        if not df_prev.empty:
+            fig.add_trace(go.Scatter(x=df_prev[x_col], y=df_prev["ConversionPct"], mode="markers", name=PREVIOUS_LABEL, marker=dict(size=df_prev[size_col].apply(lambda s: max(16, math.sqrt(s / max_size) * 68)), color="rgba(190,198,208,0.45)", line=dict(width=1.2, color="rgba(10,35,66,0.25)")), customdata=df_prev[[id_col,"Market","Sales","UniqueVisitors","ConversionPct"]], hovertemplate="<b>%{customdata[0]}</b><br>Market: %{customdata[1]}<br>Sales: %{customdata[2]:,.0f}<br>Visitors: %{customdata[3]:,.0f}<br>W2C: %{customdata[4]:.2f}%<extra></extra>"))
     primary_year = 2025 if year_view == "Previous and current + shift" else (2024 if year_view == "Previous period" else 2025)
     primary = chart_df[chart_df["Year"] == primary_year].copy()
-
     if not primary.empty:
-        primary["Cluster"] = primary["OEM"].map(cluster_for_oem)
-        for cluster in sorted(primary["Cluster"].unique()):
-            dfc = primary[primary["Cluster"] == cluster].copy()
-            color = CLUSTER_COLORS.get(cluster, "#6F6F6F")
-            sizes = dfc["Sales"].apply(lambda s: max(24, math.sqrt(s / max_sales) * 88))
-            fig.add_trace(
-                go.Scatter(
-                    x=dfc["UniqueVisitors"],
-                    y=dfc["ConversionPct"],
-                    mode="markers+text" if not show_logos else "markers",
-                    text=None if show_logos else dfc["OEM"],
-                    textposition="top center",
-                    name=f"{cluster} · {primary_year}",
-                    marker=dict(
-                        size=sizes,
-                        color=color,
-                        opacity=0.78,
-                        line=dict(width=2.2, color="white"),
-                    ),
-                    customdata=dfc[["OEM", "Market", "Year", "Sales", "UniqueVisitors", "ConversionPct", "Cluster"]],
-                    hovertemplate="<b>%{customdata[0]}</b><br>Category: %{customdata[6]}<br>Year: %{customdata[2]}<br>Sales: %{customdata[3]:,.0f}<br>Visitors: %{customdata[4]:,.0f}<br>W2C Rate: %{customdata[5]:.2f}%<extra></extra>",
-                )
-            )
-
-    if show_logos and not primary.empty:
-        add_logo_images(fig, primary, max_x, max_y)
-
-    fig.update_layout(
-        title=dict(
-            text=f"{market} | Audience scale vs Website-to-Contract Conversion Rate",
-            x=0.02,
-            y=0.98,
-            font=dict(size=20, color="#0A2342"),
-        ),
-        xaxis_title="Audience size: unique website visitors",
-        yaxis_title="Website-to-Contract Conversion Rate",
-        height=760,
-        hovermode="closest",
-        legend=dict(orientation="h", y=1.08, x=0, font=dict(size=11)),
-        margin=dict(l=75, r=45, t=105, b=75),
-        plot_bgcolor="#FFFFFF",
-        paper_bgcolor="#FFFFFF",
-    )
-    fig.update_xaxes(
-        range=[0, max_x],
-        tickformat=",",
-        gridcolor="#EDF1F5",
-        zeroline=False,
-        showline=True,
-        linecolor="#E1E7EF",
-    )
-    fig.update_yaxes(
-        range=[0, max_y],
-        ticksuffix="%",
-        gridcolor="#EDF1F5",
-        zeroline=False,
-        showline=True,
-        linecolor="#E1E7EF",
-    )
-
+        if "Cluster" not in primary.columns:
+            primary["Cluster"] = primary["OEM"].map(cluster_for_oem) if "OEM" in primary.columns else "MM5 Markets"
+        for cluster in sorted(primary["Cluster"].astype(str).unique()):
+            dfc = primary[primary["Cluster"].astype(str) == cluster]
+            color = CLUSTER_COLORS.get(cluster, "#009FE3")
+            fig.add_trace(go.Scatter(x=dfc[x_col], y=dfc["ConversionPct"], mode="markers+text" if not show_logos else "markers", text=None if show_logos else dfc[id_col], textposition="top center", name=f"{cluster} · {CURRENT_LABEL}", marker=dict(size=dfc[size_col].apply(lambda s: max(24, math.sqrt(s / max_size) * 86)), color=color, opacity=0.78, line=dict(width=2.2, color="white")), customdata=dfc[[id_col,"Market","Sales","UniqueVisitors","ConversionPct"]], hovertemplate="<b>%{customdata[0]}</b><br>Market: %{customdata[1]}<br>Sales: %{customdata[2]:,.0f}<br>Visitors: %{customdata[3]:,.0f}<br>W2C: %{customdata[4]:.2f}%<extra></extra>"))
+    if show_logos and view_label == "OEM" and not primary.empty:
+        add_logo_images(fig, primary.rename(columns={id_col:"OEM"}), max_x, max_y)
+    fig.update_layout(title=dict(text=f"{market} | {x_title} vs Website-to-Contract Conversion Rate", x=0.02, y=0.98, font=dict(size=18, color="#0A2342")), xaxis_title=x_title, yaxis_title="Website-to-Contract Conversion Rate", height=650, hovermode="closest", legend=dict(orientation="h", y=1.08, x=0, font=dict(size=11)), margin=dict(l=70, r=35, t=95, b=65), plot_bgcolor="#FFFFFF", paper_bgcolor="#FFFFFF")
+    fig.update_xaxes(range=[0, max_x], tickformat=",", gridcolor="#EDF1F5", zeroline=False, showline=True, linecolor="#E1E7EF")
+    fig.update_yaxes(range=[0, max_y], ticksuffix="%", gridcolor="#EDF1F5", zeroline=False, showline=True, linecolor="#E1E7EF")
     return fig
-
 
 
 def assistant_card(title, copy, metric, tag, style="primary"):
@@ -2463,7 +2398,7 @@ def explain_metric_cards():
         ),
         assistant_card(
             "Website-to-Contract Conversion Rate",
-            "This dashboard uses a broader commercial efficiency metric: passenger new car customer contracts divided by unique website visitors.",
+            "This dashboard uses a broader commercial efficiency metric: passenger new car Passenger Car Sales divided by unique website visitors.",
             "contracts / unique visitors",
             "macro conversion",
             "primary",
@@ -2491,7 +2426,7 @@ def explain_metric_cards():
         ),
         assistant_card(
             "Best use",
-            "Use W2C to provoke bigger-picture questions about why demand does or does not translate into customer contracts.",
+            "Use W2C to provoke bigger-picture questions about why demand does or does not translate into Passenger Car Sales.",
             "diagnostic",
             "use case",
             "primary",
@@ -2585,7 +2520,7 @@ def render_data_assistant(data, selected_oems):
     )
 
     if question:
-        cards = generate_assistant_cards(data, question, selected_oems)
+        cards = generate_assistant_cards(data, question, selected_oems)[:3]
         st.markdown(assistant_result_html(cards), unsafe_allow_html=True)
     else:
         st.info("Start by typing a question above. Example: 'Which OEM has the highest W2C rate in the UK?'")
@@ -2635,7 +2570,7 @@ def render_start_here_page(data):
         "<div class='methodology-card'>"
         "<div class='methodology-callout'>Focus: solely website effectiveness</div>"
         "<h4>Website Conversion Rate</h4>"
-        "<div class='methodology-formula'><b>Overall Website Conversion Rate</b><br>Percentage of total website visitors who completed any kind of lead = converted visitors / total visitors.</div>"
+        "<div class='methodology-formula'><b>Overall Website Conversion Rate</b><br>Percentage of total website visitors who completed any kind of lead = converted visitors / total visitors.</div><div class='methodology-source-row'><span class='source-logo-pill'>Adobe Analytics</span></div>"
         "<ul>"
         "<li><b>Used by TME today</b> to optimise website performance.</li>"
         "<li><b>Transactional leads:</b> brochure requests, keep-me-informed, newsletter, contest and similar forms.</li>"
@@ -2647,10 +2582,10 @@ def render_start_here_page(data):
         "<div class='methodology-card'>"
         "<div class='methodology-callout'>Focus: bigger-picture conversion efficiency</div>"
         "<h4>Website-to-Contract Conversion Rate</h4>"
-        "<div class='methodology-formula'><b>Website-to-Contract Conversion Rate</b><br>Passenger new car customer contracts / unique website visitors.</div>"
+        "<div class='methodology-formula'><b>Website-to-Contract Conversion Rate</b><br>Passenger new car sales / unique website visitors.</div><div class='methodology-source-row'><span class='source-logo-pill'>Similarweb</span><span class='source-logo-pill'>Marklines</span></div>"
         "<ul>"
         "<li>Uses <b>Similarweb unique website visitors</b> as the demand base.</li>"
-        "<li>Uses <b>passenger new car customer contracts / sales</b> as the outcome.</li>"
+        "<li>Uses <b>passenger new car Passenger Car Sales / sales</b> as the outcome.</li>"
         "<li>Should be interpreted as a broader commercial efficiency metric, not purely a website UX metric.</li>"
         "<li>Captures the combined effect of digital demand, website experience, retailer execution, offer competitiveness and operating model.</li>"
         "</ul>"
@@ -2711,121 +2646,25 @@ def usecase_card(audience, title, copy, reports, audience_class="shared"):
 
 def render_use_cases_page(data):
     section("Use cases — what to use this dashboard for")
-
-    st.markdown(
-        "<div class='usecase-note'>"
-        "This dashboard is designed to help both <b>NMSCs</b> and <b>TME</b> ask sharper questions about Website-to-Contract Conversion Rate. "
-        "The same metric can support different decisions: NMSCs will typically use it to improve marketing, content and local funnel execution, "
-        "while TME will typically use it to identify product, powertrain, pricing and market-structure implications."
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    cards = [
-        usecase_card(
-            "NMSC / TME",
-            "Identify which OEMs are outperforming in your market",
-            "Use this to understand which OEMs are converting website demand into customer contracts most efficiently in a specific market. This should trigger investigation into whether the driver is brand demand, offer strength, stock availability, retailer execution or website experience.",
-            ["Market Summary", "Scorecard", "Bubble chart"],
-            "shared",
-        ),
-        usecase_card(
-            "NMSC / TME",
-            "Assess different types of OEMs",
-            "Compare volume OEMs, premium OEMs and Chinese disruptors to understand whether conversion efficiency is structurally different by business model, price point, product mix or market maturity.",
-            ["OEM category filter", "Bubble chart", "Scorecard"],
-            "shared",
-        ),
-        usecase_card(
-            "NMSC",
-            "Prioritise marketing and content optimisation",
-            "Use market-level gaps to identify where Toyota or Lexus may need sharper content, clearer CTAs, better offer visibility, stronger model pages or more effective lower-funnel journeys.",
-            ["Toyota & Lexus Gap Analysis", "Market Summary", "Start Here methodology"],
-            "nmsc",
-        ),
-        usecase_card(
-            "NMSC",
-            "Diagnose whether traffic growth is quality traffic",
-            "If unique visitors are growing but Website-to-Contract Conversion Rate is flat or declining, the issue may be traffic quality, audience targeting, message-market fit or weak lower-funnel content.",
-            ["Market Summary", "YoY unique visitor growth chart", "Top 10 brands at a glance"],
-            "nmsc",
-        ),
-        usecase_card(
-            "NMSC",
-            "Dig deeper into competitor marketing strategies",
-            "Use this dashboard to identify which competitors need deeper investigation, then move into the market-specific marketing intelligence dashboards to review competitor activity, messaging and channel strategy.",
-            ["Market Summary", "External market dashboards linked below"],
-            "nmsc",
-        ),
-        usecase_card(
-            "TME",
-            "Identify product and powertrain pressure points",
-            "Where Toyota or Lexus underperform consistently across markets, the cause may not be local digital execution. It may signal product-market fit, powertrain competitiveness, availability, pricing or customer proposition issues.",
-            ["Toyota & Lexus Gap Analysis", "Market Gap Analysis", "Scorecard"],
-            "tme",
-        ),
-        usecase_card(
-            "TME",
-            "Compare market readiness for future product strategy",
-            "Use cross-market differences to understand where certain propositions appear to convert better. This can inform future model launches, powertrain emphasis, grade strategy and central product messaging.",
-            ["Toyota & Lexus Gap Analysis", "Bubble chart", "Scorecard"],
-            "tme",
-        ),
-        usecase_card(
-            "TME",
-            "Spot structural network or distribution constraints",
-            "If a brand has strong visitor demand but weak contract conversion in multiple countries, investigate retailer footprint, sales model, availability, lead handling and distribution constraints before assuming a website problem.",
-            ["Toyota & Lexus Gap Analysis", "Market Gap Analysis", "Start Here causal factors"],
-            "tme",
-        ),
-        usecase_card(
-            "NMSC / TME",
-            "Separate website effectiveness from commercial conversion",
-            "Use the Start Here page to align stakeholders that Website Conversion Rate and Website-to-Contract Conversion Rate are different. One is about lead capture; the other is about broader demand-to-contract efficiency.",
-            ["Start Here", "Two conversion metrics for different purposes"],
-            "shared",
-        ),
-        usecase_card(
-            "NMSC",
-            "Prepare local action plans",
-            "For NMSCs, the dashboard should be used to identify where to run deeper diagnostics: landing page effectiveness, offer prominence, lead quality, retailer follow-up, campaign audience quality and local content gaps.",
-            ["Toyota & Lexus Gap Analysis", "Market Summary", "Scorecard"],
-            "nmsc",
-        ),
+    st.markdown("<div class='usecase-note'>Use this dashboard as a structured planning flow: move from market scan, to competitor diagnosis, to strategic action.</div>", unsafe_allow_html=True)
+    use_cases = [
+        ("Identify which OEMs are outperforming in your market", "Use Market Summary and Scorecard to identify leaders in volume, W2C efficiency and growth."),
+        ("Assess different types of OEMs", "Use the OEM category filters to compare volume leaders, premium brands, EV challengers and new entrants."),
+        ("Diagnose whether traffic growth is quality traffic", "Compare visitor growth, Passenger Car Sales growth and W2C movement to separate demand quality from demand volume."),
+        ("Dig deeper into competitor marketing strategies", "Use market dashboards and competitor views to explore what leading OEMs are doing differently."),
+        ("Identify product and powertrain pressure points", "Use gaps across markets to identify where underperformance may reflect proposition, powertrain, price or availability issues."),
+        ("Spot structural network or distribution constraints", "Use low W2C despite strong demand to prompt investigation into lead handling, retailer footprint, stock and fulfilment constraints."),
     ]
-
-    for i in range(0, len(cards), 2):
-        cols = st.columns(2)
-        for col, card in zip(cols, cards[i:i + 2]):
-            with col:
-                st.markdown(card, unsafe_allow_html=True)
-
-    section("Market-specific competitor marketing dashboards")
-    st.markdown(
-        "<div class='usecase-note'>"
-        "Separate market-level competitor marketing dashboards have been created to support deeper investigation into local marketing and content strategy."
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    market_links = {
-        "UK": "https://valtech-uk-auto.netlify.app/",
-        "DE": "https://valtech-de-auto.netlify.app/",
-        "FR": "https://valtech-fr-auto.netlify.app/",
-        "IT": "https://valtech-it-auto.netlify.app/",
-        "ES": "https://valtech-es-auto.netlify.app/",
-    }
-    links_html = "".join([f"<a class='market-link-card' href='{url}' target='_blank'>{market}</a>" for market, url in market_links.items()])
-    st.markdown(f"<div class='market-link-grid'>{links_html}</div>", unsafe_allow_html=True)
-
+    html = "<div class='flow-usecase-grid'>"
+    for i, (title, copy) in enumerate(use_cases, start=1):
+        html += f"<div class='flow-usecase-card'><div class='flow-number'>{i}</div><div class='flow-title'>{title}</div><div class='flow-copy'>{copy}</div></div>"
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
     render_footer()
 
-# =========================
-# Pages
-# =========================
 
 def render_gap_analysis_page(data, market):
-    section(f"Toyota & Lexus gap analysis — {market}")
+    section(f"Gap Analysis — {market}")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
     st.caption(f"All headline metrics reflect current period performance; variance badges show movement versus previous period.")
     render_brand_strip()
@@ -2845,13 +2684,12 @@ def render_gap_analysis_page(data, market):
     conv_24 = sales_24 / visitors_24 * 100 if visitors_24 else 0
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric(f"Toyota/Lexus passenger sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs previous period" if sales_24 else "n/a")
+    c1.metric(f"Toyota/Lexus Passenger Car Sales", fmt_int(sales_25), f"{fmt_pct((sales_25 / sales_24 - 1) * 100)} vs previous period" if sales_24 else "n/a")
     c2.metric(f"Toyota/Lexus Unique Visitors", fmt_int(visitors_25), f"{fmt_pct((visitors_25 / visitors_24 - 1) * 100)} vs previous period" if visitors_24 else "n/a")
     c3.metric(f"Website-to-Contract Conversion Rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_25 - conv_24)} vs previous period")
     c4.metric(f"Visits per contract", fmt_int(visitors_25 / sales_25))
 
     render_brand_detail(data, market)
-    render_benchmark_cards(data, market)
     render_market_weakness(data)
     render_toyota_lexus_recommendations(data)
     render_footer()
@@ -2899,30 +2737,134 @@ def exec_kpi_card(label, value, delta=None, delta_class=None):
     )
 
 
-def render_exec_kpis(data, market, selected_oems):
+
+def posneg_class_text(value_text):
+    text_value = str(value_text)
+    if text_value.startswith("+"):
+        return "pos"
+    if text_value.startswith("-"):
+        return "neg"
+    return "neutral"
+
+
+def badge_span(value, suffix="%"):
+    if value is None or pd.isna(value):
+        text_value = "n/a"
+    elif suffix == "pp":
+        text_value = fmt_pp(value)
+    elif suffix == "raw":
+        text_value = str(value)
+    else:
+        text_value = fmt_pct(value)
+    cls = posneg_class_text(text_value)
+    bg = "#DDF8EC" if cls == "pos" else "#FFE5EF" if cls == "neg" else "#EEF2F6"
+    col = "#12C76B" if cls == "pos" else "#FF2F6D" if cls == "neg" else "#6F6F6F"
+    return f"<span style='background:{bg};color:{col};padding:5px 9px;border-radius:999px;font-weight:850;'>{text_value}</span>"
+
+
+def html_table(df, highlight_brands=None, sticky_brand=True):
+    highlight_brands = set(highlight_brands or [])
+    html = "<div class='html-table-wrap'><table class='html-table'><thead><tr>"
+    for col in df.columns:
+        cls = " class='sticky-brand'" if sticky_brand and col == "Brand" else ""
+        html += f"<th{cls}>{col}</th>"
+    html += "</tr></thead><tbody>"
+    for _, r in df.iterrows():
+        brand_text = str(r.get("Brand", "")).replace("★ ", "")
+        tr_cls = " class='table-highlight'" if brand_text in highlight_brands else ""
+        html += f"<tr{tr_cls}>"
+        for col in df.columns:
+            cls = " class='sticky-brand'" if sticky_brand and col == "Brand" else ""
+            html += f"<td{cls}>{r[col]}</td>"
+        html += "</tr>"
+    html += "</tbody></table></div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def medal_for_rank(rank):
+    try:
+        rank = int(rank)
+    except Exception:
+        return str(rank)
+    return {1: "🥇 1", 2: "🥈 2", 3: "🥉 3"}.get(rank, str(rank))
+
+
+def market_kpi_summary(data, market, selected_oems=None):
     current = market_year(data, market, 2025, selected_oems)
     previous = market_year(data, market, 2024, selected_oems)
-
     if current.empty:
-        st.warning("No data available for this selection.")
-        return False
-
+        return None
     sales_25 = current["Sales"].sum()
     visitors_25 = current["UniqueVisitors"].sum()
     conv_25 = sales_25 / visitors_25 * 100 if visitors_25 else 0
-
+    visits_sale = visitors_25 / sales_25 if sales_25 else None
     sales_24 = previous["Sales"].sum() if not previous.empty else 0
     visitors_24 = previous["UniqueVisitors"].sum() if not previous.empty else 0
     conv_24 = sales_24 / visitors_24 * 100 if visitors_24 else 0
+    return {
+        "sales": sales_25,
+        "visitors": visitors_25,
+        "conv": conv_25,
+        "visits_sale": visits_sale,
+        "sales_delta": (sales_25 / sales_24 - 1) * 100 if sales_24 else None,
+        "visitor_delta": (visitors_25 / visitors_24 - 1) * 100 if visitors_24 else None,
+        "conv_delta": conv_25 - conv_24,
+    }
 
-    sales_delta = (sales_25 / sales_24 - 1) * 100 if sales_24 else None
-    visitor_delta = (visitors_25 / visitors_24 - 1) * 100 if visitors_24 else None
-    conv_delta = conv_25 - conv_24
+
+def render_market_kpi_cards(data, market, selected_oems):
+    if market != "MM5":
+        return render_exec_kpis(data, market, selected_oems)
+    markets_to_show = ["MM5", "UK", "France", "Germany", "Italy", "Spain"]
+    html = "<div class='exec-market-grid'>"
+    for m in markets_to_show:
+        summary = market_kpi_summary(data, m, selected_oems)
+        if not summary:
+            continue
+        cls = "exec-market-card overall" if m == "MM5" else "exec-market-card"
+        html += (
+            f"<div class='{cls}'>"
+            f"<div class='exec-market-title'>{m}</div>"
+            f"<div class='exec-market-row'><span class='exec-market-label'>Passenger Car Sales</span><span class='exec-market-value'>{fmt_metric_number(summary['sales'])}</span></div>"
+            f"<div class='exec-market-row'><span class='exec-market-label'>Unique visitors</span><span class='exec-market-value'>{fmt_metric_number(summary['visitors'])}</span></div>"
+            f"<div class='exec-market-row'><span class='exec-market-label'>Market W2C rate</span><span class='exec-market-value'>{summary['conv']:.2f}%</span></div>"
+            f"<div class='exec-market-row'><span class='exec-market-label'>Visits per sale</span><span class='exec-market-value'>{fmt_int(summary['visits_sale']) if summary['visits_sale'] else 'n/a'}</span></div>"
+            f"<div class='exec-market-row'><span class='exec-market-label'>Sales movement</span><span class='exec-market-value'>{badge_span(summary['sales_delta']) if summary['sales_delta'] is not None else 'n/a'}</span></div>"
+            f"</div>"
+        )
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+    return True
+
+
+def render_scorecard_podiums(score):
+    top_sales = score.sort_values("Sales_2025", ascending=False).head(3)
+    top_eff = score.sort_values("ConversionPct_2025", ascending=False).head(3)
+    def podium_html(title, df, value_col, formatter):
+        html = f"<div class='score-podium-card'><div class='score-podium-title'>{title}</div>"
+        for i, (_, r) in enumerate(df.iterrows(), start=1):
+            html += (
+                "<div class='score-podium-row'>"
+                f"<div>{['🥇','🥈','🥉'][i-1]}</div>"
+                f"<div class='score-podium-brand'>{r['OEM']}</div>"
+                f"<div class='score-podium-value'>{formatter(r[value_col])}</div>"
+                "</div>"
+            )
+        html += "</div>"
+        return html
+    html = "<div class='score-top-grid'>" + podium_html("Top 3 Sales Volume", top_sales, "Sales_2025", fmt_metric_number) + podium_html("Top 3 Sales Efficiency", top_eff, "ConversionPct_2025", lambda x: f"{x:.2f}%") + "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+def render_exec_kpis(data, market, selected_oems):
+    summary = market_kpi_summary(data, market, selected_oems)
+    if not summary:
+        st.warning("No data available for this selection.")
+        return False
     cards = [
-        exec_kpi_card(f"{CURRENT_LABEL} market contracts", fmt_metric_number(sales_25), f"{fmt_pct(sales_delta)} vs {PREVIOUS_LABEL}" if sales_delta is not None else "n/a", signed_class(sales_delta) if sales_delta is not None else "neutral"),
-        exec_kpi_card(f"{CURRENT_LABEL} unique visitors", fmt_metric_number(visitors_25), f"{fmt_pct(visitor_delta)} vs {PREVIOUS_LABEL}" if visitor_delta is not None else "n/a", signed_class(visitor_delta) if visitor_delta is not None else "neutral"),
-        exec_kpi_card("Market W2C rate", f"{conv_25:.2f}%", f"{fmt_pp(conv_delta)} vs {PREVIOUS_LABEL}", signed_class(conv_delta)),
-        exec_kpi_card("Visits per contract", fmt_int(visitors_25 / sales_25) if sales_25 else "n/a", "lower is better", "neutral"),
+        exec_kpi_card(f"{CURRENT_LABEL} Passenger Car Sales", fmt_metric_number(summary["sales"]), badge_span(summary["sales_delta"]) if summary["sales_delta"] is not None else "n/a"),
+        exec_kpi_card(f"{CURRENT_LABEL} unique visitors", fmt_metric_number(summary["visitors"]), badge_span(summary["visitor_delta"]) if summary["visitor_delta"] is not None else "n/a"),
+        exec_kpi_card("Market W2C rate", f"{summary['conv']:.2f}%", badge_span(summary["conv_delta"], suffix="pp")),
+        exec_kpi_card("Visits per sale", fmt_int(summary["visits_sale"]) if summary["visits_sale"] else "n/a", "lower is better"),
     ]
     st.markdown("<div class='exec-kpi-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
     return True
@@ -2964,8 +2906,8 @@ def render_toyota_lexus_market_share(data, market):
         f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value {signed_class(visitor_share_delta)}'>{fmt_pp(visitor_share_delta)}</span></div>"
         "</div>"
         "<div class='share-card'>"
-        "<div class='share-title'>Toyota & Lexus share of customer contracts</div>"
-        f"<div class='share-metric-row'><span class='share-label'>Share of market contracts</span><span class='share-value'>{contract_share:.1f}%</span></div>"
+        "<div class='share-title'>Toyota & Lexus share of Passenger Car Sales</div>"
+        f"<div class='share-metric-row'><span class='share-label'>Share of Passenger Car Sales</span><span class='share-value'>{contract_share:.1f}%</span></div>"
         f"<div class='share-metric-row'><span class='share-label'>Customer contracts</span><span class='share-value'>{fmt_metric_number(tl_sales)}</span></div>"
         f"<div class='share-metric-row'><span class='share-label'>Movement vs {PREVIOUS_LABEL}</span><span class='share-value {signed_class(contract_share_delta)}'>{fmt_pp(contract_share_delta)}</span></div>"
         "</div>"
@@ -2975,45 +2917,33 @@ def render_toyota_lexus_market_share(data, market):
 
 
 def top10_leaders_table(data, market, selected_oems):
-    # Use the selected OEM universe for competitor ranking, but always include Toyota and Lexus
-    # when data is available so leaders can compare them against the top 10.
     yoy = yoy_table(data, market, selected_oems)
     yoy_all = yoy_table(data, market, None)
     if yoy.empty and yoy_all.empty:
         st.info("No Top 10 data available for this selection.")
         return
-
     base = yoy_all.copy() if not yoy_all.empty else yoy.copy()
     base = base.sort_values("ConversionPct_2025", ascending=False).reset_index(drop=True)
     base["Rank"] = range(1, len(base) + 1)
-
     top_oems = set(base.head(10)["OEM"].tolist())
     for required in ["Toyota", "Lexus"]:
         if required in base["OEM"].values:
             top_oems.add(required)
-
     table = base[base["OEM"].isin(top_oems)].copy().sort_values("Rank")
-    table["Brand"] = table["OEM"].apply(lambda x: f"★ {x}" if x in ["Toyota", "Lexus"] else x)
-
     visitor_col = f"Visitor change vs {PREVIOUS_LABEL}"
     sales_col = f"Sales change vs {PREVIOUS_LABEL}"
     display = pd.DataFrame({
-        "Rank": table["Rank"].astype(int),
-        "Brand": table["Brand"],
+        "Rank": table["Rank"].map(medal_for_rank),
+        "Brand": table["OEM"].apply(lambda x: f"★ {x}" if x in ["Toyota", "Lexus"] else x),
         "Category": table["OEM"].map(cluster_for_oem),
         "W2C Conv Rate": table["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
         "Unique Visitors": table["UniqueVisitors_2025"].map(fmt_metric_number),
-        "Customer Contracts": table["Sales_2025"].map(fmt_metric_number),
-        visitor_col: table["Visitors YoY %"].map(fmt_pct),
-        sales_col: table["Sales YoY %"].map(fmt_pct),
+        "Passenger Car Sales": table["Sales_2025"].map(fmt_metric_number),
+        visitor_col: table["Visitors YoY %"].map(lambda x: badge_span(x)),
+        sales_col: table["Sales YoY %"].map(lambda x: badge_span(x)),
     })
-
-    styled = display.style.map(badge_style, subset=[visitor_col, sales_col])
-    st.dataframe(styled, use_container_width=True, hide_index=True)
-    st.markdown(
-        "<div class='market-summary-note'>★ Toyota and Lexus are locked into this view for comparison, even when outside the top 10.</div>",
-        unsafe_allow_html=True,
-    )
+    html_table(display, highlight_brands=["Toyota", "Lexus"], sticky_brand=True)
+    st.markdown("<div class='market-summary-note'>★ Toyota and Lexus are locked into this view for comparison, even when outside the top 10.</div>", unsafe_allow_html=True)
 
 
 def render_market_takeaways(data, market, selected_oems):
@@ -3064,20 +2994,14 @@ def render_market_takeaways(data, market, selected_oems):
 def render_market_summary_page(data, market, selected_oems):
     section(f"Market Summary — {market}")
     st.caption(f"Executive view for {CURRENT_LABEL} vs {PREVIOUS_LABEL}: market growth, Toyota/Lexus share, leading competitors and key takeaways.")
-    render_cluster_legend(selected_clusters)
-
-    if not render_exec_kpis(data, market, selected_oems):
+    if not render_market_kpi_cards(data, market, selected_oems):
         return
-
-    section("Toyota & Lexus share of market demand and contracts")
+    section("Toyota & Lexus share of market demand and Passenger Car Sales")
     render_toyota_lexus_market_share(data, market)
-
     section("Leading competitors — Top 10 plus Toyota/Lexus")
     top10_leaders_table(data, market, selected_oems)
-
     section("Five executive takeaways")
     render_market_takeaways(data, market, selected_oems)
-
     render_footer()
 
 
@@ -3112,123 +3036,109 @@ def render_bubble_side_table(df, market):
     )
 
 
-def render_bubble_page(data, selected_oems, year_view, show_logos):
-    section("Bubble chart")
+def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
+    section("OEM Bubble Chart")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
-    render_cluster_legend(selected_clusters)
-    st.markdown(
-        "<div class='bubble-control-note'>"
-        "<b>How to read this view:</b> bubble position shows audience scale versus Website-to-Contract Conversion Rate. "
-        "Bubble size reflects passenger sales. In the 2024 and 2025 shift view, arrows show the movement from 2024 to 2025."
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    tabs = st.tabs(MARKETS)
-    for market, tab in zip(MARKETS, tabs):
-        with tab:
-            df = data[(data["Market"] == market) & (data["OEM"].isin(selected_oems))].copy()
-            if year_view != "Previous and current + shift":
-                selected_year = 2024 if year_view == "Previous period" else 2025
-                df = df[df["Year"] == selected_year]
-            if df.empty:
-                st.info("No bubble chart data for this selection.")
-                continue
-
-            chart_col, side_col = st.columns([4.2, 1.15])
-            with chart_col:
-                fig = build_bubble_chart(df, selected_oems, market, year_view, show_logos)
-                st.plotly_chart(fig, use_container_width=True)
-            with side_col:
-                render_bubble_side_table(df, market)
-
+    c1, c2, c3 = st.columns([1.2, 1.2, 1])
+    with c1:
+        local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0)
+    with c2:
+        x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0)
+    with c3:
+        local_show_logos = st.toggle("Show OEM logos", value=False)
+    selected_markets = st.multiselect("Markets", ["UK", "France", "Germany", "Italy", "Spain"], default=[summary_market] if summary_market != "MM5" else ["UK", "France", "Germany", "Italy", "Spain"], help="Select one or more markets to compare OEM performance across markets.")
+    if not selected_markets:
+        selected_markets = ["UK", "France", "Germany", "Italy", "Spain"]
+    size_label = "Passenger Car Sales" if x_axis_metric == "Unique Visitors" else "Unique visitors"
+    st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>.</div>", unsafe_allow_html=True)
+    df = data[(data["Market"].isin(selected_markets)) & (data["OEM"].isin(selected_oems))].copy()
+    df["DisplayName"] = df["OEM"] + " · " + df["Market"]
+    if local_year_view != "Previous and current + shift":
+        selected_year = 2024 if local_year_view == "Previous period" else 2025
+        df = df[df["Year"] == selected_year]
+    if df.empty:
+        st.info("No bubble chart data for this selection.")
+        return
+    if len(selected_markets) > 1:
+        df["Cluster"] = df["Market"]
+    fig = build_bubble_chart(df, selected_oems, "Selected markets", local_year_view, local_show_logos, x_axis_metric=x_axis_metric, view_label="OEM")
+    st.plotly_chart(fig, use_container_width=True)
+    render_bubble_side_table(df, "Selected markets")
 
 
-def scorecard_table(data, market, selected_oems):
-    yoy = yoy_table(data, market, selected_oems)
+def render_mm5_bubble_chart_page(data):
+    section("MM5 Bubble Chart")
+    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}. Compare the five markets against each other.")
+    c1, c2 = st.columns([1.2, 1.2])
+    with c1:
+        local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0, key="mm5_bubble_year")
+    with c2:
+        x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0, key="mm5_bubble_x")
+    size_label = "Passenger Car Sales" if x_axis_metric == "Unique Visitors" else "Unique visitors"
+    st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>.</div>", unsafe_allow_html=True)
+    rows = []
+    for market in ["UK", "France", "Germany", "Italy", "Spain"]:
+        for year in [2024, 2025]:
+            d = market_year(data, market, year, None)
+            if d.empty: continue
+            sales, visitors = d["Sales"].sum(), d["UniqueVisitors"].sum()
+            rows.append({"OEM": market, "DisplayName": market, "Market": market, "Year": year, "Sales": sales, "UniqueVisitors": visitors, "ConversionPct": sales / visitors * 100 if visitors else 0, "Cluster": "MM5 Markets"})
+    df = pd.DataFrame(rows)
+    if local_year_view != "Previous and current + shift":
+        selected_year = 2024 if local_year_view == "Previous period" else 2025
+        df = df[df["Year"] == selected_year]
+    fig = build_bubble_chart(df, ["UK","France","Germany","Italy","Spain"], "MM5 markets", local_year_view, False, x_axis_metric=x_axis_metric, view_label="Market")
+    st.plotly_chart(fig, use_container_width=True)
+    render_footer()
+
+
+def scorecard_table(data, market, selected_oems, lock_toyota=False, lock_lexus=False):
+    oems = list(selected_oems or [])
+    for brand, locked in [("Toyota", lock_toyota), ("Lexus", lock_lexus)]:
+        if locked and brand not in oems:
+            oems.append(brand)
+    yoy = yoy_table(data, market, oems)
     if yoy.empty:
         return pd.DataFrame()
-
     out = yoy.copy()
     out["Category"] = out["OEM"].map(cluster_for_oem)
     out["W2C Ranking"] = out["ConversionPct_2025"].rank(method="first", ascending=False).astype(int)
-    out = out.sort_values("W2C Ranking")
-
-    columns = [
-        "OEM",
-        "Category",
-        "UniqueVisitors_2024",
-        "UniqueVisitors_2025",
-        "Visitors YoY %",
-        "Sales_2024",
-        "Sales_2025",
-        "Sales YoY %",
-        "ConversionPct_2024",
-        "ConversionPct_2025",
-        "Conv Var pp",
-        "Visits to Sale 2024",
-        "Visits to Sale 2025",
-        "Visits to Sale Var",
-        "W2C Ranking",
-    ]
-
-    return out[[col for col in columns if col in out.columns]]
+    out["Sales Ranking"] = out["Sales_2025"].rank(method="first", ascending=False).astype(int)
+    return out.sort_values("W2C Ranking")
 
 
 def render_scorecard_page(data, selected_oems):
     section("Leadership scorecard")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
-    market = st.selectbox("Scorecard market", MARKETS, index=0)
-    score = scorecard_table(data, market, selected_oems)
+    c1, c2, c3 = st.columns([1.2, 1, 1])
+    with c1:
+        market = st.selectbox("Scorecard market", MARKETS, index=0)
+    with c2:
+        lock_toyota = st.checkbox("Lock Toyota in table", value=True)
+    with c3:
+        lock_lexus = st.checkbox("Lock Lexus in table", value=True)
+    score = scorecard_table(data, market, selected_oems, lock_toyota=lock_toyota, lock_lexus=lock_lexus)
     if score.empty:
         st.info("No scorecard data available.")
         return
-
-    display = score.rename(
-        columns={
-            "OEM": "Brand",
-            "UniqueVisitors_2024": "Website visitors 2024",
-            "UniqueVisitors_2025": "Website visitors 2025",
-            "Visitors YoY %": "Visitor YoY vs previous period",
-            "Sales_2024": "Passenger sales 2024",
-            "Sales_2025": "Passenger sales 2025",
-            "Sales YoY %": "Sales YoY vs previous period",
-            "ConversionPct_2024": "W2C rate 2024",
-            "ConversionPct_2025": "W2C rate 2025",
-            "Conv Var pp": "W2C var vs previous period",
-        }
-    ).copy()
-
-    for col in ["Website visitors 2024", "Website visitors 2025", "Passenger sales 2024", "Passenger sales 2025"]:
-        if col in display.columns:
-            display[col] = display[col].map(fmt_int)
-    for col in ["Visitor YoY vs previous period", "Sales YoY vs previous period"]:
-        if col in display.columns:
-            display[col] = display[col].map(fmt_pct)
-    for col in ["W2C rate 2024", "W2C rate 2025"]:
-        if col in display.columns:
-            display[col] = display[col].map(lambda x: f"{x:.2f}%")
-    if "W2C var vs previous period" in display.columns:
-        display["W2C var vs previous period"] = display["W2C var vs previous period"].map(fmt_pp)
-    for col in ["Visits to Sale 2024", "Visits to Sale 2025", "Visits to Sale Var"]:
-        if col in display.columns:
-            display[col] = display[col].map(fmt_int)
-
-    badge_cols = [c for c in ["Visitor YoY vs previous period", "Sales YoY vs previous period", "W2C var vs previous period"] if c in display.columns]
-    styler = display.style.map(badge_style, subset=badge_cols) if badge_cols else display.style
-
-    st.dataframe(
-        styler,
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    st.download_button(
-        "Download scorecard as CSV",
-        data=score.to_csv(index=False).encode("utf-8"),
-        file_name=f"{market.lower()}_scorecard.csv",
-        mime="text/csv",
-    )
+    render_scorecard_podiums(score)
+    visitor_col = f"Visitor YoY vs {PREVIOUS_LABEL}"
+    sales_col = f"Sales YoY vs {PREVIOUS_LABEL}"
+    w2c_var_col = f"W2C var vs {PREVIOUS_LABEL}"
+    display = pd.DataFrame({
+        "Brand": score["OEM"].apply(lambda x: f"★ {x}" if x in ["Toyota", "Lexus"] else x),
+        "Category": score["Category"],
+        "W2C rate": score["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
+        w2c_var_col: score["Conv Var pp"].map(lambda x: badge_span(x, suffix="pp")),
+        "W2C ranking": score["W2C Ranking"].map(medal_for_rank),
+        "Passenger Car Sales": score["Sales_2025"].map(fmt_metric_number),
+        sales_col: score["Sales YoY %"].map(lambda x: badge_span(x)),
+        "Unique visitors": score["UniqueVisitors_2025"].map(fmt_metric_number),
+        visitor_col: score["Visitors YoY %"].map(lambda x: badge_span(x)),
+        "Visits to sale": score["Visits to Sale 2025"].map(fmt_int),
+    })
+    html_table(display, highlight_brands=["Toyota", "Lexus"], sticky_brand=True)
+    st.download_button("Download scorecard as CSV", data=score.to_csv(index=False).encode("utf-8"), file_name=f"{market.lower()}_scorecard.csv", mime="text/csv")
 
 
 # =========================
@@ -3268,22 +3178,17 @@ st.sidebar.header("Filters")
 
 page = st.sidebar.radio(
     "Dashboard page",
-    ["Start Here", "Use Cases", "Market Summary", "Toyota & Lexus Gap Analysis", "Bubble chart", "Scorecard", "Data Assistant"],
+    ["Start Here", "Use Cases", "Market Summary", "Gap Analysis", "OEM Bubble Chart", "MM5 Bubble Chart", "Scorecard", "Data Assistant"],
     index=0,
 )
 
 summary_market = st.sidebar.selectbox("Summary market", MARKETS, index=0)
 
-year_view = st.sidebar.selectbox(
-    "Bubble year view",
-    ["Previous and current + shift", "Previous period", "Current period"],
-    index=0,
-)
 
 preset = st.sidebar.selectbox(
-    "Preset",
-    ["Toyota volume competitors", "Lexus premium competitors", "Chinese disruptors", "All OEMs"],
-    index=3,
+    "TME Presets",
+    ["Toyota volume competitors", "Lexus premium competitors", "All OEMs"],
+    index=2,
 )
 
 cluster_options = ["All categories"] + list(OEM_CLUSTERS.keys())
@@ -3309,7 +3214,7 @@ selected_oems = st.sidebar.multiselect(
 
 show_logos = st.sidebar.toggle(
     "Show OEM logos",
-    value=True,
+    value=False,
     help="Logos require internet access and a Brandfetch Client ID in Streamlit Secrets.",
 )
 
@@ -3324,10 +3229,12 @@ elif page == "Use Cases":
     render_use_cases_page(data)
 elif page == "Market Summary":
     render_market_summary_page(data, summary_market, selected_oems)
-elif page == "Toyota & Lexus Gap Analysis":
+elif page == "Gap Analysis":
     render_gap_analysis_page(data, summary_market)
-elif page == "Bubble chart":
-    render_bubble_page(data, selected_oems, year_view, show_logos)
+elif page == "OEM Bubble Chart":
+    render_bubble_page(data, selected_oems, show_logos=show_logos)
+elif page == "MM5 Bubble Chart":
+    render_mm5_bubble_chart_page(data)
 elif page == "Scorecard":
     render_scorecard_page(data, selected_oems)
 else:
