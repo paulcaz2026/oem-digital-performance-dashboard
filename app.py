@@ -1857,18 +1857,20 @@ def normalise_cluster_oem(oem):
 
 
 def cluster_for_oem(oem):
-    normalised = normalise_cluster_oem(oem)
-    for cluster, brands in OEM_CLUSTERS.items():
-        normalised_brands = [normalise_cluster_oem(b) for b in brands]
-        if normalised in normalised_brands:
+    """Return the six-category cluster for an OEM, supporting both dict orientations."""
+    if oem in OEM_CLUSTERS and isinstance(OEM_CLUSTERS.get(oem), str):
+        return OEM_CLUSTERS.get(oem)
+    for cluster, oems in OEM_CLUSTERS.items():
+        if isinstance(oems, (list, tuple, set)) and oem in oems:
             return cluster
-    return "Uncategorised"
+    return "Other"
+
 
 
 
 def available_oem_categories():
-    """Return the six OEM cluster/category names available for bubble chart filtering."""
-    preferred_order = [
+    """Return the six OEM category names used in the dashboard."""
+    return [
         "Volume Leaders",
         "EV Challengers",
         "European Mass Market",
@@ -1876,14 +1878,17 @@ def available_oem_categories():
         "Asian Mainstream",
         "Chinese New Entrants",
     ]
-    available = []
-    for value in OEM_CLUSTERS.values():
-        if isinstance(value, str) and value.strip():
-            available.append(value.strip())
-    available = set(available)
-    ordered = [c for c in preferred_order if c in available]
-    remainder = sorted(available.difference(ordered))
-    return ordered + remainder
+
+
+def oems_for_categories(data, categories):
+    """Return OEMs that belong to any selected category."""
+    if not categories:
+        return sorted(data["OEM"].unique())
+    selected = set(categories)
+    return sorted([
+        oem for oem in data["OEM"].unique()
+        if cluster_for_oem(oem) in selected
+    ])
 
 
 
@@ -3537,16 +3542,17 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
         if preset != "None":
             default_oems = resolve_tme_preset(data, preset)
         elif selected_categories:
-            default_oems = sorted([
-                o for o in data["OEM"].unique()
-                if cluster_for_oem(o) in selected_categories
-            ])
+            default_oems = oems_for_categories(data, selected_categories)
         else:
             default_oems = sorted(data["OEM"].unique())
 
+        oem_options = resolve_tme_preset(data, preset) if preset != "None" else oems_for_categories(data, selected_categories)
+        if not oem_options:
+            oem_options = sorted(data["OEM"].unique())
+        default_oems = [o for o in default_oems if o in oem_options] or oem_options
         local_oems = st.multiselect(
             "OEMs",
-            sorted(data["OEM"].unique()),
+            oem_options,
             default=default_oems,
             help="Select the OEMs to plot.",
         )
@@ -3602,16 +3608,17 @@ def render_mm5_bubble_chart_page(data):
         if preset != "None":
             default_oems = resolve_tme_preset(data, preset)
         elif selected_categories:
-            default_oems = sorted([
-                o for o in data["OEM"].unique()
-                if cluster_for_oem(o) in selected_categories
-            ])
+            default_oems = oems_for_categories(data, selected_categories)
         else:
             default_oems = sorted(data["OEM"].unique())
 
+        oem_options = resolve_tme_preset(data, preset) if preset != "None" else oems_for_categories(data, selected_categories)
+        if not oem_options:
+            oem_options = sorted(data["OEM"].unique())
+        default_oems = [o for o in default_oems if o in oem_options] or oem_options
         selected_oems_mm5 = st.multiselect(
             "OEMs",
-            sorted(data["OEM"].unique()),
+            oem_options,
             default=default_oems,
             key="mm5_bubble_oems",
             help="The chart aggregates selected OEMs into the five market bubbles.",
