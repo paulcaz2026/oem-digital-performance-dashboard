@@ -6,6 +6,18 @@ import re
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from io import BytesIO
+try:
+    from pptx import Presentation
+    from pptx.util import Inches, Pt
+    from pptx.dml.color import RGBColor
+except Exception:
+    Presentation = None
+    Inches = None
+    Pt = None
+    RGBColor = None
+
+
 
 
 
@@ -1605,6 +1617,67 @@ img[src^="data:image/png"][alt="Toyota logo"] {
     margin-bottom:12px !important;
 }
 
+
+/* v68 Insight Report export */
+.report-builder-grid {
+    display:grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap:18px;
+    margin: 12px 0 24px 0;
+}
+.report-builder-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 2px 14px rgba(10,35,66,.05);
+}
+.report-builder-title {
+    color:#0A2342;
+    font-size:22px;
+    font-weight:850;
+    margin-bottom:10px;
+}
+.report-builder-copy {
+    color:#6F7782;
+    font-size:15px;
+    line-height:1.55;
+}
+.report-type-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:16px;
+    margin: 14px 0 8px 0;
+}
+.report-type-card {
+    border:1px solid #E1E7EF;
+    border-radius:16px;
+    padding:18px;
+    background:#F7F9FC;
+    min-height:150px;
+}
+.report-type-card strong {
+    display:block;
+    color:#0A2342;
+    font-size:20px;
+    margin-bottom:8px;
+}
+.report-type-card span {
+    color:#6F7782;
+    font-size:14px;
+    line-height:1.45;
+}
+.report-output-card {
+    background:#F7F9FC;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:18px;
+    margin: 12px 0 18px 0;
+}
+@media (max-width: 1000px) {
+    .report-builder-grid, .report-type-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -2757,6 +2830,350 @@ def render_data_assistant(data, selected_oems):
         st.info("Start by typing a question above. Example: 'Which OEM has the highest W2C rate in the UK?'")
 
 
+
+def ppt_safe_text(value):
+    if value is None:
+        return ""
+    return str(value).replace("&", "and")
+
+
+def selected_oems_from_report_filters(data, categories, preset, picked_oems):
+    if preset and preset != "None":
+        oems = resolve_tme_preset(data, preset)
+    elif categories:
+        oems = oems_for_categories(data, categories)
+    else:
+        oems = sorted(data["OEM"].unique())
+    if picked_oems:
+        picked = set(picked_oems)
+        oems = [o for o in oems if o in picked]
+    return sorted(oems)
+
+
+def ppt_add_title(slide, title, subtitle=None):
+    tx = slide.shapes.add_textbox(Inches(0.45), Inches(0.30), Inches(12.4), Inches(0.75))
+    p = tx.text_frame.paragraphs[0]
+    p.text = ppt_safe_text(title)
+    p.font.size = Pt(28)
+    p.font.bold = True
+    p.font.color.rgb = RGBColor(10, 35, 66)
+    if subtitle:
+        stx = slide.shapes.add_textbox(Inches(0.48), Inches(0.95), Inches(12.0), Inches(0.35))
+        sp = stx.text_frame.paragraphs[0]
+        sp.text = ppt_safe_text(subtitle)
+        sp.font.size = Pt(11)
+        sp.font.color.rgb = RGBColor(111, 119, 130)
+
+
+def ppt_add_kpi(slide, x, y, label, value, delta=None):
+    box = slide.shapes.add_shape(1, Inches(x), Inches(y), Inches(2.75), Inches(1.25))
+    box.fill.solid()
+    box.fill.fore_color.rgb = RGBColor(247, 249, 252)
+    box.line.color.rgb = RGBColor(230, 233, 237)
+    tf = box.text_frame
+    tf.clear()
+    p1 = tf.paragraphs[0]
+    p1.text = ppt_safe_text(label)
+    p1.font.size = Pt(9)
+    p1.font.bold = True
+    p1.font.color.rgb = RGBColor(111, 119, 130)
+    p2 = tf.add_paragraph()
+    p2.text = ppt_safe_text(value)
+    p2.font.size = Pt(22)
+    p2.font.bold = True
+    p2.font.color.rgb = RGBColor(0, 0, 0)
+    if delta:
+        p3 = tf.add_paragraph()
+        p3.text = ppt_safe_text(delta)
+        p3.font.size = Pt(9)
+        p3.font.bold = True
+        p3.font.color.rgb = RGBColor(18, 199, 107) if str(delta).startswith("+") else RGBColor(255, 47, 109) if str(delta).startswith("-") else RGBColor(111, 119, 130)
+
+
+def ppt_add_table(slide, df, x, y, w, h, font_size=8):
+    if df.empty:
+        return
+    rows, cols = min(len(df) + 1, 14), len(df.columns)
+    table_shape = slide.shapes.add_table(rows, cols, Inches(x), Inches(y), Inches(w), Inches(h))
+    table = table_shape.table
+    for c, col in enumerate(df.columns):
+        cell = table.cell(0, c)
+        cell.text = ppt_safe_text(col)
+        cell.fill.solid()
+        cell.fill.fore_color.rgb = RGBColor(247, 249, 252)
+        for p in cell.text_frame.paragraphs:
+            p.font.size = Pt(font_size)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(10, 35, 66)
+    for r_idx, (_, row) in enumerate(df.head(rows - 1).iterrows(), start=1):
+        for c, col in enumerate(df.columns):
+            cell = table.cell(r_idx, c)
+            cell.text = ppt_safe_text(row[col])
+            for p in cell.text_frame.paragraphs:
+                p.font.size = Pt(font_size)
+                p.font.color.rgb = RGBColor(48, 54, 66)
+
+
+def ppt_insight_bullets(data, market, oems):
+    yoy = yoy_table(data, market, oems)
+    if yoy.empty:
+        return ["No comparable data available for the selected source."]
+    top_w2c = yoy.sort_values("ConversionPct_2025", ascending=False).iloc[0]
+    top_sales = yoy.sort_values("Sales_2025", ascending=False).iloc[0]
+    fastest_visitors = yoy.sort_values("Visitors YoY %", ascending=False).iloc[0]
+    weakest_conv = yoy.sort_values("Conv Var pp", ascending=True).iloc[0]
+    bullets = [
+        f"{top_w2c['OEM']} leads W2C efficiency at {top_w2c['ConversionPct_2025']:.2f}%.",
+        f"{top_sales['OEM']} has the largest Passenger Car Sales volume at {fmt_metric_number(top_sales['Sales_2025'])}.",
+        f"{fastest_visitors['OEM']} has the strongest visitor momentum at {fmt_pct(fastest_visitors['Visitors YoY %'])}.",
+        f"{weakest_conv['OEM']} shows the weakest W2C movement at {fmt_pp(weakest_conv['Conv Var pp'])}.",
+    ]
+    tl = yoy[yoy["OEM"].isin(["Toyota", "Lexus"])]
+    if not tl.empty:
+        tl_names = ", ".join(tl["OEM"].tolist())
+        tl_avg = tl["ConversionPct_2025"].mean()
+        bullets.append(f"{tl_names} average W2C rate is {tl_avg:.2f}% in the selected comparison set.")
+    return bullets[:5]
+
+
+def create_insight_report_ppt(data, market, categories, preset, picked_oems, report_style):
+    if Presentation is None:
+        raise RuntimeError("python-pptx is not installed. Add python-pptx to requirements.txt and redeploy.")
+
+    oems = selected_oems_from_report_filters(data, categories, preset, picked_oems)
+    if not oems:
+        oems = sorted(data["OEM"].unique())
+
+    prs = Presentation()
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
+    blank = prs.slide_layouts[6]
+
+    yoy = yoy_table(data, market, oems)
+    summary = market_kpi_summary(data, market, oems)
+
+    # Slide 1
+    slide = prs.slides.add_slide(blank)
+    bg = slide.shapes.add_shape(1, Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+    bg.fill.solid()
+    bg.fill.fore_color.rgb = RGBColor(0, 0, 0)
+    bg.line.color.rgb = RGBColor(0, 0, 0)
+    title = slide.shapes.add_textbox(Inches(0.65), Inches(0.8), Inches(11.6), Inches(1.6))
+    p = title.text_frame.paragraphs[0]
+    p.text = "OEM Market Intelligence Report"
+    p.font.size = Pt(42)
+    p.font.bold = True
+    p.font.color.rgb = RGBColor(255, 255, 255)
+    subtitle = slide.shapes.add_textbox(Inches(0.68), Inches(2.25), Inches(11.3), Inches(0.8))
+    sp = subtitle.text_frame.paragraphs[0]
+    sp.text = f"{market} | {CURRENT_LABEL} vs {PREVIOUS_LABEL} | {report_style}"
+    sp.font.size = Pt(18)
+    sp.font.color.rgb = RGBColor(220, 230, 238)
+    bar = slide.shapes.add_shape(1, Inches(0), Inches(7.25), prs.slide_width, Inches(0.25))
+    bar.fill.solid()
+    bar.fill.fore_color.rgb = RGBColor(0, 159, 227)
+    bar.line.color.rgb = RGBColor(0, 159, 227)
+
+    # Slide 2
+    slide = prs.slides.add_slide(blank)
+    ppt_add_title(slide, "Executive snapshot", f"Source: {market}; OEMs selected: {len(oems)}")
+    if summary:
+        ppt_add_kpi(slide, 0.6, 1.45, "Passenger Car Sales", fmt_metric_number(summary["sales"]), fmt_pct(summary["sales_delta"]) if summary["sales_delta"] is not None else None)
+        ppt_add_kpi(slide, 3.55, 1.45, "Unique visitors", fmt_metric_number(summary["visitors"]), fmt_pct(summary["visitor_delta"]) if summary["visitor_delta"] is not None else None)
+        ppt_add_kpi(slide, 6.5, 1.45, "W2C rate", f"{summary['conv']:.2f}%", fmt_pp(summary["conv_delta"]))
+        ppt_add_kpi(slide, 9.45, 1.45, "Visits per sale", fmt_int(summary["visits_sale"]) if summary["visits_sale"] else "n/a", "lower is better")
+    bullets = ppt_insight_bullets(data, market, oems)
+    box = slide.shapes.add_textbox(Inches(0.75), Inches(3.25), Inches(12.0), Inches(3.2))
+    tf = box.text_frame
+    tf.clear()
+    for i, b in enumerate(bullets):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p.text = f"• {ppt_safe_text(b)}"
+        p.font.size = Pt(17)
+        p.font.color.rgb = RGBColor(10, 35, 66)
+        p.space_after = Pt(8)
+
+    # Slide 3
+    slide = prs.slides.add_slide(blank)
+    ppt_add_title(slide, "Leading competitors", "Top performers by Website-to-Contract Conversion Rate")
+    if not yoy.empty:
+        top = yoy.sort_values("ConversionPct_2025", ascending=False).head(10).copy()
+        table_df = pd.DataFrame({
+            "Rank": range(1, len(top) + 1),
+            "Brand": top["OEM"],
+            "Category": top["OEM"].map(cluster_for_oem),
+            "W2C": top["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
+            "Sales": top["Sales_2025"].map(fmt_metric_number),
+            "Visitors": top["UniqueVisitors_2025"].map(fmt_metric_number),
+            "Visitor YoY": top["Visitors YoY %"].map(fmt_pct),
+            "Sales YoY": top["Sales YoY %"].map(fmt_pct),
+        })
+        ppt_add_table(slide, table_df, 0.45, 1.25, 12.4, 5.55, font_size=7)
+
+    # Slide 4
+    slide = prs.slides.add_slide(blank)
+    ppt_add_title(slide, "Toyota / Lexus position", "How Toyota and Lexus compare against the selected source")
+    if not yoy.empty:
+        tl = yoy[yoy["OEM"].isin(["Toyota", "Lexus"])].copy()
+        if not tl.empty:
+            tl_df = pd.DataFrame({
+                "Brand": tl["OEM"],
+                "Category": tl["OEM"].map(cluster_for_oem),
+                "W2C": tl["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
+                "W2C Var": tl["Conv Var pp"].map(fmt_pp),
+                "Sales": tl["Sales_2025"].map(fmt_metric_number),
+                "Sales YoY": tl["Sales YoY %"].map(fmt_pct),
+                "Visitors": tl["UniqueVisitors_2025"].map(fmt_metric_number),
+                "Visitor YoY": tl["Visitors YoY %"].map(fmt_pct),
+            })
+            ppt_add_table(slide, tl_df, 0.6, 1.4, 12.1, 1.5, font_size=9)
+        insight = "Use this slide to challenge whether Toyota/Lexus performance is a demand issue, conversion-quality issue, or wider commercial issue."
+        box = slide.shapes.add_textbox(Inches(0.75), Inches(3.45), Inches(11.8), Inches(1.6))
+        p = box.text_frame.paragraphs[0]
+        p.text = insight
+        p.font.size = Pt(20)
+        p.font.bold = True
+        p.font.color.rgb = RGBColor(10, 35, 66)
+
+    # Slide 5
+    slide = prs.slides.add_slide(blank)
+    ppt_add_title(slide, "Category view", "Which OEM groups are driving the selected market source")
+    if not yoy.empty:
+        cat = yoy.copy()
+        cat["Category"] = cat["OEM"].map(cluster_for_oem)
+        grouped = cat.groupby("Category", dropna=False).agg(
+            Sales=("Sales_2025", "sum"),
+            Visitors=("UniqueVisitors_2025", "sum"),
+        ).reset_index()
+        grouped["W2C"] = grouped["Sales"] / grouped["Visitors"] * 100
+        grouped = grouped.sort_values("W2C", ascending=False)
+        table_df = pd.DataFrame({
+            "Category": grouped["Category"],
+            "W2C": grouped["W2C"].map(lambda x: f"{x:.2f}%"),
+            "Sales": grouped["Sales"].map(fmt_metric_number),
+            "Visitors": grouped["Visitors"].map(fmt_metric_number),
+        })
+        ppt_add_table(slide, table_df, 0.8, 1.35, 11.7, 4.0, font_size=10)
+
+    # Slide 6
+    slide = prs.slides.add_slide(blank)
+    ppt_add_title(slide, "Planning questions", "Use these prompts in the QBR discussion")
+    questions = [
+        "Which front-runner OEMs are gaining both demand and sales efficiency?",
+        "Where is visitor growth failing to translate into Passenger Car Sales?",
+        "Which competitor categories are creating the strongest pressure?",
+        "Where should Toyota/Lexus investigate product, offer, stock, retailer or network constraints?",
+        "Which signals should shape the next quarterly planning cycle?",
+    ]
+    qbox = slide.shapes.add_textbox(Inches(0.8), Inches(1.35), Inches(11.8), Inches(4.8))
+    tf = qbox.text_frame
+    tf.clear()
+    for i, q in enumerate(questions):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p.text = f"{i+1}. {q}"
+        p.font.size = Pt(20)
+        p.font.color.rgb = RGBColor(10, 35, 66)
+        p.space_after = Pt(12)
+
+    # Slide 7
+    slide = prs.slides.add_slide(blank)
+    ppt_add_title(slide, "Methodology and caveats", "How to read this report")
+    notes = [
+        "Website-to-Contract Conversion Rate = Passenger Car Sales / unique website visitors.",
+        "Unique visitors source: Similarweb. Passenger Car Sales source: Marklines.",
+        "This is not a total market-share report. It excludes fleet, LCV and tactical registrations.",
+        "Use outputs as market-intelligence prompts, not as proof of direct website causality.",
+    ]
+    nbox = slide.shapes.add_textbox(Inches(0.8), Inches(1.35), Inches(11.8), Inches(4.8))
+    tf = nbox.text_frame
+    tf.clear()
+    for i, n in enumerate(notes):
+        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+        p.text = f"• {ppt_safe_text(n)}"
+        p.font.size = Pt(18)
+        p.font.color.rgb = RGBColor(10, 35, 66)
+        p.space_after = Pt(10)
+
+    bio = BytesIO()
+    prs.save(bio)
+    bio.seek(0)
+    return bio.getvalue()
+
+
+def render_insight_report_page(data):
+    section("Insight Report")
+    st.markdown(
+        "<div class='report-builder-grid'>"
+        "<div class='report-builder-card'>"
+        "<div class='report-builder-title'>Downloadable market-intelligence PPT</div>"
+        "<div class='report-builder-copy'>Create a senior-friendly PowerPoint report from the dashboard dataset. Select the market, OEM categories, TME preset or individual OEMs, then download a ready-to-use QBR insight deck.</div>"
+        "</div>"
+        "<div class='report-builder-card'>"
+        "<div class='report-builder-title'>Report styles</div>"
+        "<div class='report-type-grid'>"
+        "<div class='report-type-card'><strong>Storyteller</strong><span>Full narrative deck with executive snapshot, market leaders, Toyota/Lexus position, category view and planning questions.</span></div>"
+        "<div class='report-type-card'><strong>Espresso</strong><span>Shorter snapshot report focused on the highest-signal findings for faster leadership review.</span></div>"
+        "</div>"
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c1:
+        report_market = st.selectbox("Market", MARKETS, index=0, key="ppt_market")
+    with c2:
+        report_style = st.selectbox("Report style", ["Storyteller", "Espresso"], index=0, key="ppt_style")
+    with c3:
+        report_preset = st.selectbox(
+            "TME Preset",
+            ["None", "Toyota volume competitors", "Lexus premium competitors", "All OEMs"],
+            index=3,
+            key="ppt_preset",
+        )
+
+    c4, c5 = st.columns([1, 1])
+    with c4:
+        report_categories = st.multiselect(
+            "OEM categories",
+            available_oem_categories(),
+            default=[],
+            key="ppt_categories",
+            help="Leave blank if you want the TME preset or all selected OEMs to drive the report.",
+        )
+    with c5:
+        base_oems = selected_oems_from_report_filters(data, report_categories, report_preset, None)
+        report_oems = st.multiselect(
+            "OEMs",
+            sorted(data["OEM"].unique()),
+            default=base_oems,
+            key="ppt_oems",
+            help="Fine-tune the exact OEMs to include.",
+        )
+
+    selected_count = len(selected_oems_from_report_filters(data, report_categories, report_preset, report_oems))
+    st.markdown(
+        f"<div class='report-output-card'><b>Current report source:</b> {report_market} · {selected_count} OEMs · {CURRENT_LABEL} vs {PREVIOUS_LABEL}</div>",
+        unsafe_allow_html=True,
+    )
+
+    try:
+        ppt_bytes = create_insight_report_ppt(data, report_market, report_categories, report_preset, report_oems, report_style)
+        filename = f"oem_market_intelligence_{report_market.lower().replace(' ', '_')}_{report_style.lower()}.pptx"
+        st.download_button(
+            "Download PowerPoint report",
+            data=ppt_bytes,
+            file_name=filename,
+            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            use_container_width=True,
+        )
+    except Exception as exc:
+        st.error(f"Unable to generate the PowerPoint report: {exc}")
+
+    render_footer()
+
+
+
 def render_data_assistant_page(data, selected_oems):
     render_data_assistant(data, selected_oems)
     render_footer()
@@ -3770,7 +4187,7 @@ st.sidebar.header("Filters")
 
 page = st.sidebar.radio(
     "Dashboard page",
-    ["Start Here", "Use Cases", "Market Summary", "Lexus Insights", "Toyota Insights", "OEM Bubble Chart", "MM5 Bubble Chart", "Scorecard", "Data Assistant"],
+    ["Start Here", "Use Cases", "Market Summary", "Lexus Insights", "Toyota Insights", "OEM Bubble Chart", "MM5 Bubble Chart", "Scorecard", "Insight Report", "Data Assistant"],
     index=0,
 )
 
@@ -3824,5 +4241,7 @@ elif page == "MM5 Bubble Chart":
     render_mm5_bubble_chart_page(data)
 elif page == "Scorecard":
     render_scorecard_page(data, selected_oems)
+elif page == "Insight Report":
+    render_insight_report_page(data)
 else:
     render_data_assistant_page(data, selected_oems)
