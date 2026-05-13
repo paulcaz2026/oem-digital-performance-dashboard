@@ -1867,11 +1867,25 @@ def cluster_for_oem(oem):
 
 
 def available_oem_categories():
-    categories = []
+    """Return the six OEM cluster/category names available for bubble chart filtering."""
+    preferred_order = [
+        "Volume Leaders",
+        "EV Challengers",
+        "European Mass Market",
+        "Luxury & Performance",
+        "Asian Mainstream",
+        "Chinese New Entrants",
+    ]
+    available = []
     for value in OEM_CLUSTERS.values():
         if isinstance(value, str) and value.strip():
-            categories.append(value.strip())
-    return ["All categories"] + sorted(set(categories))
+            available.append(value.strip())
+    available = set(available)
+    ordered = [c for c in preferred_order if c in available]
+    remainder = sorted(available.difference(ordered))
+    return ordered + remainder
+
+
 
 
 def oems_for_clusters(clusters, available_oems):
@@ -3506,7 +3520,13 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
         )
 
         category_options = available_oem_categories()
-        selected_category = st.selectbox("OEM category", category_options, index=category_options.index("Volume Leaders") if "Volume Leaders" in category_options else 0)
+        default_categories = ["Volume Leaders"] if "Volume Leaders" in category_options else category_options[:1]
+        selected_categories = st.multiselect(
+            "OEM categories",
+            category_options,
+            default=default_categories,
+            help="Select one or more OEM categories to include in the bubble chart.",
+        )
 
         preset = st.selectbox(
             "TME Preset",
@@ -3516,10 +3536,13 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
 
         if preset != "None":
             default_oems = resolve_tme_preset(data, preset)
-        elif selected_category != "All categories":
-            default_oems = oems_for_cluster(data, selected_category)
+        elif selected_categories:
+            default_oems = sorted([
+                o for o in data["OEM"].unique()
+                if cluster_for_oem(o) in selected_categories
+            ])
         else:
-            default_oems = default_volume_oems(data)
+            default_oems = sorted(data["OEM"].unique())
 
         local_oems = st.multiselect(
             "OEMs",
@@ -3561,7 +3584,13 @@ def render_mm5_bubble_chart_page(data):
         x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0, key="mm5_bubble_x")
 
         category_options = available_oem_categories()
-        selected_category = st.selectbox("OEM category", category_options, index=0, key="mm5_bubble_category")
+        selected_categories = st.multiselect(
+            "OEM categories",
+            category_options,
+            default=category_options,
+            key="mm5_bubble_categories",
+            help="Select one or more OEM categories to aggregate into the market bubbles.",
+        )
 
         preset = st.selectbox(
             "TME Preset",
@@ -3572,8 +3601,11 @@ def render_mm5_bubble_chart_page(data):
 
         if preset != "None":
             default_oems = resolve_tme_preset(data, preset)
-        elif selected_category != "All categories":
-            default_oems = oems_for_cluster(data, selected_category)
+        elif selected_categories:
+            default_oems = sorted([
+                o for o in data["OEM"].unique()
+                if cluster_for_oem(o) in selected_categories
+            ])
         else:
             default_oems = sorted(data["OEM"].unique())
 
