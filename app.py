@@ -1576,6 +1576,46 @@ img[src^="data:image/png"][alt="Toyota logo"] {
     .mm5-kpi-grid, .brand-insight-card-grid { grid-template-columns: 1fr; }
 }
 
+
+/* v64 bubble controls and scorecard polish */
+.bubble-controls-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 2px 14px rgba(10,35,66,.05);
+}
+.bubble-controls-card .control-title {
+    color:#0A2342;
+    font-weight:850;
+    font-size:18px;
+    margin-bottom:12px;
+}
+.scorecard-controls-card {
+    background:#F7F9FC;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:18px;
+    margin:10px 0 18px 0;
+}
+.scorecard-controls-title {
+    color:#0A2342;
+    font-weight:850;
+    font-size:18px;
+    margin-bottom:12px;
+}
+.brand-insight-card .brand-insight-meta {
+    margin-top:10px;
+}
+.brand-insight-card .brand-insight-meta span[style*="border-radius"] {
+    display:inline-block;
+    margin:4px 4px 4px 0;
+    padding:6px 10px !important;
+}
+.brand-insight-main {
+    margin-bottom:12px !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -3124,6 +3164,23 @@ def render_brand_insights_page(data, brand):
     render_footer()
 
 
+
+def oems_for_cluster(data, cluster_name):
+    return sorted([o for o in data["OEM"].unique() if cluster_for_oem(o) == cluster_name])
+
+
+def resolve_tme_preset(data, preset_name):
+    if preset_name == "Toyota volume competitors":
+        return [o for o in TOYOTA_SET if o in set(data["OEM"].unique())]
+    if preset_name == "Lexus premium competitors":
+        return [o for o in LEXUS_SET if o in set(data["OEM"].unique())]
+    return sorted(data["OEM"].unique())
+
+
+def default_volume_oems(data):
+    volume = oems_for_cluster(data, "Volume Leaders")
+    return volume if volume else sorted(data["OEM"].unique())[:10]
+
 def render_brand_logo_header(brand):
     logo = LEXUS_LOGO if brand == "Lexus" else TOYOTA_LOGO
     height = "56px" if brand == "Lexus" else "66px"
@@ -3436,29 +3493,48 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
 
     chart_col, control_col = st.columns([3, 1], gap="large")
+
     with control_col:
-        st.markdown("<div class='bubble-controls-card'>", unsafe_allow_html=True)
-        st.markdown("**Bubble controls**")
+        st.markdown("<div class='bubble-controls-card'><div class='control-title'>Bubble controls</div>", unsafe_allow_html=True)
         local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0)
         x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0)
+
+        default_market = summary_market if summary_market != "MM5" else "UK"
         selected_markets = st.multiselect(
             "Markets",
             ["UK", "France", "Germany", "Italy", "Spain"],
-            default=[summary_market] if summary_market != "MM5" else ["UK", "France", "Germany", "Italy", "Spain"],
-            help="Select one or more markets to compare OEM performance across markets.",
+            default=[default_market],
+            help="Default is one market to keep the view readable. Add more markets if you want cross-market comparison.",
         )
+
+        category_options = ["All categories"] + sorted([c for c in set(OEM_CLUSTERS.values()) if c])
+        selected_category = st.selectbox("OEM category", category_options, index=category_options.index("Volume Leaders") if "Volume Leaders" in category_options else 0)
+
+        preset = st.selectbox(
+            "TME Preset",
+            ["None", "Toyota volume competitors", "Lexus premium competitors", "All OEMs"],
+            index=0,
+        )
+
+        if preset != "None":
+            default_oems = resolve_tme_preset(data, preset)
+        elif selected_category != "All categories":
+            default_oems = oems_for_cluster(data, selected_category)
+        else:
+            default_oems = default_volume_oems(data)
+
         local_oems = st.multiselect(
             "OEMs",
             sorted(data["OEM"].unique()),
-            default=selected_oems,
-            help="Select the OEMs to plot. Choose one OEM and multiple markets to see market-level performance.",
+            default=default_oems,
+            help="Select the OEMs to plot.",
         )
         st.markdown("</div>", unsafe_allow_html=True)
 
     if not selected_markets:
-        selected_markets = ["UK", "France", "Germany", "Italy", "Spain"]
+        selected_markets = [summary_market if summary_market != "MM5" else "UK"]
     if not local_oems:
-        local_oems = selected_oems
+        local_oems = default_volume_oems(data)
 
     size_label = "Passenger Car Sales" if x_axis_metric == "Unique Visitors" else "Unique visitors"
     with chart_col:
@@ -3479,34 +3555,73 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
 
 def render_mm5_bubble_chart_page(data):
     section("MM5 Bubble Chart")
-    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}. Compare the five markets against each other.")
+    st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}. Compare market performance across MM5.")
 
     chart_col, control_col = st.columns([3, 1], gap="large")
     with control_col:
-        st.markdown("<div class='bubble-controls-card'>", unsafe_allow_html=True)
-        st.markdown("**Bubble controls**")
+        st.markdown("<div class='bubble-controls-card'><div class='control-title'>Bubble controls</div>", unsafe_allow_html=True)
         local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0, key="mm5_bubble_year")
         x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0, key="mm5_bubble_x")
+
+        category_options = ["All categories"] + sorted([c for c in set(OEM_CLUSTERS.values()) if c])
+        selected_category = st.selectbox("OEM category", category_options, index=0, key="mm5_bubble_category")
+
+        preset = st.selectbox(
+            "TME Preset",
+            ["None", "Toyota volume competitors", "Lexus premium competitors", "All OEMs"],
+            index=0,
+            key="mm5_bubble_preset",
+        )
+
+        if preset != "None":
+            default_oems = resolve_tme_preset(data, preset)
+        elif selected_category != "All categories":
+            default_oems = oems_for_cluster(data, selected_category)
+        else:
+            default_oems = sorted(data["OEM"].unique())
+
+        selected_oems_mm5 = st.multiselect(
+            "OEMs",
+            sorted(data["OEM"].unique()),
+            default=default_oems,
+            key="mm5_bubble_oems",
+            help="The chart aggregates selected OEMs into the five market bubbles.",
+        )
         st.markdown("</div>", unsafe_allow_html=True)
+
+    if not selected_oems_mm5:
+        selected_oems_mm5 = sorted(data["OEM"].unique())
 
     size_label = "Passenger Car Sales" if x_axis_metric == "Unique Visitors" else "Unique visitors"
     rows = []
     for market in ["UK", "France", "Germany", "Italy", "Spain"]:
         for year in [2024, 2025]:
-            d = market_year(data, market, year, None)
+            d = market_year(data, market, year, selected_oems_mm5)
             if d.empty:
                 continue
             sales, visitors = d["Sales"].sum(), d["UniqueVisitors"].sum()
-            rows.append({"OEM": market, "DisplayName": market, "Market": market, "Year": year, "Sales": sales, "UniqueVisitors": visitors, "ConversionPct": sales / visitors * 100 if visitors else 0, "Cluster": "MM5 Markets"})
+            rows.append({
+                "OEM": market,
+                "DisplayName": market,
+                "Market": market,
+                "Year": year,
+                "Sales": sales,
+                "UniqueVisitors": visitors,
+                "ConversionPct": sales / visitors * 100 if visitors else 0,
+                "Cluster": "MM5 Markets",
+            })
     df = pd.DataFrame(rows)
     if local_year_view != "Previous and current + shift":
         selected_year = 2024 if local_year_view == "Previous period" else 2025
         df = df[df["Year"] == selected_year]
 
     with chart_col:
-        st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>.</div>", unsafe_allow_html=True)
-        fig = build_bubble_chart(df, ["UK","France","Germany","Italy","Spain"], "MM5 markets", local_year_view, False, x_axis_metric=x_axis_metric, view_label="Market")
-        st.plotly_chart(fig, use_container_width=True)
+        st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>. Market bubbles are aggregated using the selected OEM/category/preset filter.</div>", unsafe_allow_html=True)
+        if df.empty:
+            st.info("No MM5 bubble chart data for this selection.")
+        else:
+            fig = build_bubble_chart(df, ["UK","France","Germany","Italy","Spain"], "MM5 markets", local_year_view, False, x_axis_metric=x_axis_metric, view_label="Market")
+            st.plotly_chart(fig, use_container_width=True)
     render_footer()
 
 
@@ -3528,16 +3643,22 @@ def scorecard_table(data, market, selected_oems, lock_toyota=False, lock_lexus=F
 def render_scorecard_page(data, selected_oems):
     section("Leadership scorecard")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
-    c1, c2, c3, c4 = st.columns([1.2, 1, 1, 1.2])
+
+    st.markdown("<div class='scorecard-controls-card'><div class='scorecard-controls-title'>Scorecard controls</div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1.2, 1.2, 1])
     with c1:
         market = st.selectbox("Scorecard market", MARKETS, index=0)
     with c2:
-        lock_toyota = st.checkbox("Lock Toyota to top", value=True)
-    with c3:
-        lock_lexus = st.checkbox("Lock Lexus to top", value=True)
-    with c4:
         sort_by = st.selectbox("Sort table by", ["Locked brands then W2C ranking", "W2C rate", "W2C variance", "Passenger Car Sales", "Sales YoY", "Unique visitors", "Visitor YoY", "Visits to sale"], index=0)
-    descending = st.toggle("Sort large to small", value=True)
+    with c3:
+        descending = st.toggle("Sort large to small", value=True)
+
+    l1, l2 = st.columns(2)
+    with l1:
+        lock_toyota = st.checkbox("Keep Toyota at top of table", value=True)
+    with l2:
+        lock_lexus = st.checkbox("Keep Lexus at top of table", value=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     score = scorecard_table(data, market, selected_oems, lock_toyota=lock_toyota, lock_lexus=lock_lexus)
     if score.empty:
