@@ -1493,6 +1493,89 @@ img[src^="data:image/png"][alt="Toyota logo"] {
     .market-five-grid, .brand-market-grid, .dashboard-link-grid { grid-template-columns: 1fr; }
 }
 
+
+/* v63 refinements */
+.mm5-kpi-grid {
+    display:grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap:14px;
+    margin: 10px 0 18px 0;
+}
+.mm5-kpi-card {
+    background:#F7F9FC;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 2px 12px rgba(10,35,66,.04);
+}
+.mm5-kpi-card.primary { border-left:7px solid #009FE3; }
+.mm5-kpi-label { color:#6F7782; font-weight:850; font-size:13px; margin-bottom:9px; }
+.mm5-kpi-value { color:#000; font-size:30px; font-weight:850; line-height:1.05; }
+.brand-logo-header {
+    display:flex;
+    align-items:center;
+    gap:22px;
+    margin: 8px 0 16px 0;
+    min-height:74px;
+}
+.brand-logo-header img {
+    max-height:66px;
+    width:auto;
+    object-fit:contain;
+}
+.brand-insight-card-grid {
+    display:grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap:14px;
+    margin: 12px 0 24px 0;
+}
+.brand-insight-card {
+    background:#ffffff;
+    border:1px solid #E6E9ED;
+    border-left:7px solid #009FE3;
+    border-radius:18px;
+    padding:16px;
+    box-shadow:0 2px 12px rgba(10,35,66,.04);
+    min-height:205px;
+}
+.brand-insight-card.competitor { border-left-color:#B87554; background:#FBFCFD; }
+.brand-insight-title { color:#0A2342; font-weight:850; font-size:16px; margin-bottom:12px; }
+.brand-insight-label { color:#6F7782; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-top:10px; }
+.brand-insight-main { color:#000; font-size:30px; font-weight:850; line-height:1.05; margin:4px 0 8px 0; }
+.brand-insight-meta { color:#6F7782; font-size:13px; line-height:1.45; }
+.bubble-flex {
+    display:grid;
+    grid-template-columns: minmax(0, 3fr) minmax(250px, 1fr);
+    gap:18px;
+    align-items:start;
+}
+.bubble-controls-card {
+    background:#fff;
+    border:1px solid #E6E9ED;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 2px 14px rgba(10,35,66,.05);
+    position:sticky;
+    top:18px;
+}
+.lock-note {
+    background:#FFF7E8;
+    border:1px solid #F4D8A8;
+    color:#0A2342;
+    border-radius:12px;
+    padding:10px 12px;
+    font-weight:750;
+    margin:8px 0 14px 0;
+}
+@media (max-width: 1200px) {
+    .mm5-kpi-grid, .brand-insight-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bubble-flex { grid-template-columns: 1fr; }
+    .bubble-controls-card { position:relative; top:0; }
+}
+@media (max-width: 800px) {
+    .mm5-kpi-grid, .brand-insight-card-grid { grid-template-columns: 1fr; }
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -2964,18 +3047,20 @@ def brand_competitor_set(brand, all_oems=None):
 
 def brand_market_cards(data, brand):
     markets = ["UK", "France", "Germany", "Italy", "Spain"]
-    html = "<div class='brand-market-grid'>"
+    html = "<div class='brand-insight-card-grid'>"
     for market in markets:
         yoy = yoy_table(data, market, None)
         row = get_row(yoy, brand)
         if row is None:
             continue
         html += (
-            "<div class='brand-market-card'>"
-            f"<div class='brand-market-title'>{market_label_with_flag(market)}</div>"
-            f"<div class='brand-market-value'>{row['ConversionPct_2025']:.2f}%</div>"
-            f"<div class='brand-market-meta'>W2C rate<br>{badge_span(row['Conv Var pp'], suffix='pp')} vs {PREVIOUS_LABEL}</div>"
-            f"<div class='brand-market-meta' style='margin-top:10px;'>Passenger Car Sales: <b>{fmt_metric_number(row['Sales_2025'])}</b><br>Unique visitors: <b>{fmt_metric_number(row['UniqueVisitors_2025'])}</b></div>"
+            "<div class='brand-insight-card'>"
+            f"<div class='brand-insight-title'>{market_label_with_flag(market)} {brand}</div>"
+            "<div class='brand-insight-label'>W2C rate</div>"
+            f"<div class='brand-insight-main'>{row['ConversionPct_2025']:.2f}%</div>"
+            f"<div class='brand-insight-meta'>W2C movement: {badge_span(row['Conv Var pp'], suffix='pp')} vs {PREVIOUS_LABEL}</div>"
+            f"<div class='brand-insight-meta' style='margin-top:10px;'>Passenger Car Sales: <b>{fmt_metric_number(row['Sales_2025'])}</b> {badge_span(row['Sales YoY %'])}<br>"
+            f"Unique visitors: <b>{fmt_metric_number(row['UniqueVisitors_2025'])}</b> {badge_span(row['Visitors YoY %'])}</div>"
             "</div>"
         )
     html += "</div>"
@@ -3010,7 +3095,9 @@ def brand_gap_table(data, brand):
 
 def render_brand_insights_bubble(data, brand):
     competitor_set = brand_competitor_set(brand, sorted(data["OEM"].unique()))
-    st.markdown("<div class='bubble-key'>Bubble size represents <b>Passenger Car Sales</b>. Each market view is pre-set to the relevant TME competitor set.</div>", unsafe_allow_html=True)
+    x_axis_metric = st.selectbox("Bubble chart x axis", ["Unique Visitors", "Passenger Car Sales"], index=0, key=f"{brand.lower()}_insight_bubble_x")
+    size_label = "Passenger Car Sales" if x_axis_metric == "Unique Visitors" else "Unique visitors"
+    st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>. Each market view is pre-set to the relevant TME competitor set.</div>", unsafe_allow_html=True)
     tabs = st.tabs(["UK", "France", "Germany", "Italy", "Spain"])
     for market, tab in zip(["UK", "France", "Germany", "Italy", "Spain"], tabs):
         with tab:
@@ -3018,42 +3105,109 @@ def render_brand_insights_bubble(data, brand):
             if df.empty:
                 st.info("No bubble chart data for this market.")
                 continue
-            fig = build_bubble_chart(df, competitor_set, market, "Previous and current + shift", False, x_axis_metric="Unique Visitors", view_label="OEM")
+            fig = build_bubble_chart(df, competitor_set, market, "Previous and current + shift", False, x_axis_metric=x_axis_metric, view_label="OEM")
             st.plotly_chart(fig, use_container_width=True)
 
 
 def render_brand_insights_page(data, brand):
     section(f"{brand} Insights")
+    render_brand_logo_header(brand)
     st.caption(f"Pre-set to the relevant TME competitor set. Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
+    section(f"{brand} market performance")
     brand_market_cards(data, brand)
+    section(f"{brand} competitor-set market benchmark")
+    competitor_market_cards(data, brand)
     section(f"{brand} market gap analysis")
     brand_gap_table(data, brand)
     section(f"{brand} competitor bubble chart by market")
     render_brand_insights_bubble(data, brand)
     render_footer()
 
+
+def render_brand_logo_header(brand):
+    logo = LEXUS_LOGO if brand == "Lexus" else TOYOTA_LOGO
+    height = "56px" if brand == "Lexus" else "66px"
+    st.markdown(
+        f"<div class='brand-logo-header'><img src='{logo}' style='height:{height};' alt='{brand} logo'></div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_mm5_summary_kpi_cards(data, selected_oems):
+    summary = market_kpi_summary(data, "MM5", selected_oems)
+    if not summary:
+        st.warning("No MM5 data available for this selection.")
+        return False
+
+    cards = [
+        ("MM5 Passenger Car Sales", fmt_metric_number(summary["sales"]), badge_span(summary["sales_delta"]) if summary["sales_delta"] is not None else "n/a"),
+        ("MM5 unique visitors", fmt_metric_number(summary["visitors"]), badge_span(summary["visitor_delta"]) if summary["visitor_delta"] is not None else "n/a"),
+        ("MM5 W2C rate", f"{summary['conv']:.2f}%", badge_span(summary["conv_delta"], suffix="pp")),
+        ("MM5 visits per sale", fmt_int(summary["visits_sale"]) if summary["visits_sale"] else "n/a", "lower is better"),
+        ("Coverage", CURRENT_LABEL, f"vs {PREVIOUS_LABEL}"),
+    ]
+    html = "<div class='mm5-kpi-grid'>"
+    for i, (label, value, delta) in enumerate(cards):
+        cls = "mm5-kpi-card primary" if i == 0 else "mm5-kpi-card"
+        html += (
+            f"<div class='{cls}'>"
+            f"<div class='mm5-kpi-label'>{label}</div>"
+            f"<div class='mm5-kpi-value'>{value}</div>"
+            f"<div style='margin-top:10px;'>{delta}</div>"
+            "</div>"
+        )
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+    return True
+
+
+def competitor_market_cards(data, brand):
+    competitor_set = brand_competitor_set(brand, sorted(data["OEM"].unique()))
+    html = "<div class='brand-insight-card-grid'>"
+    for market in ["UK", "France", "Germany", "Italy", "Spain"]:
+        summary = market_kpi_summary(data, market, competitor_set)
+        if not summary:
+            continue
+        html += (
+            "<div class='brand-insight-card competitor'>"
+            f"<div class='brand-insight-title'>{market_label_with_flag(market)} competitor set</div>"
+            "<div class='brand-insight-label'>Benchmark W2C rate</div>"
+            f"<div class='brand-insight-main'>{summary['conv']:.2f}%</div>"
+            f"<div class='brand-insight-meta'>Passenger Car Sales: <b>{fmt_metric_number(summary['sales'])}</b><br>"
+            f"Unique visitors: <b>{fmt_metric_number(summary['visitors'])}</b><br>"
+            f"Sales movement: {badge_span(summary['sales_delta']) if summary['sales_delta'] is not None else 'n/a'}</div>"
+            "</div>"
+        )
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def sort_scorecard(score, sort_by, descending):
+    if sort_by == "W2C rate":
+        col = "ConversionPct_2025"
+    elif sort_by == "W2C variance":
+        col = "Conv Var pp"
+    elif sort_by == "Passenger Car Sales":
+        col = "Sales_2025"
+    elif sort_by == "Sales YoY":
+        col = "Sales YoY %"
+    elif sort_by == "Unique visitors":
+        col = "UniqueVisitors_2025"
+    elif sort_by == "Visitor YoY":
+        col = "Visitors YoY %"
+    elif sort_by == "Visits to sale":
+        col = "Visits to Sale 2025"
+    else:
+        col = "W2C Ranking"
+        descending = False
+    return score.sort_values(col, ascending=not descending)
+
 def render_market_kpi_cards(data, market, selected_oems):
     if market != "MM5":
         return render_exec_kpis(data, market, selected_oems)
 
-    overall = market_kpi_summary(data, "MM5", selected_oems)
-    if not overall:
-        st.warning("No data available for this selection.")
+    if not render_mm5_summary_kpi_cards(data, selected_oems):
         return False
-
-    overall_html = (
-        "<div class='market-card-full'>"
-        "<div class='exec-market-grid' style='grid-template-columns:1fr;'>"
-        "<div class='exec-market-card overall'>"
-        f"<div class='exec-market-title'>{market_label_with_flag('MM5')} Overall</div>"
-        f"<div class='exec-market-row'><span class='exec-market-label'>Passenger Car Sales</span><span class='exec-market-value'>{fmt_metric_number(overall['sales'])}</span></div>"
-        f"<div class='exec-market-row'><span class='exec-market-label'>Unique visitors</span><span class='exec-market-value'>{fmt_metric_number(overall['visitors'])}</span></div>"
-        f"<div class='exec-market-row'><span class='exec-market-label'>Market W2C rate</span><span class='exec-market-value'>{overall['conv']:.2f}%</span></div>"
-        f"<div class='exec-market-row'><span class='exec-market-label'>Visits per sale</span><span class='exec-market-value'>{fmt_int(overall['visits_sale']) if overall['visits_sale'] else 'n/a'}</span></div>"
-        f"<div class='exec-market-row'><span class='exec-market-label'>Sales movement</span><span class='exec-market-value'>{badge_span(overall['sales_delta']) if overall['sales_delta'] is not None else 'n/a'}</span></div>"
-        "</div></div></div>"
-    )
-    st.markdown(overall_html, unsafe_allow_html=True)
 
     html = "<div class='market-five-grid'>"
     for m in ["UK", "France", "Germany", "Italy", "Spain"]:
@@ -3231,13 +3385,16 @@ def render_market_takeaways(data, market, selected_oems):
 
 def render_market_summary_page(data, market, selected_oems):
     section(f"Market Summary — {market}")
-    st.caption(f"Executive view for {CURRENT_LABEL} vs {PREVIOUS_LABEL}: market growth, Toyota/Lexus share, leading competitors and key takeaways.")
+    st.caption(f"Executive view for {CURRENT_LABEL} vs {PREVIOUS_LABEL}: market growth, leading competitors, Toyota/Lexus share and key takeaways.")
     if not render_market_kpi_cards(data, market, selected_oems):
         return
-    section("Toyota & Lexus share of market demand and Passenger Car Sales")
-    render_toyota_lexus_market_share(data, market)
+
     section("Leading competitors — Top 10 plus Toyota/Lexus")
     top10_leaders_table(data, market, selected_oems)
+
+    section("Toyota & Lexus share of market demand and Passenger Car Sales")
+    render_toyota_lexus_market_share(data, market)
+
     section("Five executive takeaways")
     render_market_takeaways(data, market, selected_oems)
     render_footer()
@@ -3277,13 +3434,11 @@ def render_bubble_side_table(df, market):
 def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
     section("OEM Bubble Chart")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
-    st.markdown("<div class='bubble-page-grid'>", unsafe_allow_html=True)
 
-    chart_placeholder = st.container()
-    control_placeholder = st.container()
-
-    with control_placeholder:
-        st.markdown("<div class='bubble-filter-panel'><div class='bubble-filter-title'>Bubble controls</div>", unsafe_allow_html=True)
+    chart_col, control_col = st.columns([3, 1], gap="large")
+    with control_col:
+        st.markdown("<div class='bubble-controls-card'>", unsafe_allow_html=True)
+        st.markdown("**Bubble controls**")
         local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0)
         x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0)
         selected_markets = st.multiselect(
@@ -3306,7 +3461,7 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
         local_oems = selected_oems
 
     size_label = "Passenger Car Sales" if x_axis_metric == "Unique Visitors" else "Unique visitors"
-    with chart_placeholder:
+    with chart_col:
         st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>.</div>", unsafe_allow_html=True)
         df = data[(data["Market"].isin(selected_markets)) & (data["OEM"].isin(local_oems))].copy()
         df["DisplayName"] = df["OEM"] + " · " + df["Market"]
@@ -3320,32 +3475,38 @@ def render_bubble_page(data, selected_oems, year_view=None, show_logos=False):
                 df["Cluster"] = df["Market"]
             fig = build_bubble_chart(df, local_oems, "Selected markets", local_year_view, False, x_axis_metric=x_axis_metric, view_label="OEM")
             st.plotly_chart(fig, use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_mm5_bubble_chart_page(data):
     section("MM5 Bubble Chart")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}. Compare the five markets against each other.")
-    c1, c2 = st.columns([1.2, 1.2])
-    with c1:
+
+    chart_col, control_col = st.columns([3, 1], gap="large")
+    with control_col:
+        st.markdown("<div class='bubble-controls-card'>", unsafe_allow_html=True)
+        st.markdown("**Bubble controls**")
         local_year_view = st.selectbox("Bubble year view", ["Previous and current + shift", "Previous period", "Current period"], index=0, key="mm5_bubble_year")
-    with c2:
         x_axis_metric = st.selectbox("X axis", ["Unique Visitors", "Passenger Car Sales"], index=0, key="mm5_bubble_x")
+        st.markdown("</div>", unsafe_allow_html=True)
+
     size_label = "Passenger Car Sales" if x_axis_metric == "Unique Visitors" else "Unique visitors"
-    st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>.</div>", unsafe_allow_html=True)
     rows = []
     for market in ["UK", "France", "Germany", "Italy", "Spain"]:
         for year in [2024, 2025]:
             d = market_year(data, market, year, None)
-            if d.empty: continue
+            if d.empty:
+                continue
             sales, visitors = d["Sales"].sum(), d["UniqueVisitors"].sum()
             rows.append({"OEM": market, "DisplayName": market, "Market": market, "Year": year, "Sales": sales, "UniqueVisitors": visitors, "ConversionPct": sales / visitors * 100 if visitors else 0, "Cluster": "MM5 Markets"})
     df = pd.DataFrame(rows)
     if local_year_view != "Previous and current + shift":
         selected_year = 2024 if local_year_view == "Previous period" else 2025
         df = df[df["Year"] == selected_year]
-    fig = build_bubble_chart(df, ["UK","France","Germany","Italy","Spain"], "MM5 markets", local_year_view, False, x_axis_metric=x_axis_metric, view_label="Market")
-    st.plotly_chart(fig, use_container_width=True)
+
+    with chart_col:
+        st.markdown(f"<div class='bubble-key'>Bubble size represents <b>{size_label}</b>.</div>", unsafe_allow_html=True)
+        fig = build_bubble_chart(df, ["UK","France","Germany","Italy","Spain"], "MM5 markets", local_year_view, False, x_axis_metric=x_axis_metric, view_label="Market")
+        st.plotly_chart(fig, use_container_width=True)
     render_footer()
 
 
@@ -3367,35 +3528,53 @@ def scorecard_table(data, market, selected_oems, lock_toyota=False, lock_lexus=F
 def render_scorecard_page(data, selected_oems):
     section("Leadership scorecard")
     st.caption(f"Comparison selected: {CURRENT_LABEL} vs {PREVIOUS_LABEL}.")
-    c1, c2, c3 = st.columns([1.2, 1, 1])
+    c1, c2, c3, c4 = st.columns([1.2, 1, 1, 1.2])
     with c1:
         market = st.selectbox("Scorecard market", MARKETS, index=0)
     with c2:
-        lock_toyota = st.checkbox("Lock Toyota in table", value=True)
+        lock_toyota = st.checkbox("Lock Toyota to top", value=True)
     with c3:
-        lock_lexus = st.checkbox("Lock Lexus in table", value=True)
+        lock_lexus = st.checkbox("Lock Lexus to top", value=True)
+    with c4:
+        sort_by = st.selectbox("Sort table by", ["Locked brands then W2C ranking", "W2C rate", "W2C variance", "Passenger Car Sales", "Sales YoY", "Unique visitors", "Visitor YoY", "Visits to sale"], index=0)
+    descending = st.toggle("Sort large to small", value=True)
+
     score = scorecard_table(data, market, selected_oems, lock_toyota=lock_toyota, lock_lexus=lock_lexus)
     if score.empty:
         st.info("No scorecard data available.")
         return
+
     render_scorecard_podiums(score)
+
+    sorted_score = sort_scorecard(score, sort_by, descending)
+    locked = []
+    if lock_toyota:
+        locked.append("Toyota")
+    if lock_lexus:
+        locked.append("Lexus")
+    if locked:
+        top = sorted_score[sorted_score["OEM"].isin(locked)].copy()
+        rest = sorted_score[~sorted_score["OEM"].isin(locked)].copy()
+        sorted_score = pd.concat([top, rest], ignore_index=True)
+        st.markdown("<div class='lock-note'>★ Locked Toyota/Lexus rows are forced to the top; remaining rows follow the selected sort.</div>", unsafe_allow_html=True)
+
     visitor_col = f"Visitor YoY vs {PREVIOUS_LABEL}"
     sales_col = f"Sales YoY vs {PREVIOUS_LABEL}"
     w2c_var_col = f"W2C var vs {PREVIOUS_LABEL}"
     display = pd.DataFrame({
-        "Brand": score["OEM"].apply(lambda x: f"★ {x}" if x in ["Toyota", "Lexus"] else x),
-        "Category": score["Category"],
-        "W2C rate": score["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
-        w2c_var_col: score["Conv Var pp"].map(lambda x: badge_span(x, suffix="pp")),
-        "W2C ranking": score["W2C Ranking"].map(medal_for_rank),
-        "Passenger Car Sales": score["Sales_2025"].map(fmt_metric_number),
-        sales_col: score["Sales YoY %"].map(lambda x: badge_span(x)),
-        "Unique visitors": score["UniqueVisitors_2025"].map(fmt_metric_number),
-        visitor_col: score["Visitors YoY %"].map(lambda x: badge_span(x)),
-        "Visits to sale": score["Visits to Sale 2025"].map(fmt_int),
+        "Brand": sorted_score["OEM"].apply(lambda x: f"★ {x}" if x in ["Toyota", "Lexus"] else x),
+        "Category": sorted_score["Category"],
+        "W2C rate": sorted_score["ConversionPct_2025"].map(lambda x: f"{x:.2f}%"),
+        w2c_var_col: sorted_score["Conv Var pp"].map(lambda x: badge_span(x, suffix="pp")),
+        "W2C ranking": sorted_score["W2C Ranking"].map(medal_for_rank),
+        "Passenger Car Sales": sorted_score["Sales_2025"].map(fmt_metric_number),
+        sales_col: sorted_score["Sales YoY %"].map(lambda x: badge_span(x)),
+        "Unique visitors": sorted_score["UniqueVisitors_2025"].map(fmt_metric_number),
+        visitor_col: sorted_score["Visitors YoY %"].map(lambda x: badge_span(x)),
+        "Visits to sale": sorted_score["Visits to Sale 2025"].map(fmt_int),
     })
     html_table(display, highlight_brands=["Toyota", "Lexus"], sticky_brand=True)
-    st.download_button("Download scorecard as CSV", data=score.to_csv(index=False).encode("utf-8"), file_name=f"{market.lower()}_scorecard.csv", mime="text/csv")
+    st.download_button("Download scorecard as CSV", data=sorted_score.to_csv(index=False).encode("utf-8"), file_name=f"{market.lower()}_scorecard.csv", mime="text/csv")
 
 
 # =========================
