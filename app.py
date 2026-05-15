@@ -7,15 +7,13 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from io import BytesIO
-try:
+
+def load_pptx_dependencies():
+    """Lazy-load python-pptx only when a user creates a report, so app startup cannot be blocked by PPT dependencies."""
     from pptx import Presentation
     from pptx.util import Inches, Pt
     from pptx.dml.color import RGBColor
-except Exception:
-    Presentation = None
-    Inches = None
-    Pt = None
-    RGBColor = None
+    return Presentation, Inches, Pt, RGBColor
 
 
 
@@ -32,25 +30,26 @@ def image_file_to_data_uri(path):
     return f"data:{mime};base64,{encoded}"
 
 
+print("OEM dashboard app loaded successfully - v70 Valtech design loaded")
 # =========================
 # App config
 # =========================
 
 st.set_page_config(
-    page_title="OEM Macro Conversion Funnel",
+    page_title="OEM Macro Conversion Intelligence Report",
     page_icon="🚗",
     layout="wide",
 )
 
 DATA_FILE = Path(__file__).parent / "OEM Visit to Sales Data 2024-2026.xlsx"
 
-VALTECH_BLUE = "#009FE3"
+VALTECH_BLUE = "#003CB3"
 VALTECH_GREY = "#6F6F6F"
-VALTECH_LIGHT_GREY = "#F3F3F3"
+VALTECH_LIGHT_GREY = "#F6F5F1"
 BLACK = "#000000"
 WHITE = "#FFFFFF"
 GREEN = "#12C76B"
-PINK = "#FF5C8A"
+PINK = "#FF4B55"
 AMBER = "#FFB000"
 INTELLIGENCE = "#2563EB"
 
@@ -1678,6 +1677,426 @@ img[src^="data:image/png"][alt="Toyota logo"] {
     .report-builder-grid, .report-type-grid { grid-template-columns: 1fr; }
 }
 
+/* Valtech brand parity override */
+:root {
+    --valtech-black: #000000;
+    --valtech-white: #ffffff;
+    --valtech-offwhite: #F6F5F1;
+    --valtech-blue: #003CB3;
+    --valtech-red: #FF4B55;
+    --valtech-grey: #6F6F6F;
+    --valtech-line: #D9D7D1;
+}
+html, body, [class*="css"], .stApp, button, input, textarea, select {
+    font-family: "Valtech", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+    letter-spacing: -0.015em;
+}
+.stApp {
+    background: var(--valtech-white) !important;
+    color: var(--valtech-black) !important;
+}
+.block-container {
+    padding-top: 1.75rem !important;
+    max-width: 1480px !important;
+}
+.valtech-topbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding: 12px 0 12px 0;
+    margin: 8px 0 10px 0;
+    border-bottom: 1px solid var(--valtech-line);
+    background: var(--valtech-white);
+    overflow: visible;
+}
+.valtech-wordmark {
+    color: var(--valtech-black);
+    font-size: 30px;
+    line-height: 1.25;
+    font-weight: 400;
+    letter-spacing: -0.055em;
+    display:flex;
+    align-items:center;
+    overflow: visible;
+}
+.valtech-star {
+    display:inline-block;
+    margin-left:6px;
+    font-size:28px;
+    line-height:1;
+    transform: translateY(1px);
+}
+.valtech-nav {
+    display:none;
+    align-items:center;
+    gap:72px;
+    color: var(--valtech-black);
+    font-size:24px;
+    font-weight:700;
+}
+.valtech-nav span {
+    position:relative;
+    padding-top: 10px;
+}
+.valtech-nav span.active::before {
+    content:"";
+    position:absolute;
+    left:50%;
+    top:0;
+    transform:translateX(-50%);
+    width:24px;
+    height:6px;
+    background: var(--valtech-red);
+}
+.hero {
+    background: var(--valtech-white) !important;
+    color: var(--valtech-black) !important;
+    border-radius: 0 !important;
+    border: 1px solid var(--valtech-line) !important;
+    border-bottom: 6px solid var(--valtech-blue) !important;
+    padding: 22px 28px 24px 28px !important;
+    margin: 0 0 22px 0 !important;
+    box-shadow: none !important;
+}
+.hero::after { display:none !important; }
+.hero-accent-red {
+    width: 24px;
+    height: 5px;
+    background: var(--valtech-red);
+    margin-bottom: 12px;
+}
+.hero-kicker {
+    color: var(--valtech-grey);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.hero-title {
+    color: var(--valtech-black) !important;
+    font-size: clamp(28px, 3.8vw, 54px) !important;
+    line-height: 1.02 !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.065em !important;
+    max-width: 900px !important;
+}
+.hero-subtitle {
+    color: var(--valtech-black) !important;
+    max-width: 980px !important;
+    font-size: 14px !important;
+    line-height: 1.35 !important;
+    margin-top: 14px !important;
+    font-weight: 400 !important;
+}
+.hero-meta {
+    color: var(--valtech-grey) !important;
+    margin-top: 14px !important;
+    padding-top: 10px;
+    border-top: 1px solid var(--valtech-line);
+    font-size: 11px !important;
+}
+
+@media (max-width: 800px) {
+    .block-container { padding-top: 1.25rem !important; }
+    .valtech-topbar { padding: 10px 0 10px 0; margin-top: 6px; }
+    .valtech-wordmark { font-size: 26px; line-height: 1.25; }
+    .valtech-star { font-size: 24px; }
+}
+
+.section-kicker {
+    color: var(--valtech-black) !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    letter-spacing: .02em !important;
+    text-transform: none !important;
+    margin: 42px 0 22px !important;
+}
+.section-kicker::after {
+    background: var(--valtech-black) !important;
+    opacity: .25;
+}
+.card,
+.method-card,
+.methodology-card,
+.usecase-card,
+.flow-usecase-card,
+.report-builder-card,
+.report-output-card,
+.assistant-card,
+.share-card,
+.exec-kpi-card,
+.exec-market-card,
+.score-podium-card,
+.bubble-controls-card,
+.bubble-filter-panel,
+.bubble-side-card,
+.brand-insight-card,
+.mm5-kpi-card,
+.takeaway-card,
+.tl-detail-card {
+    border: 1px solid var(--valtech-black) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: var(--valtech-white) !important;
+}
+.start-intro,
+.usecase-note,
+.usecase-toggle-note,
+.bubble-key,
+.bubble-control-note,
+.footer-note,
+.lock-note {
+    background: var(--valtech-offwhite) !important;
+    border: 1px solid var(--valtech-black) !important;
+    border-left: 8px solid var(--valtech-blue) !important;
+    border-radius: 0 !important;
+    color: var(--valtech-black) !important;
+    box-shadow: none !important;
+}
+.methodology-callout,
+.da-context-chip,
+.assistant-card-tag,
+.tag,
+.oem-pill,
+.cluster-chip,
+.source-logo-pill {
+    background: var(--valtech-white) !important;
+    color: var(--valtech-black) !important;
+    border: 1px solid var(--valtech-black) !important;
+    border-radius: 0 !important;
+}
+.insight-card,
+.assistant-card.primary,
+.takeaway-card,
+.brand-market-card,
+.brand-insight-card {
+    border-left: 8px solid var(--valtech-blue) !important;
+}
+.insight-card.risk,
+.assistant-card.risk,
+.takeaway-card.risk {
+    border-left-color: var(--valtech-red) !important;
+}
+.insight-card.opportunity,
+.assistant-card.positive,
+.takeaway-card.positive {
+    border-left-color: var(--valtech-blue) !important;
+}
+.report-type-card,
+.tl-detail-metric,
+.start-factor-card,
+.exec-kpi-card.primary,
+.mm5-kpi-card.primary {
+    background: var(--valtech-offwhite) !important;
+    border-radius: 0 !important;
+}
+.start-factor-card {
+    border: 1px solid var(--valtech-black) !important;
+    border-left: 8px solid var(--valtech-blue) !important;
+}
+.benchmark-title,
+.insight-title,
+.method-title,
+.methodology-card h4,
+.usecase-title,
+.flow-title,
+.report-builder-title,
+.assistant-card-title,
+.share-title,
+.takeaway-title,
+.exec-market-title,
+.score-podium-title,
+.brand-insight-title,
+.da-simple-title,
+.bubble-side-title,
+.bubble-filter-title,
+.brand-market-title {
+    color: var(--valtech-black) !important;
+    font-weight: 700 !important;
+}
+.benchmark-copy,
+.insight-copy,
+.method-copy,
+.usecase-copy,
+.flow-copy,
+.report-builder-copy,
+.assistant-card-copy,
+.takeaway-copy,
+.brand-market-meta,
+.brand-insight-meta,
+.market-summary-note,
+.da-simple-copy {
+    color: var(--valtech-grey) !important;
+}
+.benchmark-metric,
+.insight-metric,
+.assistant-card-metric,
+.exec-kpi-value,
+.mm5-kpi-value,
+.brand-insight-main,
+.brand-market-value,
+.tl-detail-value {
+    color: var(--valtech-black) !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.055em !important;
+}
+div[data-testid="stPlotlyChart"] {
+    border: 1px solid var(--valtech-black) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 12px !important;
+}
+.html-table-wrap {
+    border: 1px solid var(--valtech-black) !important;
+    border-radius: 0 !important;
+}
+.html-table th {
+    background: var(--valtech-offwhite) !important;
+    color: var(--valtech-black) !important;
+    border-bottom: 1px solid var(--valtech-black) !important;
+}
+.html-table td {
+    color: var(--valtech-black) !important;
+    border-bottom: 1px solid var(--valtech-line) !important;
+}
+section[data-testid="stSidebar"] {
+    background: var(--valtech-black) !important;
+    border-right: 8px solid var(--valtech-blue) !important;
+}
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span {
+    color: var(--valtech-white) !important;
+}
+section[data-testid="stSidebar"] [data-baseweb="radio"] label,
+section[data-testid="stSidebar"] [data-baseweb="checkbox"] label {
+    color: var(--valtech-white) !important;
+}
+.stButton > button,
+div[data-testid="stDownloadButton"] button {
+    background: var(--valtech-black) !important;
+    color: var(--valtech-white) !important;
+    border: 1px solid var(--valtech-black) !important;
+    border-radius: 0 !important;
+    font-weight: 700 !important;
+}
+.stButton > button:hover,
+div[data-testid="stDownloadButton"] button:hover {
+    background: var(--valtech-blue) !important;
+    color: var(--valtech-white) !important;
+    border-color: var(--valtech-blue) !important;
+}
+span[data-baseweb="tag"] {
+    background-color: var(--valtech-white) !important;
+    color: var(--valtech-black) !important;
+    border: 1px solid var(--valtech-black) !important;
+    border-radius: 0 !important;
+}
+[data-baseweb="select"] > div,
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input {
+    border-radius: 0 !important;
+    border-color: var(--valtech-black) !important;
+}
+@media (max-width: 900px) {
+    .valtech-topbar { align-items:flex-start; flex-direction:column; padding: 6px 0 8px 0; margin-bottom: 8px; }
+    .valtech-wordmark { font-size: 28px !important; }
+    .valtech-star { font-size: 25px !important; }
+    .valtech-nav { display:none !important; }
+    .hero { padding: 16px 18px 18px 18px !important; margin-bottom: 16px !important; }
+    .hero-title { font-size: 32px !important; letter-spacing: -0.055em !important; }
+    .hero-subtitle { font-size: 13px !important; margin-top: 10px !important; }
+    .hero-meta { font-size: 10px !important; }
+}
+
+
+/* v70 Toyota-version Valtech design preservation refinements */
+:root {
+    --vt-black: #000000;
+    --vt-white: #ffffff;
+    --vt-offwhite: #F6F5F1;
+    --vt-blue: #003CB3;
+    --vt-red: #FF4B55;
+    --vt-grey: #6F6F6F;
+    --vt-line: #D9D7D1;
+}
+.hero-logo { display:none !important; }
+.hero-title, .da-simple-title {
+    font-weight: 400 !important;
+    letter-spacing: -0.065em !important;
+}
+div[data-testid="stMetric"] {
+    background: var(--vt-white);
+    border: 1px solid var(--vt-black);
+    border-radius: 0;
+    padding: 16px 18px;
+}
+div[data-testid="stMetric"] label,
+div[data-testid="stMetric"] [data-testid="stMetricLabel"] {
+    color: var(--vt-grey) !important;
+    font-weight: 700 !important;
+}
+div[data-testid="stMetricValue"] {
+    font-weight: 400 !important;
+    letter-spacing: -0.055em !important;
+}
+div[data-testid="stMetricDelta"] {
+    font-weight: 700 !important;
+}
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    border-bottom: 1px solid var(--vt-black);
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 0 !important;
+    border: 1px solid var(--vt-black);
+    background: var(--vt-white);
+}
+.stTabs [aria-selected="true"] {
+    background: var(--vt-black) !important;
+    color: var(--vt-white) !important;
+}
+section[data-testid="stSidebar"] .stRadio [role="radiogroup"] label {
+    padding: 4px 0 !important;
+}
+section[data-testid="stSidebar"] .stRadio [role="radiogroup"] label p {
+    font-weight: 700 !important;
+}
+[data-testid="stSidebar"] hr {
+    border-color: rgba(255,255,255,.22) !important;
+}
+.block-container {
+    padding-bottom: 4rem !important;
+}
+.report-builder-card,
+.report-type-card,
+.assistant-shell {
+    border-radius: 0 !important;
+}
+.assistant-shell {
+    background: var(--vt-black) !important;
+    border: 1px solid var(--vt-black) !important;
+    border-bottom: 8px solid var(--vt-blue) !important;
+}
+.flow-number {
+    border-radius: 0 !important;
+    background: var(--vt-blue) !important;
+}
+.dashboard-link-card {
+    border: 1px solid var(--vt-black) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+.dashboard-link-card:hover {
+    background: var(--vt-blue) !important;
+    color: var(--vt-white) !important;
+}
+
 </style>
 """,
     unsafe_allow_html=True,
@@ -2014,11 +2433,15 @@ def render_cluster_legend(selected_clusters):
 def render_hero():
     st.markdown(
         f"""
+        <div class="valtech-topbar">
+            <div class="valtech-wordmark">Valtech <span class="valtech-star">✳</span></div>
+        </div>
         <div class="hero">
-            <div class="hero-logo"><img src="{VALTECH_LOGO}" alt="Valtech logo"></div>
-            <div class="hero-title">OEM Macro Conversion Funnel</div>
+            <div class="hero-accent-red"></div>
+            <div class="hero-kicker">OEM intelligence</div>
+            <div class="hero-title">OEM Macro Conversion Intelligence Report</div>
             <div class="hero-subtitle">
-                Website to customer contract conversion across MM5. Explores how unique visitor demand converts into passenger new car Passenger Car Sales, and where Toyota/Lexus under- or over-perform by market.
+                Website-to-contract conversion intelligence across MM5. Explore how unique visitor demand converts into passenger car sales, compare OEMs consistently by market, and identify Toyota/Lexus cross-market performance opportunities.
             </div>
             <div class="hero-meta">
                 <b>Coverage:</b> 2024, 2025 &amp; 2026 (Jan to April) &nbsp;|&nbsp;
@@ -2029,7 +2452,6 @@ def render_hero():
         """,
         unsafe_allow_html=True,
     )
-
 
 def section(title):
     st.markdown(f'<div class="section-kicker">{title}</div>', unsafe_allow_html=True)
@@ -2937,9 +3359,7 @@ def ppt_insight_bullets(data, market, oems):
 
 
 def create_insight_report_ppt(data, market, categories, preset, picked_oems, report_style):
-    if Presentation is None:
-        raise RuntimeError("python-pptx is not installed. Add python-pptx to requirements.txt and redeploy.")
-
+    Presentation, Inches, Pt, RGBColor = load_pptx_dependencies()
     oems = selected_oems_from_report_filters(data, categories, preset, picked_oems)
     if not oems:
         oems = sorted(data["OEM"].unique())
@@ -3157,18 +3577,22 @@ def render_insight_report_page(data):
         unsafe_allow_html=True,
     )
 
-    try:
-        ppt_bytes = create_insight_report_ppt(data, report_market, report_categories, report_preset, report_oems, report_style)
-        filename = f"oem_market_intelligence_{report_market.lower().replace(' ', '_')}_{report_style.lower()}.pptx"
-        st.download_button(
-            "Download PowerPoint report",
-            data=ppt_bytes,
-            file_name=filename,
-            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            use_container_width=True,
-        )
-    except Exception as exc:
-        st.error(f"Unable to generate the PowerPoint report: {exc}")
+    if st.button("Generate PowerPoint report", use_container_width=True):
+        try:
+            with st.spinner("Generating PowerPoint report..."):
+                ppt_bytes = create_insight_report_ppt(data, report_market, report_categories, report_preset, report_oems, report_style)
+            filename = f"oem_market_intelligence_{report_market.lower().replace(' ', '_')}_{report_style.lower()}.pptx"
+            st.download_button(
+                "Download generated PowerPoint",
+                data=ppt_bytes,
+                file_name=filename,
+                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                use_container_width=True,
+            )
+        except Exception as exc:
+            st.error(f"Unable to generate the PowerPoint report: {exc}")
+    else:
+        st.info("Select the report source, then click Generate PowerPoint report.")
 
     render_footer()
 
